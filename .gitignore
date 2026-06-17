@@ -1,0 +1,47 @@
+# Node / Angular
+node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.sass-cache/
+*.log
+npm-debug.log*
+
+# .NET
+backend/**/bin/
+backend/**/obj/
+backend/**/publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# PostgreSQL portable data
+db/data/
+pendrive/db/data/
+*.sql.backup
+
+# Runtime / pendrive
+logs/
+exports/
+backup/
+config/device.lic
+config/*.local.json
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+*.local
+
+# Test coverage
+coverage/
+TestResults/

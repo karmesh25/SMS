@@ -1,0 +1,25 @@
+.app-shell {
+  height: 100vh;
+}
+
+.app-sidenav {
+  width: 240px;
+}
+
+.brand {
+  padding: 1rem;
+  font-weight: 700;
+  color: #1f4e79;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+a.active {
+  background: rgba(31, 78, 121, 0.08);
+}

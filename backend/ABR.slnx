@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ABR.Api/ABR.Api.csproj" />
+  <Project Path="ABR.Application/ABR.Application.csproj" />
+  <Project Path="ABR.Domain/ABR.Domain.csproj" />
+  <Project Path="ABR.Infrastructure/ABR.Infrastructure.csproj" />
+</Solution>

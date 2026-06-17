@@ -1,0 +1,34 @@
+# .cursorrules - ABR Real Estate Management System
+
+## Project Context
+This is the ABR Society & Real Estate Management System.
+- Frontend: Angular 17+ with standalone components, Angular Material, Reactive Forms
+- Backend: ASP.NET Core 8 Web API, Entity Framework Core 8, PostgreSQL 15
+- Architecture: Clean Architecture (Controller -> Service -> Repository -> EF Core)
+- Auth: JWT Bearer tokens, BCrypt password hashing, hardware fingerprint security
+- Deployment: Portable USB pendrive - offline only, no internet required
+
+## Coding Standards
+- Angular: use standalone components, inject() function (not constructor injection)
+- Angular: use Signals for reactive state where possible
+- C#: follow Clean Architecture - no business logic in controllers
+- C#: all repository methods must be async/await
+- Database: all tables use UUID primary keys (gen_random_uuid())
+- All amounts stored as DECIMAL(15,2) - never float or double
+- Soft deletes: use is_deleted + deleted_at columns - never hard delete
+- All API responses use standardized ApiResponse<T> wrapper
+- Error handling: global exception middleware in ASP.NET Core
+- Validation: FluentValidation for all DTOs
+
+## Naming Conventions
+- Angular components: kebab-case files, PascalCase class
+- Angular services: feature.service.ts
+- C# classes: PascalCase, interfaces prefix I
+- Database tables: snake_case (e.g., daily_entries)
+- API endpoints: /api/{resource} (plural, lowercase)
+
+## Do Not
+- Never use localStorage - use in-memory services only
+- Never expose connection strings in frontend code
+- Never return passwords or password hashes in API responses
+- Never use float/double for money - always decimal

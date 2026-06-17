@@ -1,0 +1,41 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$abr-primary: mat.define-palette(mat.$blue-palette, 900);
+$abr-accent: mat.define-palette(mat.$light-blue-palette, 700);
+$abr-warn: mat.define-palette(mat.$red-palette, 700);
+
+$abr-theme: mat.define-light-theme((
+  color: (
+    primary: $abr-primary,
+    accent: $abr-accent,
+    warn: $abr-warn
+  ),
+  typography: mat.define-typography-config(),
+  density: 0
+));
+
+@include mat.all-component-themes($abr-theme);
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background: #f5f7fa;
+}
+
+.success-snackbar {
+  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-supporting-text-color: #fff;
+}
+
+.error-snackbar {
+  --mdc-snackbar-container-color: #c0392b;
+  --mdc-snackbar-supporting-text-color: #fff;
+}
+
+.warning-snackbar {
+  --mdc-snackbar-container-color: #e67e22;
+  --mdc-snackbar-supporting-text-color: #fff;
+}
