@@ -93,7 +93,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-await app.Services.InitializeDatabaseAsync();
+try
+{
+    await app.Services.InitializeDatabaseAsync();
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "Database initialization skipped — ensure PostgreSQL is running and connection string is correct.");
+}
 
 app.Run();
 
