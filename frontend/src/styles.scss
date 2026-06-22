@@ -1,9 +1,68 @@
 @use '@angular/material' as mat;
+@use './styles/tokens' as tokens;
 
 @include mat.core();
 
-$abr-primary: mat.define-palette(mat.$blue-palette, 900);
-$abr-accent: mat.define-palette(mat.$light-blue-palette, 700);
+$abr-primary-palette: (
+  50: #e8eef4,
+  100: #c5d5e4,
+  200: #9eb9d2,
+  300: #779dbf,
+  400: #5a88b2,
+  500: #3d73a5,
+  600: #376b9d,
+  700: #2f6093,
+  800: #27568a,
+  900: #1f4e79,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: white,
+    400: white,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white
+  )
+);
+
+$abr-accent-palette: (
+  50: #e8f2fa,
+  100: #c5dff3,
+  200: #9ecaeb,
+  300: #77b5e3,
+  400: #59a5dd,
+  500: #3c95d7,
+  600: #368dd3,
+  700: #2e82cd,
+  800: #2778c7,
+  900: #1a67bd,
+  A100: #ffffff,
+  A200: #e3f1ff,
+  A400: #b0d7ff,
+  A700: #96caff,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: rgba(black, 0.87),
+    400: white,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(black, 0.87),
+    A200: rgba(black, 0.87),
+    A400: rgba(black, 0.87),
+    A700: rgba(black, 0.87)
+  )
+);
+
+$abr-primary: mat.define-palette($abr-primary-palette, 900);
+$abr-accent: mat.define-palette($abr-accent-palette, 700);
 $abr-warn: mat.define-palette(mat.$red-palette, 700);
 
 $abr-theme: mat.define-light-theme((
@@ -21,8 +80,8 @@ $abr-theme: mat.define-light-theme((
 html, body {
   height: 100%;
   margin: 0;
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
-  background: #f5f7fa;
+  font-family: tokens.$abr-font-family;
+  background: tokens.$abr-bg;
 }
 
 .success-snackbar {
@@ -38,4 +97,46 @@ html, body {
 .warning-snackbar {
   --mdc-snackbar-container-color: #e67e22;
   --mdc-snackbar-supporting-text-color: #fff;
+}
+
+@media print {
+  mat-sidenav,
+  mat-toolbar,
+  .app-sidenav,
+  .site-select,
+  .user-label,
+  app-breadcrumb {
+    display: none !important;
+  }
+
+  mat-sidenav-content {
+    margin: 0 !important;
+  }
+
+  .content {
+    padding: 0 !important;
+  }
+}
+
+.abr-table {
+  width: 100%;
+}
+
+.abr-table.sticky-header .mat-mdc-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: tokens.$abr-header-bg;
+}
+
+.abr-table .empty-row td {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #888;
+}
+
+.abr-table .empty-row mat-icon {
+  display: block;
+  margin: 0 auto 0.5rem;
+  color: #b0bec5;
 }

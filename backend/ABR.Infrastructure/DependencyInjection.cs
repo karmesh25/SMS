@@ -1,6 +1,15 @@
+using ABR.Application.Interfaces;
 using ABR.Domain.Entities;
 using ABR.Domain.Enums;
 using ABR.Infrastructure.Persistence;
+using ABR.Infrastructure.Security;
+using ABR.Infrastructure.Services;
+using ABR.Infrastructure.Services.Accounting;
+using ABR.Infrastructure.Services.Booking;
+using ABR.Infrastructure.Services.Dashboard;
+using ABR.Infrastructure.Services.MasterData;
+using ABR.Infrastructure.Services.Reports;
+using ABR.Infrastructure.Services.Vyaj;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,8 +20,33 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
-        services.AddDbContext<AbrDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        services.AddSingleton<SlowQueryInterceptor>();
+        services.AddDbContext<AbrDbContext>((sp, options) =>
+            options.UseNpgsql(connectionString)
+                .AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>()));
+
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IDeviceLicenseService, DeviceLicenseService>();
+        services.AddSingleton<IDeviceFingerprintService, DeviceFingerprintService>();
+
+        services.AddScoped<ISiteService, SiteService>();
+        services.AddScoped<IWingService, WingService>();
+        services.AddScoped<IFlatService, FlatService>();
+        services.AddScoped<IMainLedgerService, MainLedgerService>();
+        services.AddScoped<ISubLedgerService, SubLedgerService>();
+        services.AddScoped<IConditionService, ConditionService>();
+        services.AddScoped<IBankAccountService, BankAccountService>();
+        services.AddScoped<IBrokerService, BrokerService>();
+
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IInstallmentService, InstallmentService>();
+        services.AddScoped<IDailyEntryService, DailyEntryService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IReportExportService, ReportExportService>();
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IVyajService, VyajService>();
 
         return services;
     }

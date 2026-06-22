@@ -8,6 +8,9 @@ export interface ApiResponse<T> {
 export interface CurrentUser {
   id: string;
   username: string;
+  email?: string;
   role: string;
+  isActive?: boolean;
+  forcePasswordChange?: boolean;
   siteAccess: string[];
 }

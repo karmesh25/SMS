@@ -240,6 +240,75 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.ToTable("bookings", (string)null);
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.BookingInstallment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("BookingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("booking_id");
+
+                    b.Property<Guid?>("ConditionItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("condition_item_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("DueAmount")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("due_amount");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date")
+                        .HasColumnName("due_date");
+
+                    b.Property<string>("MilestoneName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("milestone_name");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("paid_amount");
+
+                    b.Property<DateOnly?>("PaidDate")
+                        .HasColumnType("date")
+                        .HasColumnName("paid_date");
+
+                    b.Property<string>("PaymentNotes")
+                        .HasColumnType("text")
+                        .HasColumnName("payment_notes");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("ConditionItemId");
+
+                    b.ToTable("booking_installments", (string)null);
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.Broker", b =>
                 {
                     b.Property<Guid>("Id")
@@ -438,6 +507,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("SubLedgerId");
 
+                    b.HasIndex("SiteId", "MainLedgerId", "SubLedgerId");
+
                     b.HasIndex("SiteId", "EntryDate", "EntryType", "IsDeleted");
 
                     b.ToTable("daily_entries", (string)null);
@@ -487,6 +558,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("AuthorizedById");
 
+                    b.HasIndex("FingerprintHash");
+
                     b.ToTable("device_licenses", (string)null);
                 });
 
@@ -535,6 +608,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.HasIndex("WingId", "FlatNo")
                         .IsUnique();
 
+                    b.HasIndex("WingId", "Status");
+
                     b.ToTable("flats", (string)null);
                 });
 
@@ -573,6 +648,50 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.HasIndex("SiteId");
 
                     b.ToTable("main_ledgers", (string)null);
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_revoked");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("token");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("refresh_tokens", (string)null);
                 });
 
             modelBuilder.Entity("ABR.Domain.Entities.Site", b =>
@@ -765,6 +884,157 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.ToTable("user_site_access", (string)null);
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.VyajEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_closed");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<Guid>("PartyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("party_id");
+
+                    b.Property<decimal>("Principal")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("principal");
+
+                    b.Property<string>("RateBasis")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("rate_basis");
+
+                    b.Property<decimal>("RatePercent")
+                        .HasColumnType("decimal(8,4)")
+                        .HasColumnName("rate_percent");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartyId", "IsDeleted");
+
+                    b.ToTable("vyaj_entries", (string)null);
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajParty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("SiteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("site_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SiteId", "IsDeleted");
+
+                    b.ToTable("vyaj_parties", (string)null);
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid>("EntryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entry_id");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateOnly>("PaymentDate")
+                        .HasColumnType("date")
+                        .HasColumnName("payment_date");
+
+                    b.Property<string>("PaymentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("payment_type");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntryId", "IsDeleted");
+
+                    b.ToTable("vyaj_payments", (string)null);
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.Wing", b =>
                 {
                     b.Property<Guid>("Id")
@@ -869,6 +1139,24 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.Navigation("MemberSubLedger");
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.BookingInstallment", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.Booking", "Booking")
+                        .WithMany("Installments")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ABR.Domain.Entities.ConditionItem", "ConditionItem")
+                        .WithMany()
+                        .HasForeignKey("ConditionItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("ConditionItem");
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.Broker", b =>
                 {
                     b.HasOne("ABR.Domain.Entities.Site", "Site")
@@ -961,6 +1249,17 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.Navigation("Site");
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.SubLedger", b =>
                 {
                     b.HasOne("ABR.Domain.Entities.Flat", "Flat")
@@ -998,6 +1297,39 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.VyajEntry", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.VyajParty", "Party")
+                        .WithMany("Entries")
+                        .HasForeignKey("PartyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Party");
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajParty", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.Site", "Site")
+                        .WithMany("VyajParties")
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Site");
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajPayment", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.VyajEntry", "Entry")
+                        .WithMany("Payments")
+                        .HasForeignKey("EntryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Entry");
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.Wing", b =>
                 {
                     b.HasOne("ABR.Domain.Entities.Site", "Site")
@@ -1007,6 +1339,11 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Site");
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.Booking", b =>
+                {
+                    b.Navigation("Installments");
                 });
 
             modelBuilder.Entity("ABR.Domain.Entities.Broker", b =>
@@ -1049,6 +1386,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
 
                     b.Navigation("UserAccesses");
 
+                    b.Navigation("VyajParties");
+
                     b.Navigation("Wings");
                 });
 
@@ -1065,7 +1404,19 @@ namespace ABR.Infrastructure.Persistence.Migrations
 
                     b.Navigation("AuthorizedDevices");
 
+                    b.Navigation("RefreshTokens");
+
                     b.Navigation("SiteAccesses");
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajEntry", b =>
+                {
+                    b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajParty", b =>
+                {
+                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("ABR.Domain.Entities.Wing", b =>

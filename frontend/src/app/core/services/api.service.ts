@@ -22,8 +22,19 @@ export class ApiService {
     return this.http.put<ApiResponse<T>>(`${environment.apiUrl}${path}`, body);
   }
 
+  patch<T>(path: string, body: unknown): Observable<ApiResponse<T>> {
+    return this.http.patch<ApiResponse<T>>(`${environment.apiUrl}${path}`, body);
+  }
+
   delete<T>(path: string): Observable<ApiResponse<T>> {
     return this.http.delete<ApiResponse<T>>(`${environment.apiUrl}${path}`);
+  }
+
+  downloadBlob(path: string, params?: Record<string, string | number | boolean>): Observable<Blob> {
+    return this.http.get(`${environment.apiUrl}${path}`, {
+      params: this.buildParams(params),
+      responseType: 'blob'
+    });
   }
 
   private buildParams(params?: Record<string, string | number | boolean>): HttpParams | undefined {

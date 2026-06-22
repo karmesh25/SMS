@@ -1,0 +1,69 @@
+@media print {
+  :host ::ng-deep .no-print,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .report-container {
+    padding: 0;
+  }
+
+  table {
+    font-size: 11px;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+.report-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+table {
+  width: 100%;
+}
+
+.aavak-header {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.javak-header {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.profit-positive {
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.profit-negative {
+  color: #c62828;
+  font-weight: 500;
+}
+
+.pct-high { color: #2e7d32; }
+.pct-mid { color: #ef6c00; }
+.pct-low { color: #c62828; }
+
+.scroll-table {
+  overflow-x: auto;
+}

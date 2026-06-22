@@ -1,0 +1,102 @@
+<article class="entry-row" [class.closed]="entry().isClosed">
+  <div class="entry-grid">
+    <div class="cell">
+      <span class="label">Principal</span>
+      <span class="mono">Rs. {{ entry().principal | indianCurrency }}</span>
+    </div>
+    <div class="cell">
+      <span class="label">Rate</span>
+      <span>{{ entry().ratePercent }}% / {{ basisLabel(entry().rateBasis) }}</span>
+    </div>
+    <div class="cell">
+      <span class="label">Since</span>
+      <span>{{ entry().startDate | appDate }}</span>
+    </div>
+    <div class="cell">
+      <span class="label">Vyaj accrued</span>
+      <span class="mono">Rs. {{ entry().grossVyaj | indianCurrency }}</span>
+    </div>
+    <div class="cell">
+      <span class="label">Vyaj paid</span>
+      <span class="mono">Rs. {{ entry().interestPaid | indianCurrency }}</span>
+    </div>
+    <div class="cell due-cell">
+      <span class="label">Vyaj due</span>
+      <span class="mono due" [class.settled]="entry().vyajDue === 0">
+        Rs. {{ entry().vyajDue | indianCurrency }}
+      </span>
+    </div>
+    <div class="cell actions">
+      <mat-slide-toggle
+        [checked]="entry().isClosed"
+        [disabled]="readOnly()"
+        (change)="closedToggled.emit($event.checked)"
+        matTooltip="Close settled entries instead of deleting">
+        Closed
+      </mat-slide-toggle>
+      <button
+        mat-stroked-button
+        type="button"
+        *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']"
+        (click)="showPayment.set(!showPayment())">
+        Record payment
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        color="warn"
+        *appHasRole="['SuperAdmin', 'Admin']"
+        matTooltip="Delete mistaken entry"
+        (click)="deleteEntry.emit()">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="subtotals">
+    <span>Principal due: Rs. {{ entry().principalDue | indianCurrency }}</span>
+  </div>
+
+  @if (showPayment() && !readOnly()) {
+    <form class="payment-form" [formGroup]="paymentForm" (ngSubmit)="submitPayment()">
+      <mat-form-field appearance="outline">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="paymentType">
+          @for (opt of paymentTypeOptions; track opt.value) {
+            <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Amount</mat-label>
+        <input matInput formControlName="amount" appIndianAmount />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Date</mat-label>
+        <input matInput type="date" formControlName="paymentDate" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit" [disabled]="paymentForm.invalid || savingPayment()">
+        Save payment
+      </button>
+    </form>
+  }
+
+  @if (entry().payments.length) {
+    <ul class="payment-list">
+      @for (p of entry().payments; track p.id) {
+        <li>
+          <span>{{ p.paymentDate | appDate }}</span>
+          <span>{{ p.paymentType === 'interest' ? 'Vyaj' : 'Principal' }}</span>
+          <span class="mono">Rs. {{ p.amount | indianCurrency }}</span>
+          <button
+            mat-icon-button
+            type="button"
+            *appHasRole="['SuperAdmin', 'Admin']"
+            (click)="deletePayment.emit(p.id)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</article>

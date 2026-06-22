@@ -3,7 +3,7 @@
 }
 
 .app-sidenav {
-  width: 240px;
+  width: 260px;
 }
 
 .brand {
@@ -12,8 +12,28 @@
   color: #1f4e79;
 }
 
+.nav-divider {
+  margin: 0.5rem 0;
+}
+
+.nav-section-label {
+  padding: 0.5rem 1rem 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #78909c;
+}
+
 .spacer {
   flex: 1;
+}
+
+.toolbar-title {
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .content {
@@ -22,4 +42,43 @@
 
 a.active {
   background: rgba(31, 78, 121, 0.08);
+}
+
+.site-select {
+  width: 180px;
+  margin-right: 1rem;
+  font-size: 0.875rem;
+}
+
+.site-select ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.site-select ::ng-deep .mat-mdc-text-field-wrapper {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.site-select ::ng-deep .mat-mdc-form-field-label,
+.site-select ::ng-deep .mat-mdc-select-value {
+  color: #fff;
+}
+
+.user-label {
+  margin-right: 1rem;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 959px) {
+  .toolbar-title {
+    font-size: 0.8rem;
+    max-width: 140px;
+  }
+
+  .user-label {
+    display: none;
+  }
+
+  .content {
+    padding: 1rem;
+  }
 }

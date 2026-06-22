@@ -17,6 +17,7 @@ public class User : BaseEntity
     public ICollection<UserSiteAccess> SiteAccesses { get; set; } = new List<UserSiteAccess>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     public ICollection<DeviceLicense> AuthorizedDevices { get; set; } = new List<DeviceLicense>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }
 
 public class UserSiteAccess : BaseEntity
@@ -55,6 +56,7 @@ public class Site : BaseEntity
     public ICollection<Broker> Brokers { get; set; } = new List<Broker>();
     public ICollection<Condition> Conditions { get; set; } = new List<Condition>();
     public ICollection<DailyEntry> DailyEntries { get; set; } = new List<DailyEntry>();
+    public ICollection<VyajParty> VyajParties { get; set; } = new List<VyajParty>();
     public ICollection<UserSiteAccess> UserAccesses { get; set; } = new List<UserSiteAccess>();
 }
 
@@ -182,6 +184,24 @@ public class Booking : BaseEntity
     public SubLedger MemberSubLedger { get; set; } = null!;
     public Broker? Broker { get; set; }
     public Condition Condition { get; set; } = null!;
+    public ICollection<BookingInstallment> Installments { get; set; } = new List<BookingInstallment>();
+}
+
+public class BookingInstallment : BaseEntity
+{
+    public Guid BookingId { get; set; }
+    public Guid? ConditionItemId { get; set; }
+    public string MilestoneName { get; set; } = string.Empty;
+    public int SortOrder { get; set; }
+    public decimal DueAmount { get; set; }
+    public decimal PaidAmount { get; set; }
+    public DateOnly DueDate { get; set; }
+    public DateOnly? PaidDate { get; set; }
+    public string Status { get; set; } = "pending";
+    public string? PaymentNotes { get; set; }
+
+    public Booking Booking { get; set; } = null!;
+    public ConditionItem? ConditionItem { get; set; }
 }
 
 public class DailyEntry : SoftDeleteEntity

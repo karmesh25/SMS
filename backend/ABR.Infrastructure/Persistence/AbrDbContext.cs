@@ -22,8 +22,13 @@ public class AbrDbContext : DbContext
     public DbSet<Condition> Conditions => Set<Condition>();
     public DbSet<ConditionItem> ConditionItems => Set<ConditionItem>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<BookingInstallment> BookingInstallments => Set<BookingInstallment>();
     public DbSet<DailyEntry> DailyEntries => Set<DailyEntry>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<VyajParty> VyajParties => Set<VyajParty>();
+    public DbSet<VyajEntry> VyajEntries => Set<VyajEntry>();
+    public DbSet<VyajPayment> VyajPayments => Set<VyajPayment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,8 +49,11 @@ public class AbrDbContext : DbContext
         ConfigureCondition(modelBuilder);
         ConfigureConditionItem(modelBuilder);
         ConfigureBooking(modelBuilder);
+        ConfigureBookingInstallment(modelBuilder);
         ConfigureDailyEntry(modelBuilder);
+        ConfigureVyaj(modelBuilder);
         ConfigureAuditLog(modelBuilder);
+        ConfigureRefreshToken(modelBuilder);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -120,6 +128,7 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
         entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         entity.HasOne(e => e.AuthorizedBy).WithMany(u => u.AuthorizedDevices).HasForeignKey(e => e.AuthorizedById).OnDelete(DeleteBehavior.SetNull);
+        entity.HasIndex(e => e.FingerprintHash);
     }
 
     private static void ConfigureSite(ModelBuilder modelBuilder)
@@ -168,6 +177,7 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         entity.HasOne(e => e.Wing).WithMany(w => w.Flats).HasForeignKey(e => e.WingId).OnDelete(DeleteBehavior.Cascade);
         entity.HasIndex(e => new { e.WingId, e.FlatNo }).IsUnique();
+        entity.HasIndex(e => new { e.WingId, e.Status });
     }
 
     private static void ConfigureMainLedger(ModelBuilder modelBuilder)
@@ -298,6 +308,28 @@ public class AbrDbContext : DbContext
         entity.HasOne(e => e.Condition).WithMany(c => c.Bookings).HasForeignKey(e => e.ConditionId).OnDelete(DeleteBehavior.Restrict);
     }
 
+    private static void ConfigureBookingInstallment(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<BookingInstallment>();
+        entity.ToTable("booking_installments");
+        entity.HasKey(e => e.Id);
+        entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        entity.Property(e => e.BookingId).HasColumnName("booking_id");
+        entity.Property(e => e.ConditionItemId).HasColumnName("condition_item_id");
+        entity.Property(e => e.MilestoneName).HasColumnName("milestone_name").HasMaxLength(200);
+        entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+        entity.Property(e => e.DueAmount).HasColumnName("due_amount").HasColumnType("decimal(15,2)");
+        entity.Property(e => e.PaidAmount).HasColumnName("paid_amount").HasColumnType("decimal(15,2)");
+        entity.Property(e => e.DueDate).HasColumnName("due_date");
+        entity.Property(e => e.PaidDate).HasColumnName("paid_date");
+        entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20);
+        entity.Property(e => e.PaymentNotes).HasColumnName("payment_notes");
+        entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+        entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        entity.HasOne(e => e.Booking).WithMany(b => b.Installments).HasForeignKey(e => e.BookingId).OnDelete(DeleteBehavior.Cascade);
+        entity.HasOne(e => e.ConditionItem).WithMany().HasForeignKey(e => e.ConditionItemId).OnDelete(DeleteBehavior.SetNull);
+    }
+
     private static void ConfigureDailyEntry(ModelBuilder modelBuilder)
     {
         var entity = modelBuilder.Entity<DailyEntry>();
@@ -320,6 +352,56 @@ public class AbrDbContext : DbContext
         entity.HasOne(e => e.MainLedger).WithMany(m => m.DailyEntries).HasForeignKey(e => e.MainLedgerId).OnDelete(DeleteBehavior.Restrict);
         entity.HasOne(e => e.SubLedger).WithMany(s => s.DailyEntries).HasForeignKey(e => e.SubLedgerId).OnDelete(DeleteBehavior.Restrict);
         entity.HasIndex(e => new { e.SiteId, e.EntryDate, e.EntryType, e.IsDeleted });
+        entity.HasIndex(e => new { e.SiteId, e.MainLedgerId, e.SubLedgerId });
+    }
+
+    private static void ConfigureVyaj(ModelBuilder modelBuilder)
+    {
+        var party = modelBuilder.Entity<VyajParty>();
+        party.ToTable("vyaj_parties");
+        party.HasKey(e => e.Id);
+        party.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        party.Property(e => e.SiteId).HasColumnName("site_id");
+        party.Property(e => e.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
+        party.Property(e => e.Notes).HasColumnName("notes");
+        party.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        party.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+        party.Property(e => e.CreatedAt).HasColumnName("created_at");
+        party.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        party.HasOne(e => e.Site).WithMany(s => s.VyajParties).HasForeignKey(e => e.SiteId).OnDelete(DeleteBehavior.Cascade);
+        party.HasIndex(e => new { e.SiteId, e.IsDeleted });
+
+        var entry = modelBuilder.Entity<VyajEntry>();
+        entry.ToTable("vyaj_entries");
+        entry.HasKey(e => e.Id);
+        entry.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        entry.Property(e => e.PartyId).HasColumnName("party_id");
+        entry.Property(e => e.Principal).HasColumnName("principal").HasColumnType("decimal(15,2)");
+        entry.Property(e => e.RatePercent).HasColumnName("rate_percent").HasColumnType("decimal(8,4)");
+        entry.Property(e => e.RateBasis).HasColumnName("rate_basis").HasMaxLength(10);
+        entry.Property(e => e.StartDate).HasColumnName("start_date");
+        entry.Property(e => e.IsClosed).HasColumnName("is_closed");
+        entry.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entry.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+        entry.Property(e => e.CreatedAt).HasColumnName("created_at");
+        entry.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        entry.HasOne(e => e.Party).WithMany(p => p.Entries).HasForeignKey(e => e.PartyId).OnDelete(DeleteBehavior.Cascade);
+        entry.HasIndex(e => new { e.PartyId, e.IsDeleted });
+
+        var payment = modelBuilder.Entity<VyajPayment>();
+        payment.ToTable("vyaj_payments");
+        payment.HasKey(e => e.Id);
+        payment.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        payment.Property(e => e.EntryId).HasColumnName("entry_id");
+        payment.Property(e => e.PaymentDate).HasColumnName("payment_date");
+        payment.Property(e => e.Amount).HasColumnName("amount").HasColumnType("decimal(15,2)");
+        payment.Property(e => e.PaymentType).HasColumnName("payment_type").HasMaxLength(20);
+        payment.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        payment.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+        payment.Property(e => e.CreatedAt).HasColumnName("created_at");
+        payment.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        payment.HasOne(e => e.Entry).WithMany(en => en.Payments).HasForeignKey(e => e.EntryId).OnDelete(DeleteBehavior.Cascade);
+        payment.HasIndex(e => new { e.EntryId, e.IsDeleted });
     }
 
     private static void ConfigureAuditLog(ModelBuilder modelBuilder)
@@ -337,5 +419,21 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
         entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         entity.HasOne(e => e.User).WithMany(u => u.AuditLogs).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.SetNull);
+    }
+
+    private static void ConfigureRefreshToken(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<RefreshToken>();
+        entity.ToTable("refresh_tokens");
+        entity.HasKey(e => e.Id);
+        entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        entity.Property(e => e.UserId).HasColumnName("user_id");
+        entity.Property(e => e.Token).HasColumnName("token").HasMaxLength(512).IsRequired();
+        entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+        entity.Property(e => e.IsRevoked).HasColumnName("is_revoked");
+        entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+        entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        entity.HasIndex(e => e.Token).IsUnique();
+        entity.HasOne(e => e.User).WithMany(u => u.RefreshTokens).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }

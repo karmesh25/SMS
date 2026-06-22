@@ -1,0 +1,55 @@
+@use '../../../../styles/tokens' as tokens;
+
+.add-panel {
+  margin-bottom: tokens.$abr-spacing-md;
+  padding: tokens.$abr-spacing-md;
+  border: 1px solid tokens.$abr-border;
+  border-radius: tokens.$abr-radius-md;
+  background: tokens.$abr-header-bg;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: tokens.$abr-spacing-sm;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: tokens.$abr-primary;
+}
+
+.panel-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: tokens.$abr-spacing-sm;
+  align-items: start;
+}
+
+.preview {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: tokens.$abr-spacing-sm tokens.$abr-spacing-md;
+  border-radius: tokens.$abr-radius-sm;
+  background: tokens.$abr-surface;
+  border: 1px solid tokens.$abr-border;
+}
+
+.preview-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: tokens.$abr-text-muted;
+}
+
+.preview-value {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1.15rem;
+  color: tokens.$abr-warn;
+  font-weight: 600;
+}

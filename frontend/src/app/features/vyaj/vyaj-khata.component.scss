@@ -1,0 +1,132 @@
+@use '../../../styles/tokens' as tokens;
+
+.vyaj-page {
+  display: flex;
+  flex-direction: column;
+  gap: tokens.$abr-spacing-md;
+  min-height: calc(100vh - 120px);
+}
+
+.vyaj-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: tokens.$abr-spacing-md;
+}
+
+.vyaj-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  flex: 1;
+  min-height: 520px;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.sidebar-col {
+  min-height: 100%;
+  border-right: 1px solid tokens.$abr-border;
+  background: tokens.$abr-header-bg;
+}
+
+.main-col {
+  padding: tokens.$abr-spacing-lg;
+  overflow-y: auto;
+  background: tokens.$abr-surface;
+}
+
+.party-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: tokens.$abr-spacing-md;
+  margin-bottom: tokens.$abr-spacing-md;
+  padding-bottom: tokens.$abr-spacing-md;
+  border-bottom: 1px solid tokens.$abr-border;
+}
+
+.party-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: tokens.$abr-primary;
+}
+
+.notes {
+  margin: tokens.$abr-spacing-xs 0 0;
+  font-size: 0.85rem;
+  color: tokens.$abr-text-muted;
+}
+
+.header-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: tokens.$abr-spacing-lg;
+  margin-left: auto;
+}
+
+.total-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.total-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: tokens.$abr-text-muted;
+}
+
+.total-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.total-block.due .total-value {
+  color: tokens.$abr-warn;
+}
+
+.total-value.settled {
+  color: tokens.$abr-success !important;
+}
+
+.mono {
+  font-family: 'Roboto Mono', monospace;
+}
+
+.empty-main,
+.empty-entries {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: tokens.$abr-spacing-sm;
+  padding: 3rem tokens.$abr-spacing-md;
+  color: tokens.$abr-text-muted;
+  text-align: center;
+}
+
+.empty-main mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: tokens.$abr-accent;
+}
+
+@media (max-width: 768px) {
+  .vyaj-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-col {
+    max-height: 220px;
+    border-right: none;
+    border-bottom: 1px solid tokens.$abr-border;
+  }
+
+  .header-totals {
+    margin-left: 0;
+    width: 100%;
+  }
+}

@@ -1,0 +1,101 @@
+@use '../../../../styles/tokens' as tokens;
+
+.entry-row {
+  padding: tokens.$abr-spacing-md;
+  margin-bottom: tokens.$abr-spacing-sm;
+  border: 1px solid tokens.$abr-border;
+  border-radius: tokens.$abr-radius-md;
+  background: tokens.$abr-surface;
+}
+
+.entry-row.closed {
+  opacity: 0.6;
+}
+
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  gap: tokens.$abr-spacing-md;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .entry-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: tokens.$abr-text-muted;
+}
+
+.mono {
+  font-family: 'Roboto Mono', monospace;
+}
+
+.due {
+  color: tokens.$abr-warn;
+  font-weight: 600;
+}
+
+.due.settled {
+  color: tokens.$abr-success;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: tokens.$abr-spacing-xs;
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 901px) {
+  .actions {
+    grid-column: auto;
+    grid-row: 1 / span 2;
+  }
+}
+
+.subtotals {
+  display: flex;
+  gap: tokens.$abr-spacing-lg;
+  margin-top: tokens.$abr-spacing-sm;
+  font-size: 0.85rem;
+  color: tokens.$abr-text-muted;
+}
+
+.payment-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: tokens.$abr-spacing-sm;
+  margin-top: tokens.$abr-spacing-md;
+  padding-top: tokens.$abr-spacing-md;
+  border-top: 1px dashed tokens.$abr-border;
+  align-items: center;
+}
+
+.payment-list {
+  list-style: none;
+  margin: tokens.$abr-spacing-sm 0 0;
+  padding: 0;
+}
+
+.payment-list li {
+  display: flex;
+  align-items: center;
+  gap: tokens.$abr-spacing-md;
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid tokens.$abr-border;
+}

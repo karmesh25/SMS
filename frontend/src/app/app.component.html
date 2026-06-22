@@ -1,26 +1,76 @@
 <app-loader></app-loader>
 
-<mat-sidenav-container class="app-shell">
-  <mat-sidenav mode="side" opened class="app-sidenav">
-    <div class="brand">ABR SMS</div>
-    <mat-nav-list>
-      @for (item of navItems; track item.route) {
-        <a mat-list-item [routerLink]="item.route" routerLinkActive="active">
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          <span matListItemTitle>{{ item.label }}</span>
+@if (showShell()) {
+  <mat-sidenav-container class="app-shell">
+    <mat-sidenav
+      [mode]="sidenavMode()"
+      [opened]="sidenavOpened()"
+      (closedStart)="mobileMenuOpen.set(false)"
+      class="app-sidenav">
+      <div class="brand">ABR SMS</div>
+      <mat-nav-list>
+        <a
+          mat-list-item
+          [routerLink]="dashboardLink.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          *appHasRole="dashboardLink.roles"
+          (click)="closeSidenavOnNavigate()">
+          <mat-icon matListItemIcon>{{ dashboardLink.icon }}</mat-icon>
+          <span matListItemTitle>{{ dashboardLink.label }}</span>
         </a>
-      }
-    </mat-nav-list>
-  </mat-sidenav>
 
-  <mat-sidenav-content>
-    <mat-toolbar color="primary">
-      <span>ABR Society & Real Estate Management System</span>
-      <span class="spacer"></span>
-      <button mat-button routerLink="/login">Login</button>
-    </mat-toolbar>
-    <main class="content">
-      <router-outlet></router-outlet>
-    </main>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+        @for (section of navSections; track section.title) {
+          <ng-container *appHasRole="section.roles">
+            <mat-divider class="nav-divider" />
+            <div class="nav-section-label">{{ section.title }}</div>
+            @for (item of section.items; track item.route) {
+              <a
+                mat-list-item
+                [routerLink]="item.route"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+                *appHasRole="item.roles"
+                (click)="closeSidenavOnNavigate()">
+                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+                <span matListItemTitle>{{ item.label }}</span>
+              </a>
+            }
+          </ng-container>
+        }
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <mat-toolbar color="primary">
+        @if (isHandset()) {
+          <button mat-icon-button (click)="toggleSidenav()" aria-label="Toggle navigation">
+            <mat-icon>menu</mat-icon>
+          </button>
+        }
+        <span class="toolbar-title">ABR Society & Real Estate Management System</span>
+        <span class="spacer"></span>
+        @if (siteContext.sites().length > 0) {
+          <mat-form-field appearance="outline" class="site-select">
+            <mat-label>Site</mat-label>
+            <mat-select [value]="siteContext.activeSiteId()" (selectionChange)="onSiteChange($event.value)">
+              @for (site of siteContext.sites(); track site.id) {
+                <mat-option [value]="site.id">{{ site.siteName }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+        @if (currentUser(); as user) {
+          <span class="user-label">{{ user.username }} ({{ user.role }})</span>
+        }
+        <button mat-button (click)="logout()">Logout</button>
+      </mat-toolbar>
+      <app-breadcrumb />
+      <main class="content">
+        <router-outlet></router-outlet>
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+} @else {
+  <router-outlet></router-outlet>
+}

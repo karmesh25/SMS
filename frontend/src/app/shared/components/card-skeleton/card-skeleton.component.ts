@@ -1,0 +1,40 @@
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-card-skeleton',
+  standalone: true,
+  template: `
+    <div class="skeleton-card" [style.min-height.px]="height">
+      <div class="skeleton-line title"></div>
+      <div class="skeleton-line value"></div>
+      @if (showBar) {
+        <div class="skeleton-bar"></div>
+      }
+    </div>
+  `,
+  styles: [`
+    .skeleton-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .skeleton-line, .skeleton-bar {
+      background: linear-gradient(90deg, #eceff1 25%, #f5f7fa 50%, #eceff1 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 4px;
+    }
+    .title { height: 14px; width: 60%; margin-bottom: 1rem; }
+    .value { height: 28px; width: 45%; margin-bottom: 0.75rem; }
+    .skeleton-bar { height: 8px; width: 100%; }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  `]
+})
+export class CardSkeletonComponent {
+  @Input() height = 120;
+  @Input() showBar = false;
+}

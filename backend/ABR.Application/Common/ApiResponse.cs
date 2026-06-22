@@ -19,4 +19,5 @@ public class HealthDto
     public string Status { get; set; } = "healthy";
     public string Version { get; set; } = "1.0.0";
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+    public bool DatabaseConnected { get; set; }
 }

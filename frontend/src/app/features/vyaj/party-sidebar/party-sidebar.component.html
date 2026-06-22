@@ -1,0 +1,34 @@
+<aside class="party-sidebar">
+  <div class="sidebar-header">
+    <h2>Parties</h2>
+    <span class="count">{{ parties().length }}</span>
+  </div>
+
+  <div class="party-list">
+    @for (party of parties(); track party.id) {
+      <button
+        type="button"
+        class="party-row"
+        [class.active]="party.id === selectedPartyId()"
+        (click)="partySelected.emit(party.id)">
+        <span class="party-name">{{ party.name }}</span>
+        <span class="party-due" [class.settled]="party.vyajDue === 0">
+          Rs. {{ party.vyajDue | indianCurrency }}
+        </span>
+      </button>
+    } @empty {
+      <p class="empty-hint">No parties yet. Add one below.</p>
+    }
+  </div>
+
+  <div class="add-party" *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']">
+    <mat-form-field appearance="outline" class="dense">
+      <mat-label>Party name</mat-label>
+      <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitParty()" />
+    </mat-form-field>
+    <button mat-flat-button color="primary" [disabled]="!newPartyName.trim()" (click)="submitParty()">
+      <mat-icon>person_add</mat-icon>
+      Add party
+    </button>
+  </div>
+</aside>
