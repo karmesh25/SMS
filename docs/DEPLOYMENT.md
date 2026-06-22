@@ -19,9 +19,15 @@ Public URL example: `https://abr-sms.onrender.com`
 
 1. Open your Supabase project → **Project Settings** → **Database**
 2. Copy the database password (reset if needed — never commit it to git)
-3. Use the **direct** connection on port **5432** (required for EF Core migrations)
+3. Use the **direct** connection on port **5432** for local migrations. For **Render** and other IPv4-only hosts, use **Supavisor session mode** (IPv4-compatible):
 
-Connection string format for Npgsql:
+```
+Host=aws-1-ap-southeast-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.twxowhyjqrxktnkmqson;Password=YOUR_SUPABASE_PASSWORD;SslMode=Require;TrustServerCertificate=true
+```
+
+Find your exact pooler host in Supabase Dashboard → **Connect** → **Session pooler**. The region (`ap-southeast-1`, etc.) must match your project.
+
+Direct connection (IPv6 — works locally, not on Render free tier):
 
 ```
 Host=db.twxowhyjqrxktnkmqson.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=YOUR_SUPABASE_PASSWORD;SSL Mode=Require;Trust Server Certificate=true
