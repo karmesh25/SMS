@@ -31,4 +31,18 @@ describe('DailyEntryComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
     expect(fixture.componentInstance.form.invalid).toBeTrue();
   });
+
+  it('should expose main ledger options when ledgers load', () => {
+    const fixture = TestBed.createComponent(DailyEntryComponent);
+    const component = fixture.componentInstance;
+    component.mainLedgers.set([
+      { id: 'm1', ledgerName: 'Member A/c' },
+      { id: 'm2', ledgerName: 'Construction' }
+    ]);
+    fixture.detectChanges();
+    expect(component.mainLedgerOptions()).toEqual([
+      { value: 'm1', label: 'Member A/c' },
+      { value: 'm2', label: 'Construction' }
+    ]);
+  });
 });

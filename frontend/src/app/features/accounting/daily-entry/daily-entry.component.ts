@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, OnInit } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -141,8 +141,8 @@ export class DailyEntryComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
 
   siteId: string | null = null;
-  mainLedgers: MainLedger[] = [];
-  subLedgers: SubLedger[] = [];
+  readonly mainLedgers = signal<MainLedger[]>([]);
+  readonly subLedgers = signal<SubLedger[]>([]);
   banks: BankRow[] = [];
   aavakEntries: DailyEntry[] = [];
   javakEntries: DailyEntry[] = [];
@@ -152,11 +152,11 @@ export class DailyEntryComponent implements OnInit {
   readonly accountingNav = ACCOUNTING_NAV_ITEMS;
 
   readonly mainLedgerOptions = computed<SelectOption<string>[]>(() =>
-    this.mainLedgers.map((m) => ({ value: m.id, label: m.ledgerName }))
+    this.mainLedgers().map((m) => ({ value: m.id, label: m.ledgerName }))
   );
 
   readonly subLedgerOptions = computed<SelectOption<string>[]>(() =>
-    this.subLedgers.map((s) => ({ value: s.id, label: this.subLedgerLabel(s) }))
+    this.subLedgers().map((s) => ({ value: s.id, label: this.subLedgerLabel(s) }))
   );
 
   form = this.fb.nonNullable.group({
@@ -185,7 +185,12 @@ export class DailyEntryComponent implements OnInit {
   loadAll(): void {
     if (!this.siteId) return;
     this.masterData.getMainLedgers(this.siteId).subscribe({
-      next: (r) => { if (r.success) this.mainLedgers = r.data as MainLedger[]; }
+      next: (r) => {
+        if (r.success) {
+          this.mainLedgers.set(r.data as MainLedger[]);
+          this.subLedgers.set([]);
+        }
+      }
     });
     this.masterData.getBanks(this.siteId).subscribe({
       next: (r) => { if (r.success) this.banks = (r.data as BankRow[]).filter(b => (b as { isActive?: boolean }).isActive !== false); }
@@ -214,10 +219,10 @@ export class DailyEntryComponent implements OnInit {
   onMainChange(): void {
     const mainId = this.form.value.mainLedgerId;
     if (!mainId) return;
-    const main = this.mainLedgers.find(m => m.id === mainId);
+    const main = this.mainLedgers().find(m => m.id === mainId);
     this.isMemberAccount = main?.ledgerName === 'Member A/c';
     this.masterData.getSubLedgers(mainId).subscribe({
-      next: (r) => { if (r.success) this.subLedgers = r.data as SubLedger[]; }
+      next: (r) => { if (r.success) this.subLedgers.set(r.data as SubLedger[]); }
     });
     this.form.patchValue({ subLedgerId: '' });
   }
