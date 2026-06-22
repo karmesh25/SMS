@@ -127,12 +127,23 @@ builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("De
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins("http://localhost:4200")
+    {
+        var origins = new List<string> { "http://localhost:4200" };
+        var frontendUrl = builder.Configuration["FRONTEND_URL"];
+        if (!string.IsNullOrWhiteSpace(frontendUrl))
+            origins.Add(frontendUrl.TrimEnd('/'));
+
+        policy.WithOrigins(origins.ToArray())
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod();
+    });
 });
 
-builder.WebHost.UseUrls(builder.Configuration["Urls"] ?? "http://localhost:5050");
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+else
+    builder.WebHost.UseUrls(builder.Configuration["Urls"] ?? "http://localhost:5050");
 
 var app = builder.Build();
 
@@ -148,16 +159,16 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-var frontendPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "frontend"));
-if (Directory.Exists(frontendPath))
+app.MapControllers();
+
+var staticRoot = ResolveStaticRoot(app.Environment);
+if (staticRoot is not null)
 {
-    var fileProvider = new PhysicalFileProvider(frontendPath);
+    var fileProvider = new PhysicalFileProvider(staticRoot);
     app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = fileProvider });
     app.UseStaticFiles(new StaticFileOptions { FileProvider = fileProvider });
     app.MapFallbackToFile("index.html", new StaticFileOptions { FileProvider = fileProvider });
 }
-
-app.MapControllers();
 
 try
 {
@@ -169,6 +180,22 @@ catch (Exception ex)
 }
 
 app.Run();
+
+static string? ResolveStaticRoot(IWebHostEnvironment environment)
+{
+    var wwwroot = Path.Combine(AppContext.BaseDirectory, "wwwroot");
+    if (Directory.Exists(wwwroot))
+        return wwwroot;
+
+    if (environment.IsDevelopment())
+    {
+        var devFrontend = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "frontend"));
+        if (Directory.Exists(devFrontend))
+            return devFrontend;
+    }
+
+    return null;
+}
 
 public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
 {

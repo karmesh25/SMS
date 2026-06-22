@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: abr-sms
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Security__EnforceDeviceLock
+        value: "false"
+      - key: Jwt__Issuer
+        value: ABR.Api
+      - key: Jwt__Audience
+        value: ABR.Frontend
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: Jwt__SecretKey
+        sync: false
+      - key: Security__LicenseSecret
+        sync: false

@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Build outputs
+**/bin
+**/obj
+**/node_modules
+frontend/dist
+frontend/.angular
+
+# Local logs and exports
+logs
+exports
+backup
+*.log
+
+# IDE and OS
+.vs
+.vscode
+.cursor
+**/.DS_Store
+Thumbs.db
+
+# Pendrive package output
+pendrive/package
+
+# Secrets (use Render env vars)
+**/.env
+**/.env.*
