@@ -1,89 +1,119 @@
-<div class="vyaj-page">
-  <div class="vyaj-header">
-    <app-page-header title="Vyaj Khata" subtitle="Interest ledger — parties, entries & payments"></app-page-header>
-    <button mat-stroked-button (click)="refresh()" [disabled]="loading()">
-      <mat-icon>refresh</mat-icon>
-      Refresh
-    </button>
-  </div>
-
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
-
-  <mat-card class="vyaj-shell">
-    <app-vyaj-party-sidebar
-      class="sidebar-col"
-      [parties]="parties()"
-      [selectedPartyId]="selectedPartyId()"
-      (partySelected)="selectParty($event)"
-      (addParty)="addParty($event)" />
-
-    <main class="main-col">
-      @if (partyDetail(); as detail) {
-        <header class="party-header">
-          <div>
-            <h2>{{ detail.name }}</h2>
-            @if (detail.notes) {
-              <p class="notes">{{ detail.notes }}</p>
-            }
-          </div>
-          <div class="header-totals">
-            <div class="total-block">
-              <span class="total-label">Principal outstanding</span>
-              <span class="total-value mono">Rs. {{ detail.totalPrincipalDue | indianCurrency }}</span>
-            </div>
-            <div class="total-block">
-              <span class="total-label">Vyaj accrued</span>
-              <span class="total-value mono">Rs. {{ detail.totalGrossVyaj | indianCurrency }}</span>
-            </div>
-            <div class="total-block">
-              <span class="total-label">Vyaj paid</span>
-              <span class="total-value mono">Rs. {{ detail.totalVyajPaid | indianCurrency }}</span>
-            </div>
-            <div class="total-block due">
-              <span class="total-label">Vyaj due</span>
-              <span class="total-value mono" [class.settled]="detail.totalVyajDue === 0">
-                Rs. {{ detail.totalVyajDue | indianCurrency }}
-              </span>
-            </div>
-          </div>
-          <button
-            mat-flat-button
-            color="primary"
-            *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']"
-            (click)="addEntryOpen.set(!addEntryOpen())">
-            <mat-icon>add</mat-icon>
-            Add entry
-          </button>
-        </header>
-
-        <app-vyaj-add-entry-panel
-          [open]="addEntryOpen()"
-          [saving]="saving()"
-          (saved)="saveEntry($event)"
-          (closed)="addEntryOpen.set(false)" />
-
-        <section class="entries">
-          @for (entry of detail.entries; track entry.id) {
-            <app-vyaj-entry-row
-              [entry]="entry"
-              [readOnly]="readOnly()"
-              [savingPayment]="saving()"
-              (closedToggled)="toggleClosed(entry.id, $event)"
-              (paymentRecorded)="recordPayment(entry.id, $event)"
-              (deleteEntry)="deleteEntry(entry.id)"
-              (deletePayment)="deletePayment($event)" />
-          } @empty {
-            <p class="empty-entries">No khata entries for this party yet.</p>
-          }
-        </section>
-      } @else {
-        <div class="empty-main">
-          <mat-icon>menu_book</mat-icon>
-          <p>Select a party from the register, or add a new one.</p>
-        </div>
-      }
-    </main>
-  </mat-card>
-</div>
+<div class="vyaj-page">
+  <div class="vyaj-header">
+    <app-page-header title="Vyaj Khata" subtitle="Interest ledger — parties, entries & payments"></app-page-header>
+    <button mat-stroked-button (click)="refresh()" [disabled]="loading()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (isTabletDown()) {
+    <div class="mobile-party-bar">
+      <mat-form-field appearance="outline" class="party-select-field">
+        <mat-label>Select party</mat-label>
+        <mat-select
+          [value]="selectedPartyId()"
+          (selectionChange)="selectParty($event.value)"
+          placeholder="Choose a party">
+          @for (party of parties(); track party.id) {
+            <mat-option [value]="party.id">
+              {{ party.name }} — Rs. {{ party.vyajDue | indianCurrency }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <div class="mobile-add-party" *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']">
+        <mat-form-field appearance="outline" class="party-name-field">
+          <mat-label>New party name</mat-label>
+          <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitNewParty()" />
+        </mat-form-field>
+        <button mat-flat-button color="primary" [disabled]="!newPartyName.trim() || saving()" (click)="submitNewParty()">
+          <mat-icon>person_add</mat-icon>
+          Add
+        </button>
+      </div>
+    </div>
+  }
+
+  <mat-card class="vyaj-shell" [class.vyaj-shell--mobile]="isTabletDown()">
+    @if (!isTabletDown()) {
+      <app-vyaj-party-sidebar
+        class="sidebar-col"
+        [parties]="parties()"
+        [selectedPartyId]="selectedPartyId()"
+        (partySelected)="selectParty($event)"
+        (addParty)="addParty($event)" />
+    }
+
+    <main class="main-col">
+      @if (partyDetail(); as detail) {
+        <header class="party-header">
+          <div>
+            <h2>{{ detail.name }}</h2>
+            @if (detail.notes) {
+              <p class="notes">{{ detail.notes }}</p>
+            }
+          </div>
+          <div class="header-totals">
+            <div class="total-block">
+              <span class="total-label">Principal outstanding</span>
+              <span class="total-value mono">Rs. {{ detail.totalPrincipalDue | indianCurrency }}</span>
+            </div>
+            <div class="total-block">
+              <span class="total-label">Vyaj accrued</span>
+              <span class="total-value mono">Rs. {{ detail.totalGrossVyaj | indianCurrency }}</span>
+            </div>
+            <div class="total-block">
+              <span class="total-label">Vyaj paid</span>
+              <span class="total-value mono">Rs. {{ detail.totalVyajPaid | indianCurrency }}</span>
+            </div>
+            <div class="total-block due">
+              <span class="total-label">Vyaj due</span>
+              <span class="total-value mono" [class.settled]="detail.totalVyajDue === 0">
+                Rs. {{ detail.totalVyajDue | indianCurrency }}
+              </span>
+            </div>
+          </div>
+          <button
+            mat-flat-button
+            color="primary"
+            *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']"
+            (click)="addEntryOpen.set(!addEntryOpen())">
+            <mat-icon>add</mat-icon>
+            Add entry
+          </button>
+        </header>
+
+        <app-vyaj-add-entry-panel
+          [open]="addEntryOpen()"
+          [saving]="saving()"
+          (saved)="saveEntry($event)"
+          (closed)="addEntryOpen.set(false)" />
+
+        <section class="entries">
+          @for (entry of detail.entries; track entry.id) {
+            <app-vyaj-entry-row
+              [entry]="entry"
+              [readOnly]="readOnly()"
+              [savingPayment]="saving()"
+              (closedToggled)="toggleClosed(entry.id, $event)"
+              (paymentRecorded)="recordPayment(entry.id, $event)"
+              (deleteEntry)="deleteEntry(entry.id)"
+              (deletePayment)="deletePayment($event)" />
+          } @empty {
+            <p class="empty-entries">No khata entries for this party yet.</p>
+          }
+        </section>
+      } @else {
+        <div class="empty-main">
+          <mat-icon>menu_book</mat-icon>
+          <p>Select a party from the register, or add a new one.</p>
+        </div>
+      }
+    </main>
+  </mat-card>
+</div>

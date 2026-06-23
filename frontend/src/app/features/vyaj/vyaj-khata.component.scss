@@ -7,6 +7,37 @@
   min-height: calc(100vh - 120px);
 }
 
+.mobile-party-bar {
+  display: flex;
+  flex-direction: column;
+  gap: tokens.$abr-spacing-sm;
+  padding: tokens.$abr-spacing-md;
+  background: tokens.$abr-surface;
+  border-radius: tokens.$abr-radius-md;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.party-select-field,
+.party-name-field {
+  width: 100%;
+}
+
+.mobile-add-party {
+  display: flex;
+  gap: tokens.$abr-spacing-sm;
+  align-items: flex-start;
+}
+
+.mobile-add-party .party-name-field {
+  flex: 1;
+}
+
+.mobile-add-party button {
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+
 .vyaj-header {
   display: flex;
   align-items: flex-start;
@@ -119,10 +150,12 @@
     grid-template-columns: 1fr;
   }
 
-  .sidebar-col {
-    max-height: 40vh;
-    border-right: none;
-    border-bottom: 1px solid tokens.$abr-border;
+  .vyaj-shell--mobile {
+    min-height: auto;
+  }
+
+  .vyaj-shell--mobile .main-col {
+    padding: tokens.$abr-spacing-md;
   }
 
   .header-totals {

@@ -1,9 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { FormsModule } from '@angular/forms';
+import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { catchError, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { HasRoleDirective } from '../../shared/directives/has-role.directive';
@@ -21,10 +27,14 @@ import { RateBasis, VyajPartyDetail, VyajPartySummary } from './models/vyaj.mode
   selector: 'app-vyaj-khata',
   standalone: true,
   imports: [
+    FormsModule,
     MatButtonModule,
     MatCardModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressBarModule,
+    MatSelectModule,
     PageHeaderComponent,
     HasRoleDirective,
     IndianCurrencyPipe,
@@ -40,8 +50,15 @@ export class VyajKhataComponent {
   private readonly siteContext = inject(SiteContextService);
   private readonly toast = inject(ToastService);
   private readonly authService = inject(AuthService);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
+  readonly isTabletDown = toSignal(
+    this.breakpointObserver.observe('(max-width: 959px)').pipe(map((r) => r.matches)),
+    { initialValue: false }
+  );
 
   readonly loading = signal(false);
+  newPartyName = '';
   readonly saving = signal(false);
   readonly parties = signal<VyajPartySummary[]>([]);
   readonly selectedPartyId = signal<string | null>(null);
@@ -118,6 +135,13 @@ export class VyajKhataComponent {
   selectParty(partyId: string): void {
     this.selectedPartyId.set(partyId);
     this.addEntryOpen.set(false);
+  }
+
+  submitNewParty(): void {
+    const name = this.newPartyName.trim();
+    if (!name) return;
+    this.addParty(name);
+    this.newPartyName = '';
   }
 
   addParty(name: string): void {

@@ -1,4 +1,7 @@
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { map } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -79,8 +82,22 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Entry</button>
     </form>
 
-    <div class="split-tables">
-      <section>
+    @if (isTabletDown()) {
+      <mat-button-toggle-group
+        class="entry-table-tabs"
+        [value]="activeTableView"
+        (change)="activeTableView = $event.value">
+        <mat-button-toggle value="aavak">Aavak (Receipts)</mat-button-toggle>
+        <mat-button-toggle value="javak">Javak (Payments)</mat-button-toggle>
+      </mat-button-toggle-group>
+    }
+
+    <div
+      class="entries-view"
+      [class.entries-view--desktop]="!isTabletDown()"
+      [class.entries-view--aavak]="isTabletDown() && activeTableView === 'aavak'"
+      [class.entries-view--javak]="isTabletDown() && activeTableView === 'javak'">
+      <section class="aavak-section">
         <h3 class="aavak-title">Aavak (Receipts)</h3>
         <div class="abr-scroll-x">
         <table mat-table [dataSource]="aavakEntries" class="mat-elevation-z1 abr-table sticky-header">
@@ -98,7 +115,7 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
         </table>
         </div>
       </section>
-      <section>
+      <section class="javak-section">
         <h3 class="javak-title">Javak (Payments)</h3>
         <div class="abr-scroll-x">
         <table mat-table [dataSource]="javakEntries" class="mat-elevation-z1 abr-table sticky-header">
@@ -116,6 +133,7 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
         </table>
         </div>
       </section>
+    </div>
   `,
   styles: [`
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
@@ -124,11 +142,24 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
     .profit.negative { color: #e74c3c; }
     .entry-form { margin-bottom: 1.5rem; }
     .type-toggle { grid-column: 1 / -1; width: 100%; }
-    .split-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .entry-table-tabs {
+      display: flex;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    .entry-table-tabs mat-button-toggle { flex: 1; }
+    .entries-view--desktop {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .entries-view--aavak .javak-section,
+    .entries-view--javak .aavak-section { display: none; }
+    .entries-view--aavak .aavak-section h3,
+    .entries-view--javak .javak-section h3 { display: none; }
     .aavak-title { color: #27ae60; }
     .javak-title { color: #2980b9; }
     table { width: 100%; min-width: 520px; }
-    @media (max-width: 959px) { .split-tables { grid-template-columns: 1fr; } }
     @media (max-width: 599px) {
       .type-toggle {
         display: flex;
@@ -147,6 +178,12 @@ export class DailyEntryComponent implements OnInit {
   private readonly siteContext = inject(SiteContextService);
   private readonly toast = inject(ToastService);
   private readonly dialog = inject(MatDialog);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+
+  readonly isTabletDown = toSignal(
+    this.breakpointObserver.observe('(max-width: 959px)').pipe(map((r) => r.matches)),
+    { initialValue: false }
+  );
 
   siteId: string | null = null;
   readonly mainLedgers = signal<MainLedger[]>([]);
@@ -158,6 +195,7 @@ export class DailyEntryComponent implements OnInit {
   cols = ['entryDate', 'mainLedgerName', 'subLedgerName', 'amount', 'description', 'actions'];
   isMemberAccount = false;
   readonly accountingNav = ACCOUNTING_NAV_ITEMS;
+  activeTableView: 'aavak' | 'javak' = 'aavak';
 
   readonly mainLedgerOptions = computed<SelectOption<string>[]>(() =>
     this.mainLedgers().map((m) => ({ value: m.id, label: m.ledgerName }))
@@ -181,6 +219,12 @@ export class DailyEntryComponent implements OnInit {
     effect(() => {
       this.siteId = this.siteContext.activeSiteId();
       if (this.siteId) this.loadAll();
+    });
+
+    this.form.get('entryType')?.valueChanges.pipe(takeUntilDestroyed()).subscribe((type) => {
+      if (type === 'aavak' || type === 'javak') {
+        this.activeTableView = type;
+      }
     });
   }
 
