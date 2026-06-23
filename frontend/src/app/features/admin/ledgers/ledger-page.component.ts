@@ -139,7 +139,7 @@ export class LedgerPageComponent implements OnInit {
   selectedMainName = '';
   isMemberAccount = false;
   siteId: string | null = null;
-  activePanel: LedgerPanel = 'sub';
+  activePanel: LedgerPanel = 'main';
 
   mainForm = this.fb.nonNullable.group({ ledgerName: ['', Validators.required] });
   subForm = this.fb.nonNullable.group({ ledgerName: ['', Validators.required], flatNo: [''] });
@@ -160,15 +160,14 @@ export class LedgerPageComponent implements OnInit {
 
   onPanelChange(panel: LedgerPanel): void {
     if (panel === 'sub' && !this.selectedMainId && this.mainLedgers.length > 0) {
-      this.selectMain(this.mainLedgers[0], true);
-      return;
+      this.selectMain(this.mainLedgers[0], false);
     }
     this.activePanel = panel;
   }
 
   onMainLedgerPick(mainId: string): void {
     const main = this.mainLedgers.find((m) => m.id === mainId);
-    if (main) this.selectMain(main, true);
+    if (main) this.selectMain(main, false);
   }
 
   loadMain(): void {
@@ -187,7 +186,7 @@ export class LedgerPageComponent implements OnInit {
         const current = this.selectedMainId
           ? this.mainLedgers.find((m) => m.id === this.selectedMainId)
           : null;
-        this.selectMain(current ?? this.mainLedgers[0], this.activePanel === 'sub');
+        this.selectMain(current ?? this.mainLedgers[0], false);
       }
     });
   }
