@@ -1,5 +1,6 @@
 @use '@angular/material' as mat;
 @use './styles/tokens' as tokens;
+@use './styles/breakpoints' as bp;
 
 @include mat.core();
 
@@ -139,4 +140,29 @@ html, body {
   display: block;
   margin: 0 auto 0.5rem;
   color: #b0bec5;
+}
+
+// Responsive layout utilities
+.abr-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.abr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: tokens.$abr-spacing-md;
+  align-items: start;
+}
+
+.abr-stack-mobile {
+  @include bp.tablet-down {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+.cdk-overlay-pane.mat-mdc-dialog-panel {
+  max-width: min(720px, calc(100vw - 2rem)) !important;
 }

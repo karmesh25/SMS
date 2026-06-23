@@ -62,13 +62,19 @@ export class AppComponent {
   readonly currentUser = this.authService.currentUser;
   readonly mobileMenuOpen = signal(false);
 
-  readonly isHandset = toSignal(
+  readonly isTabletDown = toSignal(
     this.breakpointObserver.observe('(max-width: 959px)').pipe(map((r) => r.matches)),
     { initialValue: false }
   );
 
-  readonly sidenavMode = computed(() => (this.isHandset() ? 'over' : 'side') as 'over' | 'side');
-  readonly sidenavOpened = computed(() => !this.isHandset() || this.mobileMenuOpen());
+  /** Small phones (≤599px) */
+  readonly isHandset = toSignal(
+    this.breakpointObserver.observe('(max-width: 599px)').pipe(map((r) => r.matches)),
+    { initialValue: false }
+  );
+
+  readonly sidenavMode = computed(() => (this.isTabletDown() ? 'over' : 'side') as 'over' | 'side');
+  readonly sidenavOpened = computed(() => !this.isTabletDown() || this.mobileMenuOpen());
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -155,7 +161,7 @@ export class AppComponent {
   }
 
   closeSidenavOnNavigate(): void {
-    if (this.isHandset()) {
+    if (this.isTabletDown()) {
       this.mobileMenuOpen.set(false);
     }
   }

@@ -36,7 +36,7 @@ export type ConditionEditDialogResult = ConditionEditDialogData;
       <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()">Save</button>
     </mat-dialog-actions>
   `,
-  styles: [`.form { display:flex; flex-direction:column; gap:0.5rem; min-width:320px; }`]
+  styles: [`.form { display:flex; flex-direction:column; gap:0.5rem; min-width:min(320px, calc(100vw - 2rem)); width:100%; }`]
 })
 export class ConditionEditDialogComponent {
   readonly data = inject<ConditionEditDialogData>(MAT_DIALOG_DATA);

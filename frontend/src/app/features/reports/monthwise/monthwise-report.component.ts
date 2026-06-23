@@ -37,6 +37,7 @@ interface MonthwiseRow {
           <app-report-export-buttons reportType="monthwise" [filters]="exportFilters()" [disabled]="!siteId" />
         </form>
       </div>
+      <div class="abr-scroll-x">
       <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
         <ng-container matColumnDef="monthLabel"><th mat-header-cell *matHeaderCellDef>Month</th><td mat-cell *matCellDef="let r">{{ r.monthLabel }}</td></ng-container>
         <ng-container matColumnDef="aavakTotal"><th mat-header-cell *matHeaderCellDef>Aavak</th><td mat-cell *matCellDef="let r">{{ r.aavakTotal | indianCurrency }}</td></ng-container>
@@ -46,6 +47,7 @@ interface MonthwiseRow {
         <tr mat-row *matRowDef="let row; columns: cols"></tr>
         <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
       </table>
+      </div>
     </div>
   `,
   styleUrls: ['../report-shared.scss']

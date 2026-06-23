@@ -52,6 +52,10 @@ import { SiteEditDialogComponent } from '../../../shared/components/master-edit/
 
 
 
+    <div class="abr-scroll-x">
+
+
+
     <table mat-table [dataSource]="sites" class="mat-elevation-z1 abr-table sticky-header">
 
       <ng-container matColumnDef="siteName"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.siteName }}</td></ng-container>
@@ -87,6 +91,8 @@ import { SiteEditDialogComponent } from '../../../shared/components/master-edit/
       <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
 
     </table>
+
+    </div>
 
   `,
 

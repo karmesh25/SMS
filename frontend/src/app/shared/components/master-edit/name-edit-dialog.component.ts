@@ -34,7 +34,7 @@ export interface NameEditDialogResult {
       <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()">Save</button>
     </mat-dialog-actions>
   `,
-  styles: [`.full-width { width: 100%; min-width: 280px; }`]
+  styles: [`.full-width { width: 100%; min-width:min(280px, calc(100vw - 2rem)); width:100%; }`]
 })
 export class NameEditDialogComponent {
   readonly data = inject<NameEditDialogData>(MAT_DIALOG_DATA);

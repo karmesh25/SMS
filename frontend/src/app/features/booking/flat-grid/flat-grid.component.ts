@@ -126,6 +126,10 @@ interface FloorGroup {
       grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
       gap: 0.5rem;
     }
+    @media (max-width: 599px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 0.35rem; }
+      .flat-card { min-height: 46px; font-size: 0.8rem; padding: 0.35rem 0.25rem; }
+    }
     .flat-card {
       border: none;
       border-radius: 4px;
@@ -343,7 +347,8 @@ export class FlatGridComponent implements OnInit {
 
     this.dialog.open(BookingDetailDialogComponent, {
       data: { flatId: flat.id, flatStatus: flat.status },
-      width: '720px',
+      width: 'min(720px, calc(100vw - 2rem))',
+      maxWidth: '100vw',
       maxHeight: '90vh'
     }).afterClosed().subscribe(() => this.loadGrid());
   }

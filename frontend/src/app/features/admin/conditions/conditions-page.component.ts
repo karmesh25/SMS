@@ -74,6 +74,10 @@ interface Condition { id: string; conditionName: string; conditionType: string; 
 
 
 
+    <div class="abr-scroll-x">
+
+
+
     <table mat-table [dataSource]="conditions" class="mat-elevation-z1 abr-table sticky-header">
 
       <ng-container matColumnDef="conditionName"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.conditionName }}</td></ng-container>
@@ -103,6 +107,8 @@ interface Condition { id: string; conditionName: string; conditionType: string; 
       <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
 
     </table>
+
+    </div>
 
   `,
 

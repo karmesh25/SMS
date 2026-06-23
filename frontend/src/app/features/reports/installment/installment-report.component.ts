@@ -47,6 +47,7 @@ interface InstallmentRow {
       @if (rows.length) {
         <p>{{ rows[0].flatNo }} — {{ rows[0].memberName }}</p>
       }
+      <div class="abr-scroll-x">
       <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
         <ng-container matColumnDef="milestoneName"><th mat-header-cell *matHeaderCellDef>Milestone</th><td mat-cell *matCellDef="let r">{{ r.milestoneName }}</td></ng-container>
         <ng-container matColumnDef="dueDate"><th mat-header-cell *matHeaderCellDef>Due Date</th><td mat-cell *matCellDef="let r">{{ r.dueDate | appDate }}</td></ng-container>
@@ -59,6 +60,7 @@ interface InstallmentRow {
         <tr mat-row *matRowDef="let row; columns: cols"></tr>
         <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
       </table>
+      </div>
     </div>
   `,
   styleUrls: ['../report-shared.scss']

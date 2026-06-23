@@ -51,6 +51,8 @@ import { CurrentUser } from '../../../core/models/api-response.model';
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add User</button>
     </form>
 
+    <div class="abr-scroll-x">
+
     <table mat-table [dataSource]="users" class="mat-elevation-z1 abr-table sticky-header">
       <ng-container matColumnDef="username">
         <th mat-header-cell *matHeaderCellDef>Username</th>
@@ -80,6 +82,7 @@ import { CurrentUser } from '../../../core/models/api-response.model';
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
     </table>
+    </div>
   `,
   styles: [`
     .form-grid {

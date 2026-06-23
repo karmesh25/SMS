@@ -42,13 +42,14 @@
     </mat-sidenav>
 
     <mat-sidenav-content>
-      <mat-toolbar color="primary">
-        @if (isHandset()) {
+      <mat-toolbar color="primary" class="app-toolbar">
+        @if (isTabletDown()) {
           <button mat-icon-button (click)="toggleSidenav()" aria-label="Toggle navigation">
             <mat-icon>menu</mat-icon>
           </button>
         }
-        <span class="toolbar-title">ABR Society & Real Estate Management System</span>
+        <span class="toolbar-title toolbar-title--full">ABR Society & Real Estate Management System</span>
+        <span class="toolbar-title toolbar-title--short">ABR SMS</span>
         <span class="spacer"></span>
         @if (siteContext.sites().length > 0) {
           <mat-form-field appearance="outline" class="site-select">
@@ -63,7 +64,10 @@
         @if (currentUser(); as user) {
           <span class="user-label">{{ user.username }} ({{ user.role }})</span>
         }
-        <button mat-button (click)="logout()">Logout</button>
+        <button mat-button class="logout-btn" (click)="logout()">
+          <mat-icon class="logout-icon">logout</mat-icon>
+          <span class="logout-text">Logout</span>
+        </button>
       </mat-toolbar>
       <app-breadcrumb />
       <main class="content">

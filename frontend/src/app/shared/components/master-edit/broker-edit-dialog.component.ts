@@ -33,7 +33,7 @@ export type BrokerEditDialogResult = BrokerEditDialogData;
       <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()">Save</button>
     </mat-dialog-actions>
   `,
-  styles: [`.form { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; min-width:400px; } .full { grid-column:1 / -1; }`]
+  styles: [`.form { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; min-width:min(400px, calc(100vw - 2rem)); width:100%; } .full { grid-column:1 / -1; } @media (max-width: 599px) { .form { grid-template-columns: 1fr; } }`]
 })
 export class BrokerEditDialogComponent {
   readonly data = inject<BrokerEditDialogData>(MAT_DIALOG_DATA);

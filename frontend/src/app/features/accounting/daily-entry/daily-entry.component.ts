@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -31,7 +30,7 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
   selector: 'app-daily-entry',
   standalone: true,
   imports: [
-    ReactiveFormsModule, RouterLink, RouterLinkActive, MatButtonModule, MatButtonToggleModule,
+    ReactiveFormsModule, MatButtonModule, MatButtonToggleModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule, MatIconModule,
     PageHeaderComponent, IndianCurrencyPipe, AppDatePipe, IndianAmountDirective,
     ModuleSubnavComponent, SearchableSelectComponent
@@ -51,7 +50,7 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
 
     <app-module-subnav [items]="accountingNav" />
 
-    <form [formGroup]="form" class="entry-form" (ngSubmit)="submit()">
+    <form [formGroup]="form" class="entry-form abr-form-grid" (ngSubmit)="submit()">
       <mat-button-toggle-group formControlName="entryType" class="type-toggle">
         <mat-button-toggle value="aavak">Aavak</mat-button-toggle>
         <mat-button-toggle value="javak">Javak</mat-button-toggle>
@@ -83,6 +82,7 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
     <div class="split-tables">
       <section>
         <h3 class="aavak-title">Aavak (Receipts)</h3>
+        <div class="abr-scroll-x">
         <table mat-table [dataSource]="aavakEntries" class="mat-elevation-z1 abr-table sticky-header">
           <ng-container matColumnDef="entryDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.entryDate | appDate }}</td></ng-container>
           <ng-container matColumnDef="mainLedgerName"><th mat-header-cell *matHeaderCellDef>Ledger</th><td mat-cell *matCellDef="let row">{{ row.mainLedgerName }}</td></ng-container>
@@ -96,9 +96,11 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
             <td [attr.colspan]="cols.length"><mat-icon>receipt_long</mat-icon>No aavak entries yet.</td>
           </tr>
         </table>
+        </div>
       </section>
       <section>
         <h3 class="javak-title">Javak (Payments)</h3>
+        <div class="abr-scroll-x">
         <table mat-table [dataSource]="javakEntries" class="mat-elevation-z1 abr-table sticky-header">
           <ng-container matColumnDef="entryDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.entryDate | appDate }}</td></ng-container>
           <ng-container matColumnDef="mainLedgerName"><th mat-header-cell *matHeaderCellDef>Ledger</th><td mat-cell *matCellDef="let row">{{ row.mainLedgerName }}</td></ng-container>
@@ -112,24 +114,30 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
             <td [attr.colspan]="cols.length"><mat-icon>receipt_long</mat-icon>No javak entries yet.</td>
           </tr>
         </table>
+        </div>
       </section>
-    </div>
   `,
   styles: [`
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
-    .header-actions { display: flex; align-items: center; gap: 1rem; padding-top: 0.5rem; }
+    .header-actions { display: flex; align-items: center; gap: 1rem; padding-top: 0.5rem; flex-wrap: wrap; }
     .profit { font-weight: 700; color: #27ae60; font-size: 1.1rem; }
     .profit.negative { color: #e74c3c; }
-    .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
-    .tabs a { color: #1f4e79; text-decoration: none; font-weight: 500; }
-    .tabs a.active { text-decoration: underline; }
-    .entry-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
-    .type-toggle { grid-column: 1 / -1; }
+    .entry-form { margin-bottom: 1.5rem; }
+    .type-toggle { grid-column: 1 / -1; width: 100%; }
     .split-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     .aavak-title { color: #27ae60; }
     .javak-title { color: #2980b9; }
-    table { width: 100%; }
-    @media (max-width: 900px) { .split-tables { grid-template-columns: 1fr; } }
+    table { width: 100%; min-width: 520px; }
+    @media (max-width: 959px) { .split-tables { grid-template-columns: 1fr; } }
+    @media (max-width: 599px) {
+      .type-toggle {
+        display: flex;
+        flex-direction: column;
+      }
+      .type-toggle mat-button-toggle {
+        flex: 1 1 auto;
+      }
+    }
   `]
 })
 export class DailyEntryComponent implements OnInit {

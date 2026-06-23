@@ -114,13 +114,13 @@
   color: tokens.$abr-accent;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 959px) {
   .vyaj-shell {
     grid-template-columns: 1fr;
   }
 
   .sidebar-col {
-    max-height: 220px;
+    max-height: 40vh;
     border-right: none;
     border-bottom: 1px solid tokens.$abr-border;
   }
@@ -128,5 +128,9 @@
   .header-totals {
     margin-left: 0;
     width: 100%;
+  }
+
+  .vyaj-header {
+    flex-direction: column;
   }
 }

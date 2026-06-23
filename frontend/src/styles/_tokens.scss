@@ -19,3 +19,8 @@ $abr-radius-sm: 4px;
 $abr-radius-md: 8px;
 
 $abr-font-family: Roboto, 'Helvetica Neue', sans-serif;
+
+// Responsive breakpoints (align with app shell overlay sidenav at 959px)
+$bp-handset: 599px;
+$bp-tablet: 959px;
+$bp-desktop-min: 960px;

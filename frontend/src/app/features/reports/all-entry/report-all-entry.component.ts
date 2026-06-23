@@ -66,6 +66,7 @@ interface AllEntryRow {
         </form>
       </div>
       <div class="print-only"><h2>All Daily Entry Report</h2><p>{{ form.value.dateFrom }} — {{ form.value.dateTo }}</p></div>
+      <div class="abr-scroll-x scroll-table">
       <table mat-table class="mat-elevation-z1 abr-table sticky-header">
         <thead>
           <tr>
@@ -95,6 +96,7 @@ interface AllEntryRow {
           }
         </tbody>
       </table>
+      </div>
       <mat-paginator class="no-print" [length]="total" [pageSize]="pageSize" [pageIndex]="page - 1" (page)="onPage($event)" />
     </div>
   `,

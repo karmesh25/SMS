@@ -44,7 +44,7 @@ export interface SiteEditDialogResult {
       <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="save()">Save</button>
     </mat-dialog-actions>
   `,
-  styles: [`.form { display:flex; flex-direction:column; gap:0.5rem; min-width:320px; }`]
+  styles: [`.form { display:flex; flex-direction:column; gap:0.5rem; min-width:min(320px, calc(100vw - 2rem)); width:100%; }`]
 })
 export class SiteEditDialogComponent {
   readonly data = inject<SiteEditDialogData>(MAT_DIALOG_DATA);

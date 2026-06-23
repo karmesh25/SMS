@@ -25,8 +25,18 @@
   color: #78909c;
 }
 
+.app-sidenav a.mat-mdc-list-item {
+  min-height: 44px;
+}
+
 .spacer {
   flex: 1;
+}
+
+.app-toolbar {
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 56px;
 }
 
 .toolbar-title {
@@ -34,6 +44,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.toolbar-title--short {
+  display: none;
 }
 
 .content {
@@ -46,7 +60,7 @@ a.active {
 
 .site-select {
   width: 180px;
-  margin-right: 1rem;
+  margin-right: 0.5rem;
   font-size: 0.875rem;
 }
 
@@ -64,21 +78,71 @@ a.active {
 }
 
 .user-label {
-  margin-right: 1rem;
+  margin-right: 0.75rem;
   font-size: 0.875rem;
 }
 
+.logout-icon {
+  display: none;
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 @media (max-width: 959px) {
-  .toolbar-title {
+  .toolbar-title--full {
     font-size: 0.8rem;
-    max-width: 140px;
+    max-width: 180px;
   }
 
   .user-label {
     display: none;
   }
 
+  .site-select {
+    width: min(180px, 40vw);
+  }
+
   .content {
     padding: 1rem;
+  }
+}
+
+@media (max-width: 599px) {
+  .toolbar-title--full {
+    display: none;
+  }
+
+  .toolbar-title--short {
+    display: inline;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .app-toolbar {
+    padding: 0 0.25rem;
+  }
+
+  .site-select {
+    order: 10;
+    width: 100%;
+    margin: 0.25rem 0.5rem 0;
+  }
+
+  .logout-text {
+    display: none;
+  }
+
+  .logout-icon {
+    display: inline-block;
+  }
+
+  .logout-btn {
+    min-width: 44px;
+    padding: 0 0.5rem;
+  }
+
+  .content {
+    padding: 0.75rem;
   }
 }

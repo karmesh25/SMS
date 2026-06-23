@@ -1,0 +1,19 @@
+@use './tokens' as tokens;
+
+@mixin handset {
+  @media (max-width: tokens.$bp-handset) {
+    @content;
+  }
+}
+
+@mixin tablet-down {
+  @media (max-width: tokens.$bp-tablet) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: tokens.$bp-desktop-min) {
+    @content;
+  }
+}

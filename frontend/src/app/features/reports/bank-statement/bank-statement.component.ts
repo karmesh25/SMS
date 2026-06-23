@@ -47,6 +47,7 @@ interface StmtRow { entryDate: string; description?: string; debit: number; cred
       @if (openingBalance != null) {
         <p>Opening: Rs. {{ openingBalance | indianCurrency }} | Closing: Rs. {{ closingBalance | indianCurrency }}</p>
       }
+      <div class="abr-scroll-x">
       <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
         <ng-container matColumnDef="entryDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let r">{{ r.entryDate | appDate }}</td></ng-container>
         <ng-container matColumnDef="description"><th mat-header-cell *matHeaderCellDef>Description</th><td mat-cell *matCellDef="let r">{{ r.description ?? '-' }}</td></ng-container>
@@ -57,6 +58,7 @@ interface StmtRow { entryDate: string; description?: string; debit: number; cred
         <tr mat-row *matRowDef="let row; columns: cols"></tr>
         <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
       </table>
+      </div>
     </div>
   `,
   styleUrls: ['../report-shared.scss']

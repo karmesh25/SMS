@@ -61,7 +61,7 @@ interface TillDateRow {
           <app-report-export-buttons reportType="till-date" [filters]="exportFilters()" [disabled]="!siteId" />
         </form>
       </div>
-      <div class="scroll-table">
+      <div class="abr-scroll-x">
         <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
           <ng-container matColumnDef="flatNo"><th mat-header-cell *matHeaderCellDef>Flat</th><td mat-cell *matCellDef="let r">{{ r.flatNo }}</td></ng-container>
           <ng-container matColumnDef="memberName"><th mat-header-cell *matHeaderCellDef>Member</th><td mat-cell *matCellDef="let r">{{ r.memberName }}</td></ng-container>

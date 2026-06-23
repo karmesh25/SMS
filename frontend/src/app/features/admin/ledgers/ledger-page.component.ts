@@ -62,7 +62,7 @@ interface SubLedger { id: string; ledgerName: string; flatNo?: string; mainLedge
 
         </form>
 
-        <table mat-table [dataSource]="mainLedgers" class="mat-elevation-z1">
+        <div class="abr-scroll-x"><table mat-table [dataSource]="mainLedgers" class="mat-elevation-z1">
 
           <ng-container matColumnDef="ledgerName"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.ledgerName }}</td></ng-container>
 
@@ -84,7 +84,7 @@ interface SubLedger { id: string; ledgerName: string; flatNo?: string; mainLedge
 
           <tr mat-row *matRowDef="let row; columns: mainCols" [class.selected]="row.id === selectedMainId" (click)="selectMain(row)"></tr>
 
-        </table>
+        </table></div>
 
       </section>
 
@@ -118,7 +118,7 @@ interface SubLedger { id: string; ledgerName: string; flatNo?: string; mainLedge
 
           </div>
 
-          <table mat-table [dataSource]="subLedgers" class="mat-elevation-z1">
+          <div class="abr-scroll-x"><table mat-table [dataSource]="subLedgers" class="mat-elevation-z1">
 
             <ng-container matColumnDef="ledgerName"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.ledgerName }}</td></ng-container>
 
@@ -140,7 +140,7 @@ interface SubLedger { id: string; ledgerName: string; flatNo?: string; mainLedge
 
             <tr mat-row *matRowDef="let row; columns: subCols"></tr>
 
-          </table>
+          </table></div>
 
         } @else {
 
@@ -164,7 +164,7 @@ interface SubLedger { id: string; ledgerName: string; flatNo?: string; mainLedge
 
     tr.selected { background:rgba(25,118,210,0.08); }
 
-    @media (max-width:900px) { .split { grid-template-columns:1fr; } }
+    @media (max-width:959px) { .split { grid-template-columns:1fr; } }
 
   `]
 

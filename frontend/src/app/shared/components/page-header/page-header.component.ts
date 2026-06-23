@@ -46,6 +46,26 @@ import { MatButtonModule } from '@angular/material/button';
       margin: 0.25rem 0 0;
       color: #666;
     }
+
+    @media (max-width: 959px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 1rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    }
+
+    @media (max-width: 599px) {
+      h1 {
+        font-size: 1.35rem;
+      }
+    }
   `]
 })
 export class PageHeaderComponent {

@@ -46,6 +46,8 @@ interface DeviceLicenseRow {
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Authorize</button>
     </form>
 
+    <div class="abr-scroll-x">
+
     <table mat-table [dataSource]="devices" class="mat-elevation-z1 abr-table sticky-header">
       <ng-container matColumnDef="deviceName">
         <th mat-header-cell *matHeaderCellDef>Device</th>
@@ -70,6 +72,7 @@ interface DeviceLicenseRow {
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
     </table>
+    </div>
   `,
   styles: [`
     .form-row {

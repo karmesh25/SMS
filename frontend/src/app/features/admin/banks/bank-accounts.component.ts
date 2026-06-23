@@ -78,6 +78,10 @@ interface BankRow {
 
 
 
+    <div class="abr-scroll-x">
+
+
+
     <table mat-table [dataSource]="banks" class="mat-elevation-z1 abr-table sticky-header">
 
       <ng-container matColumnDef="bankName"><th mat-header-cell *matHeaderCellDef>Bank</th><td mat-cell *matCellDef="let row">{{ row.bankName }}</td></ng-container>
@@ -115,6 +119,8 @@ interface BankRow {
       <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
 
     </table>
+
+    </div>
 
   `,
 

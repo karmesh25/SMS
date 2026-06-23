@@ -37,6 +37,7 @@ export interface BookingDetailDialogData {
             <mat-progress-bar mode="determinate" [value]="installments.percentagePaid"></mat-progress-bar>
           </div>
 
+          <div class="abr-scroll-x">
           <table mat-table [dataSource]="installments.milestones" class="mat-elevation-z1 abr-table sticky-header">
             <ng-container matColumnDef="milestoneName"><th mat-header-cell *matHeaderCellDef>Milestone</th><td mat-cell *matCellDef="let row">{{ row.milestoneName }}</td></ng-container>
             <ng-container matColumnDef="dueDate"><th mat-header-cell *matHeaderCellDef>Due</th><td mat-cell *matCellDef="let row">{{ row.dueDate | appDate }}</td></ng-container>
@@ -52,6 +53,7 @@ export interface BookingDetailDialogData {
             <tr mat-row *matRowDef="let row; columns: cols"></tr>
             <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
           </table>
+          </div>
         }
       } @else if (loading) {
         <p>Loading...</p>
@@ -72,7 +74,11 @@ export interface BookingDetailDialogData {
   styles: [`
     .summary p { margin: 0.25rem 0; }
     .inst-summary { margin: 1rem 0; }
-    table { width: 100%; margin-top: 1rem; }
+    table { width: 100%; margin-top: 1rem; min-width: 520px; }
+    @media (max-width: 599px) {
+      mat-dialog-actions { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+      mat-dialog-actions button { width: 100%; margin: 0 !important; }
+    }
     .status-paid { color: #27ae60; font-weight: 600; }
     .status-partial { color: #2980b9; font-weight: 600; }
     .status-pending { color: #7f8c8d; }

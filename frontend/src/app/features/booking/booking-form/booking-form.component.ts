@@ -172,7 +172,11 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
     .full { grid-column: 1 / -1; }
 
-    .actions { grid-column: 1 / -1; display: flex; gap: 1rem; justify-content: flex-end; }
+    .actions { grid-column: 1 / -1; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap; }
+    @media (max-width: 599px) {
+      .actions { flex-direction: column; align-items: stretch; }
+      .actions button { width: 100%; }
+    }
 
     .warning { color: #c0392b; margin-bottom: 1rem; font-size: 0.875rem; }
 

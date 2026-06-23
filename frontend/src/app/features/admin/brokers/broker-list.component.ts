@@ -74,6 +74,10 @@ interface BrokerRow {
 
 
 
+    <div class="abr-scroll-x">
+
+
+
     <table mat-table [dataSource]="brokers" class="mat-elevation-z1 abr-table sticky-header">
 
       <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container>
@@ -101,6 +105,8 @@ interface BrokerRow {
       <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
 
     </table>
+
+    </div>
 
   `,
 

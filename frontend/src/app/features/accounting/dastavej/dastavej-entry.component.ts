@@ -1,6 +1,5 @@
 import { Component, effect, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -35,7 +34,7 @@ interface DastavejRow {
   selector: 'app-dastavej-entry',
   standalone: true,
   imports: [
-    ReactiveFormsModule, RouterLink, RouterLinkActive, MatButtonModule,
+    ReactiveFormsModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatTableModule, MatIconModule,
     PageHeaderComponent, IndianCurrencyPipe, AppDatePipe, IndianAmountDirective,
     ModuleSubnavComponent, SearchableSelectComponent
@@ -45,7 +44,7 @@ interface DastavejRow {
 
     <app-module-subnav [items]="accountingNav" />
 
-    <form [formGroup]="form" class="form-grid" (ngSubmit)="save()">
+    <form [formGroup]="form" class="form-grid abr-form-grid" (ngSubmit)="save()">
       <app-searchable-select
         label="Booking"
         formControlName="bookingId"
@@ -59,6 +58,7 @@ interface DastavejRow {
       <button mat-flat-button color="primary" type="submit" [disabled]="!form.value.bookingId">Save</button>
     </form>
 
+    <div class="abr-scroll-x">
     <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
       <ng-container matColumnDef="flatNo"><th mat-header-cell *matHeaderCellDef>Flat</th><td mat-cell *matCellDef="let row">{{ row.flatNo }}</td></ng-container>
       <ng-container matColumnDef="memberName"><th mat-header-cell *matHeaderCellDef>Member</th><td mat-cell *matCellDef="let row">{{ row.memberName }}</td></ng-container>
@@ -71,13 +71,11 @@ interface DastavejRow {
       <tr mat-row *matRowDef="let row; columns: cols"></tr>
       <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
     </table>
+    </div>
   `,
   styles: [`
-    .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
-    .tabs a { color: #1f4e79; text-decoration: none; font-weight: 500; }
-    .tabs a.active { text-decoration: underline; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; align-items: center; }
-    table { width: 100%; }
+    .form-grid { margin-bottom: 1.5rem; align-items: center; }
+    table { width: 100%; min-width: 640px; }
   `]
 })
 export class DastavejEntryComponent implements OnInit {

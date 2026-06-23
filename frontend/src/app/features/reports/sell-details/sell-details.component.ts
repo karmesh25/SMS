@@ -58,6 +58,7 @@ interface SellRow {
           <app-report-export-buttons reportType="sell-details" [filters]="exportFilters()" [disabled]="!siteId" />
         </form>
       </div>
+      <div class="abr-scroll-x">
       <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
         <ng-container matColumnDef="flatNo"><th mat-header-cell *matHeaderCellDef>Flat</th><td mat-cell *matCellDef="let r">{{ r.flatNo }}</td></ng-container>
         <ng-container matColumnDef="wingName"><th mat-header-cell *matHeaderCellDef>Wing</th><td mat-cell *matCellDef="let r">{{ r.wingName }}</td></ng-container>
@@ -71,6 +72,7 @@ interface SellRow {
         <tr mat-row *matRowDef="let row; columns: cols"></tr>
         <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
       </table>
+      </div>
       @if (totals) {
         <p><strong>Totals:</strong> Price Rs. {{ totals.totalPrice | indianCurrency }} | Paid Rs. {{ totals.totalPaid | indianCurrency }} | Remaining Rs. {{ totals.totalRemaining | indianCurrency }}</p>
       }

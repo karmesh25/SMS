@@ -17,7 +17,7 @@ describe('DailyEntryComponent', () => {
       providers: [
         FormBuilder,
         { provide: DailyEntryService, useValue: { getList: () => of({ success: true, data: { items: [], totalCount: 0 } }), getProfit: () => of({ success: true, data: { totalAavak: 0, totalJavak: 0, profit: 0 } }), create: () => of({ success: true }), delete: () => of({ success: true }) } },
-        { provide: MasterDataService, useValue: { getMainLedgers: () => of({ success: true, data: [] }), getSubLedgers: () => of({ success: true, data: [] }), getBanks: () => of({ success: true, data: [] }) } },
+        { provide: MasterDataService, useValue: { getMainLedgers: () => of({ success: true, data: [{ id: 'm1', ledgerName: 'Member A/c' }, { id: 'm2', ledgerName: 'Construction' }] }), getSubLedgers: () => of({ success: true, data: [] }), getBanks: () => of({ success: true, data: [] }) } },
         { provide: SiteContextService, useValue: { activeSiteId: () => 'site-1', loadSites: () => of({ success: true, data: [] }) } },
         { provide: ToastService, useValue: { success: () => {}, error: () => {} } },
         { provide: MatDialog, useValue: { open: () => ({ afterClosed: () => of(false) }) } }
@@ -34,13 +34,8 @@ describe('DailyEntryComponent', () => {
 
   it('should expose main ledger options when ledgers load', () => {
     const fixture = TestBed.createComponent(DailyEntryComponent);
-    const component = fixture.componentInstance;
-    component.mainLedgers.set([
-      { id: 'm1', ledgerName: 'Member A/c' },
-      { id: 'm2', ledgerName: 'Construction' }
-    ]);
     fixture.detectChanges();
-    expect(component.mainLedgerOptions()).toEqual([
+    expect(fixture.componentInstance.mainLedgerOptions()).toEqual([
       { value: 'm1', label: 'Member A/c' },
       { value: 'm2', label: 'Construction' }
     ]);

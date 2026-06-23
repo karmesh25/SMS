@@ -83,7 +83,7 @@ interface BalanceSheetData {
   styleUrls: ['../report-shared.scss'],
   styles: [`
     .split { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
-    @media (max-width: 800px) { .split { grid-template-columns: 1fr; } }
+    @media (max-width: 959px) { .split { grid-template-columns: 1fr; } }
     h3 { padding: 0.5rem; margin: 0 0 0.5rem; }
   `]
 })

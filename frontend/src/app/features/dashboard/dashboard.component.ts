@@ -221,7 +221,16 @@ import { AppDatePipe } from '../../shared/pipes/app-date.pipe';
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 1rem;
     }
-    .table-wrap { overflow: auto; max-height: 360px; }
+    .table-wrap { overflow: auto; max-height: 360px; -webkit-overflow-scrolling: touch; }
+    .table-wrap table { min-width: 480px; }
+    @media (max-width: 599px) {
+      .dashboard-header { flex-direction: column; align-items: stretch; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .tables-grid { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 600px) and (max-width: 959px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
     .type-badge {
       text-transform: capitalize;
       font-size: 0.75rem;

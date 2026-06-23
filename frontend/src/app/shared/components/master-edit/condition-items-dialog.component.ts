@@ -42,7 +42,7 @@ interface ConditionItemRow {
         <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add</button>
       </form>
 
-      <table mat-table [dataSource]="items" class="mat-elevation-z1">
+      <div class="abr-scroll-x"><table mat-table [dataSource]="items" class="mat-elevation-z1">
         <ng-container matColumnDef="milestoneName"><th mat-header-cell *matHeaderCellDef>Milestone</th><td mat-cell *matCellDef="let row">{{ row.milestoneName }}</td></ng-container>
         <ng-container matColumnDef="percentage"><th mat-header-cell *matHeaderCellDef>%</th><td mat-cell *matCellDef="let row">{{ row.percentage ?? '-' }}</td></ng-container>
         <ng-container matColumnDef="amount"><th mat-header-cell *matHeaderCellDef>Amount</th><td mat-cell *matCellDef="let row">{{ row.amount ?? '-' }}</td></ng-container>
@@ -55,7 +55,7 @@ interface ConditionItemRow {
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="cols"></tr>
         <tr mat-row *matRowDef="let row; columns: cols"></tr>
-      </table>
+      </table></div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button (click)="close()">Close</button>

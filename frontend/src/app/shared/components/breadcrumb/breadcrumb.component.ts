@@ -51,6 +51,19 @@ import { BreadcrumbService } from '../../../core/services/breadcrumb.service';
     .separator {
       color: #999;
     }
+
+    @media (max-width: 959px) {
+      .breadcrumb-nav {
+        padding: 0.4rem 1rem;
+        font-size: 0.8125rem;
+      }
+    }
+
+    @media (max-width: 599px) {
+      .breadcrumb-nav {
+        padding: 0.35rem 0.75rem;
+      }
+    }
   `]
 })
 export class BreadcrumbComponent {
