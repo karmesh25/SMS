@@ -34,7 +34,7 @@ type LedgerPanel = 'main' | 'sub';
       [value]="activePanel"
       (change)="onPanelChange($event.value)">
       <mat-button-toggle value="main">Main Ledger</mat-button-toggle>
-      <mat-button-toggle value="sub" [disabled]="!selectedMainId">Sub Ledger</mat-button-toggle>
+      <mat-button-toggle value="sub">Sub Ledger</mat-button-toggle>
     </mat-button-toggle-group>
 
     @if (activePanel === 'main') {
@@ -49,9 +49,8 @@ type LedgerPanel = 'main' | 'sub';
             <ng-container matColumnDef="ledgerName"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.ledgerName }}</td></ng-container>
             <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef>Actions</th>
               <td mat-cell *matCellDef="let row">
-                <button mat-button (click)="openSubPanel(row)">Sub</button>
-                <button mat-button (click)="editMain(row)">Edit</button>
-                <button mat-button color="warn" (click)="deleteMain(row)">Delete</button>
+                <button mat-button (click)="editMain(row); $event.stopPropagation()">Edit</button>
+                <button mat-button color="warn" (click)="deleteMain(row); $event.stopPropagation()">Delete</button>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="mainCols"></tr>
@@ -61,8 +60,17 @@ type LedgerPanel = 'main' | 'sub';
       </section>
     } @else {
       <section class="panel">
-        @if (selectedMainId) {
-          <p class="sub-context">Sub ledgers for <strong>{{ selectedMainName }}</strong></p>
+        @if (selectedMainId && mainLedgers.length > 0) {
+          <div class="sub-toolbar">
+            <mat-form-field appearance="outline" class="main-ledger-picker">
+              <mat-label>Main Ledger</mat-label>
+              <mat-select [value]="selectedMainId" (selectionChange)="onMainLedgerPick($event.value)">
+                @for (main of mainLedgers; track main.id) {
+                  <mat-option [value]="main.id">{{ main.ledgerName }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
 
           <form [formGroup]="subForm" class="row" (ngSubmit)="addSub()">
             <mat-form-field appearance="outline"><mat-label>Name</mat-label><input matInput formControlName="ledgerName" /></mat-form-field>
@@ -92,7 +100,7 @@ type LedgerPanel = 'main' | 'sub';
             </table>
           </div>
         } @else {
-          <p class="empty-hint">Select a main ledger from the Main Ledger tab first.</p>
+          <p class="empty-hint">Add a main ledger first, then manage sub ledgers here.</p>
         }
       </section>
     }
@@ -111,6 +119,8 @@ type LedgerPanel = 'main' | 'sub';
     table { width:100%; min-width: 320px; }
     tr.selected { background:rgba(25,118,210,0.08); }
     .sub-context { margin: 0 0 1rem; color: #555; }
+    .sub-toolbar { margin-bottom: 1rem; }
+    .main-ledger-picker { width: 100%; max-width: 420px; }
     .empty-hint { color: #888; padding: 1rem 0; }
   `]
 })
@@ -129,7 +139,7 @@ export class LedgerPageComponent implements OnInit {
   selectedMainName = '';
   isMemberAccount = false;
   siteId: string | null = null;
-  activePanel: LedgerPanel = 'main';
+  activePanel: LedgerPanel = 'sub';
 
   mainForm = this.fb.nonNullable.group({ ledgerName: ['', Validators.required] });
   subForm = this.fb.nonNullable.group({ ledgerName: ['', Validators.required], flatNo: [''] });
@@ -149,14 +159,36 @@ export class LedgerPageComponent implements OnInit {
   }
 
   onPanelChange(panel: LedgerPanel): void {
-    if (panel === 'sub' && !this.selectedMainId) return;
+    if (panel === 'sub' && !this.selectedMainId && this.mainLedgers.length > 0) {
+      this.selectMain(this.mainLedgers[0], true);
+      return;
+    }
     this.activePanel = panel;
+  }
+
+  onMainLedgerPick(mainId: string): void {
+    const main = this.mainLedgers.find((m) => m.id === mainId);
+    if (main) this.selectMain(main, true);
   }
 
   loadMain(): void {
     if (!this.siteId) return;
     this.masterData.getMainLedgers(this.siteId).subscribe({
-      next: (r) => { if (r.success) this.mainLedgers = r.data as MainLedger[]; }
+      next: (r) => {
+        if (!r.success) return;
+        this.mainLedgers = r.data as MainLedger[];
+        if (this.mainLedgers.length === 0) {
+          this.selectedMainId = null;
+          this.selectedMainName = '';
+          this.subLedgers = [];
+          this.activePanel = 'main';
+          return;
+        }
+        const current = this.selectedMainId
+          ? this.mainLedgers.find((m) => m.id === this.selectedMainId)
+          : null;
+        this.selectMain(current ?? this.mainLedgers[0], this.activePanel === 'sub');
+      }
     });
   }
 
@@ -168,14 +200,14 @@ export class LedgerPageComponent implements OnInit {
   }
 
   openSubPanel(row: MainLedger): void {
-    this.selectMain(row);
-    this.activePanel = 'sub';
+    this.selectMain(row, true);
   }
 
-  selectMain(row: MainLedger): void {
+  selectMain(row: MainLedger, openSub = false): void {
     this.selectedMainId = row.id;
     this.selectedMainName = row.ledgerName;
     this.isMemberAccount = row.ledgerName.toLowerCase().includes('member');
+    if (openSub) this.activePanel = 'sub';
     this.masterData.getSubLedgers(row.id).subscribe({
       next: (r) => { if (r.success) this.subLedgers = r.data as SubLedger[]; }
     });
@@ -218,7 +250,7 @@ export class LedgerPageComponent implements OnInit {
   addSub(): void {
     if (!this.selectedMainId) return;
     this.masterData.createSubLedger({ mainLedgerId: this.selectedMainId, ledgerName: this.subForm.value.ledgerName! }).subscribe({
-      next: (r) => { if (r.success) { this.toast.success('Sub ledger added'); this.subForm.reset(); this.selectMain({ id: this.selectedMainId!, ledgerName: this.selectedMainName }); } }
+      next: (r) => { if (r.success) { this.toast.success('Sub ledger added'); this.subForm.reset(); this.selectMain({ id: this.selectedMainId!, ledgerName: this.selectedMainName }, true); } }
     });
   }
 
@@ -229,7 +261,7 @@ export class LedgerPageComponent implements OnInit {
     ref.afterClosed().subscribe((result) => {
       if (!result || !this.selectedMainId) return;
       this.masterData.updateSubLedger(row.id, { ledgerName: result.value, mainLedgerId: this.selectedMainId }).subscribe({
-        next: (r) => { if (r.success) { this.toast.success('Sub ledger updated'); this.selectMain({ id: this.selectedMainId!, ledgerName: this.selectedMainName }); } }
+        next: (r) => { if (r.success) { this.toast.success('Sub ledger updated'); this.selectMain({ id: this.selectedMainId!, ledgerName: this.selectedMainName }, true); } }
       });
     });
   }
@@ -244,7 +276,7 @@ export class LedgerPageComponent implements OnInit {
         next: (r) => {
           if (r.success) {
             this.toast.success('Sub ledger deleted');
-            this.selectMain({ id: this.selectedMainId!, ledgerName: this.selectedMainName });
+            this.selectMain({ id: this.selectedMainId!, ledgerName: this.selectedMainName }, true);
           }
         }
       });

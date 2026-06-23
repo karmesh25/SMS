@@ -51,8 +51,8 @@
         <span class="toolbar-title toolbar-title--full">ABR Society & Real Estate Management System</span>
         <span class="toolbar-title toolbar-title--short">ABR SMS</span>
         <span class="spacer"></span>
-        @if (siteContext.sites().length > 0) {
-          <mat-form-field appearance="outline" class="site-select">
+        @if (siteContext.sites().length > 0 && !isTabletDown()) {
+          <mat-form-field appearance="outline" class="site-select site-select--toolbar">
             <mat-label>Site</mat-label>
             <mat-select [value]="siteContext.activeSiteId()" (selectionChange)="onSiteChange($event.value)">
               @for (site of siteContext.sites(); track site.id) {
@@ -69,6 +69,20 @@
           <span class="logout-text">Logout</span>
         </button>
       </mat-toolbar>
+
+      @if (siteContext.sites().length > 0 && isTabletDown()) {
+        <div class="mobile-site-bar">
+          <mat-form-field appearance="outline" class="site-select site-select--mobile">
+            <mat-label>Site</mat-label>
+            <mat-select [value]="siteContext.activeSiteId()" (selectionChange)="onSiteChange($event.value)">
+              @for (site of siteContext.sites(); track site.id) {
+                <mat-option [value]="site.id">{{ site.siteName }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      }
+
       <app-breadcrumb />
       <main class="content">
         <router-outlet></router-outlet>
