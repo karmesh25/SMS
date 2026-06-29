@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using ABR.Application.Common;
 using ABR.Application.DTOs.Auth;
 using ABR.Application.Interfaces;
 using ABR.Domain.Entities;
@@ -45,6 +46,9 @@ public sealed class AuthService : IAuthService
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
+        if (SubscriptionLicense.IsExpired)
+            throw new InvalidOperationException(SubscriptionLicense.ExpiredMessage);
+
         var user = await _context.Users
             .Include(u => u.SiteAccesses)
             .ThenInclude(sa => sa.Site)

@@ -90,6 +90,7 @@ export class AppComponent {
     const isPublicRoute =
       url.startsWith('/login') ||
       url.startsWith('/unauthorized-device') ||
+      url.startsWith('/license-expired') ||
       url.startsWith('/forbidden') ||
       url.startsWith('/not-found') ||
       url.startsWith('/server-error');

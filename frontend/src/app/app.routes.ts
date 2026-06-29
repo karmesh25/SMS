@@ -17,6 +17,13 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'license-expired',
+    loadComponent: () =>
+      import('./features/auth/license-expired/license-expired.component').then(
+        m => m.LicenseExpiredComponent
+      )
+  },
+  {
     path: 'forbidden',
     loadComponent: () => import('./features/errors/error-page.component').then(m => m.ErrorPageComponent),
     data: {

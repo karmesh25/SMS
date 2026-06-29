@@ -1,4 +1,5 @@
 using System.Text;
+using ABR.Api.Middleware;
 using ABR.Application;
 using ABR.Application.Common;
 using ABR.Application.Interfaces;
@@ -154,6 +155,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<SubscriptionLicenseMiddleware>();
 app.UseSerilogRequestLogging();
 app.UseCors("Frontend");
 app.UseAuthentication();

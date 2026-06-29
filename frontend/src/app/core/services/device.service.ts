@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
+import { LicenseService } from './license.service';
 
 export interface DeviceVerifyResult {
   result: string;
@@ -51,11 +52,23 @@ export class DeviceService {
   }
 }
 
-export function deviceInitializer(deviceService: DeviceService): () => Promise<void> {
-  return () =>
-    deviceService.verifyDevice().then((valid) => {
-      if (!valid) {
-        window.location.href = '/unauthorized-device';
-      }
-    });
+export function deviceInitializer(
+  deviceService: DeviceService,
+  licenseService: LicenseService
+): () => Promise<void> {
+  return async () => {
+    if (window.location.pathname.startsWith('/license-expired')) {
+      return;
+    }
+
+    const licenseValid = licenseService.isValid() || (await licenseService.checkStatus());
+    if (!licenseValid) {
+      return;
+    }
+
+    const valid = await deviceService.verifyDevice();
+    if (!valid) {
+      window.location.href = '/unauthorized-device';
+    }
+  };
 }
