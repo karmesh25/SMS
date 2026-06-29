@@ -11,6 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { DailyEntry, DailyEntryService, ProfitSummary } from '../../../core/services/daily-entry.service';
 import { MasterDataService } from '../../../core/services/master-data.service';
@@ -18,6 +19,7 @@ import { SiteContextService } from '../../../core/services/site-context.service'
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { BalanceDialogComponent } from './balance-dialog.component';
+import { ImportResultDialogComponent } from './import-result-dialog.component';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
 import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
 import { IndianAmountDirective } from '../../../shared/directives/indian-amount.directive';
@@ -47,7 +49,11 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
             Profit: Rs. {{ profit.profit | indianCurrency }}
           </span>
         }
+        <button mat-stroked-button (click)="downloadSample()">Sample Excel</button>
+        <button mat-stroked-button (click)="fileInput.click()" [disabled]="importing">Import Excel</button>
+        <button mat-stroked-button (click)="exportExcel()">Export Excel</button>
         <button mat-stroked-button (click)="openBalance()">Balance</button>
+        <input #fileInput type="file" accept=".xlsx" class="file-input" (change)="onFileSelected($event)" />
       </div>
     </div>
 
@@ -137,7 +143,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
   `,
   styles: [`
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
-    .header-actions { display: flex; align-items: center; gap: 1rem; padding-top: 0.5rem; flex-wrap: wrap; }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; padding-top: 0.5rem; flex-wrap: wrap; }
+    .file-input { display: none; }
     .profit { font-weight: 700; color: #27ae60; font-size: 1.1rem; }
     .profit.negative { color: #e74c3c; }
     .entry-form { margin-bottom: 1.5rem; }
@@ -161,6 +168,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
     .javak-title { color: #2980b9; }
     table { width: 100%; min-width: 520px; }
     @media (max-width: 599px) {
+      .header-actions { width: 100%; }
+      .header-actions button { flex: 1 1 calc(50% - 0.25rem); min-width: 140px; }
       .type-toggle {
         display: flex;
         flex-direction: column;
@@ -196,6 +205,7 @@ export class DailyEntryComponent implements OnInit {
   isMemberAccount = false;
   readonly accountingNav = ACCOUNTING_NAV_ITEMS;
   activeTableView: 'aavak' | 'javak' = 'aavak';
+  importing = false;
 
   readonly mainLedgerOptions = computed<SelectOption<string>[]>(() =>
     this.mainLedgers().map((m) => ({ value: m.id, label: m.ledgerName }))
@@ -320,5 +330,68 @@ export class DailyEntryComponent implements OnInit {
   openBalance(): void {
     if (!this.siteId) return;
     this.dialog.open(BalanceDialogComponent, { data: { siteId: this.siteId }, width: '520px' });
+  }
+
+  downloadSample(): void {
+    this.dailyEntryService.downloadImportSample().subscribe({
+      next: (blob) => this.triggerDownload(blob, 'daily-entry-import-sample.xlsx'),
+      error: () => this.toast.error('Failed to download sample file')
+    });
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this.siteId) return;
+
+    this.importing = true;
+    this.dailyEntryService.importExcel(this.siteId, file).subscribe({
+      next: (r) => {
+        this.importing = false;
+        if (!r.success || !r.data) {
+          this.toast.error(r.message ?? 'Import failed');
+          return;
+        }
+        this.loadAll();
+        this.dialog.open(ImportResultDialogComponent, { data: r.data, width: 'min(480px, calc(100vw - 2rem))' });
+        if (r.data.importedCount > 0) {
+          this.toast.success(`Imported ${r.data.importedCount} entries`);
+        }
+      },
+      error: (err) => {
+        this.importing = false;
+        this.toast.error(this.extractImportError(err));
+      }
+    });
+  }
+
+  exportExcel(): void {
+    if (!this.siteId) return;
+    this.dailyEntryService.exportLedgerExcel(this.siteId).subscribe({
+      next: (blob) => {
+        const name = `daily-entry-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        this.triggerDownload(blob, name);
+        this.toast.success('Export downloaded');
+      },
+      error: () => this.toast.error('Export failed')
+    });
+  }
+
+  private triggerDownload(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private extractImportError(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      const body = err.error as { message?: string } | null;
+      return body?.message ?? 'Import failed';
+    }
+    return 'Import failed';
   }
 }

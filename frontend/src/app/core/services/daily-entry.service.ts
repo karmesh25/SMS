@@ -36,6 +36,17 @@ export interface BalanceSummary {
   bankBalances: BankBalance[];
 }
 
+export interface DailyEntryImportError {
+  rowNumber: number;
+  message: string;
+}
+
+export interface DailyEntryImportResult {
+  importedCount: number;
+  failedCount: number;
+  errors: DailyEntryImportError[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class DailyEntryService {
   private readonly api = inject(ApiService);
@@ -62,5 +73,19 @@ export class DailyEntryService {
 
   getBalance(siteId: string) {
     return this.api.get<BalanceSummary>(`/daily-entries/balance/${siteId}`);
+  }
+
+  downloadImportSample() {
+    return this.api.downloadBlob('/daily-entries/import/sample');
+  }
+
+  importExcel(siteId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.api.uploadFormData<DailyEntryImportResult>('/daily-entries/import', formData, { siteId });
+  }
+
+  exportLedgerExcel(siteId: string, params?: { dateFrom?: string; dateTo?: string }) {
+    return this.api.downloadBlob('/daily-entries/export/ledger-excel', { siteId, ...params });
   }
 }

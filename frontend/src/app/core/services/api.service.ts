@@ -37,6 +37,12 @@ export class ApiService {
     });
   }
 
+  uploadFormData<T>(path: string, formData: FormData, params?: Record<string, string | number | boolean>): Observable<ApiResponse<T>> {
+    return this.http.post<ApiResponse<T>>(`${environment.apiUrl}${path}`, formData, {
+      params: this.buildParams(params)
+    });
+  }
+
   private buildParams(params?: Record<string, string | number | boolean>): HttpParams | undefined {
     if (!params) {
       return undefined;

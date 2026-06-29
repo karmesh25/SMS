@@ -15,15 +15,18 @@ namespace ABR.Api.Controllers;
 public class DailyEntryController : ControllerBase
 {
     private readonly IDailyEntryService _service;
+    private readonly IDailyEntryExcelService _excelService;
     private readonly IValidator<CreateDailyEntryDto> _createValidator;
     private readonly IValidator<UpdateDailyEntryDto> _updateValidator;
 
     public DailyEntryController(
         IDailyEntryService service,
+        IDailyEntryExcelService excelService,
         IValidator<CreateDailyEntryDto> createValidator,
         IValidator<UpdateDailyEntryDto> updateValidator)
     {
         _service = service;
+        _excelService = excelService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
@@ -89,6 +92,57 @@ public class DailyEntryController : ControllerBase
     {
         var balance = await _service.GetBalanceAsync(siteId, cancellationToken);
         return Ok(ApiResponse<BalanceSummaryDto>.Ok(balance));
+    }
+
+    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [HttpGet("import/sample")]
+    public async Task<IActionResult> DownloadImportSample(CancellationToken cancellationToken)
+    {
+        var file = await _excelService.GetSampleAsync(cancellationToken);
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [HttpPost("import")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<ActionResult<ApiResponse<DailyEntryImportResultDto>>> ImportExcel(
+        [FromQuery] Guid siteId,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (siteId == Guid.Empty)
+            return BadRequest(ApiResponse<DailyEntryImportResultDto>.Fail("SiteId is required."));
+        if (file is null || file.Length == 0)
+            return BadRequest(ApiResponse<DailyEntryImportResultDto>.Fail("Excel file is required."));
+        if (!string.Equals(Path.GetExtension(file.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(ApiResponse<DailyEntryImportResultDto>.Fail("Only .xlsx files are supported."));
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var result = await _excelService.ImportAsync(siteId, stream, GetUserId(), cancellationToken);
+            var message = result.ImportedCount > 0
+                ? $"Imported {result.ImportedCount} entries."
+                : "No entries were imported.";
+            return Ok(ApiResponse<DailyEntryImportResultDto>.Ok(result, message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<DailyEntryImportResultDto>.Fail(ex.Message));
+        }
+    }
+
+    [HttpGet("export/ledger-excel")]
+    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    public async Task<IActionResult> ExportLedgerExcel(
+        [FromQuery] DailyEntryLedgerExportRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request.SiteId == Guid.Empty)
+            return BadRequest(new { message = "SiteId is required." });
+
+        var file = await _excelService.ExportLedgerExcelAsync(request, cancellationToken);
+        return File(file.Content, file.ContentType, file.FileName);
     }
 
     private Guid? GetUserId()
