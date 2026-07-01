@@ -100,9 +100,18 @@ public sealed class WingService : IWingService
 
     public WingService(AbrDbContext context) => _context = context;
 
-    public async Task<IReadOnlyList<WingDto>> GetBySiteAsync(Guid siteId, CancellationToken cancellationToken = default) =>
-        await _context.Wings
-            .Where(w => w.SiteId == siteId)
+    public async Task<IReadOnlyList<WingDto>> GetBySiteAsync(Guid siteId, string? type = "wing", CancellationToken cancellationToken = default)
+    {
+        var query = _context.Wings.Where(w => w.SiteId == siteId);
+
+        query = type?.ToLowerInvariant() switch
+        {
+            "plot" => query.Where(w => w.IsPlot),
+            "all" => query,
+            _ => query.Where(w => !w.IsPlot)
+        };
+
+        return await query
             .OrderBy(w => w.WingName)
             .Select(w => new WingDto
             {
@@ -113,8 +122,10 @@ public sealed class WingService : IWingService
                 FlatsPerFloor = w.FlatsPerFloor,
                 Shops = w.Shops,
                 IsBungalow = w.IsBungalow,
+                IsPlot = w.IsPlot,
                 FlatCount = w.Flats.Count
             }).ToListAsync(cancellationToken);
+    }
 
     public async Task<WingDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -131,17 +142,66 @@ public sealed class WingService : IWingService
             Floors = dto.Floors,
             FlatsPerFloor = dto.FlatsPerFloor,
             Shops = dto.Shops,
-            IsBungalow = dto.IsBungalow
+            IsBungalow = dto.IsBungalow,
+            IsPlot = false
         };
 
         _context.Wings.Add(wing);
         await _context.SaveChangesAsync(cancellationToken);
 
-        var flats = GenerateFlats(wing, dto.DefaultSqft);
+        var flats = GenerateFlats(wing);
         _context.Flats.AddRange(flats);
         await _context.SaveChangesAsync(cancellationToken);
 
         wing.Flats = flats;
+        return MapWing(wing);
+    }
+
+    public async Task<WingDto> CreatePlotAsync(CreatePlotDto dto, CancellationToken cancellationToken = default)
+    {
+        var wing = new Wing
+        {
+            SiteId = dto.SiteId,
+            WingName = dto.PlotName.Trim().ToUpperInvariant(),
+            Floors = 1,
+            FlatsPerFloor = dto.PlotCount,
+            Shops = 0,
+            IsBungalow = false,
+            IsPlot = true
+        };
+
+        _context.Wings.Add(wing);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var flats = GenerateFlats(wing);
+        _context.Flats.AddRange(flats);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        wing.Flats = flats;
+        return MapWing(wing);
+    }
+
+    public async Task<WingDto?> UpdatePlotAsync(Guid id, UpdatePlotDto dto, CancellationToken cancellationToken = default)
+    {
+        var wing = await _context.Wings.Include(w => w.Flats).FirstOrDefaultAsync(w => w.Id == id && w.IsPlot, cancellationToken);
+        if (wing is null) return null;
+
+        var oldName = wing.WingName;
+        var newName = dto.PlotName.Trim().ToUpperInvariant();
+
+        if (!string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var flat in wing.Flats)
+            {
+                if (flat.FlatNo.StartsWith(oldName, StringComparison.OrdinalIgnoreCase))
+                    flat.FlatNo = newName + flat.FlatNo[oldName.Length..];
+            }
+        }
+
+        wing.WingName = newName;
+        wing.FlatsPerFloor = dto.PlotCount;
+
+        await _context.SaveChangesAsync(cancellationToken);
         return MapWing(wing);
     }
 
@@ -188,9 +248,25 @@ public sealed class WingService : IWingService
         return true;
     }
 
-    internal static List<Flat> GenerateFlats(Wing wing, decimal defaultSqft)
+    internal static List<Flat> GenerateFlats(Wing wing)
     {
         var flats = new List<Flat>();
+
+        if (wing.IsPlot)
+        {
+            for (var i = 1; i <= wing.FlatsPerFloor; i++)
+            {
+                flats.Add(new Flat
+                {
+                    WingId = wing.Id,
+                    FlatNo = $"{wing.WingName}{i}",
+                    Sqft = 0,
+                    FlatType = "plot",
+                    Status = "available"
+                });
+            }
+            return flats;
+        }
 
         if (wing.IsBungalow)
         {
@@ -200,7 +276,7 @@ public sealed class WingService : IWingService
                 {
                     WingId = wing.Id,
                     FlatNo = $"{wing.WingName}{i}",
-                    Sqft = defaultSqft,
+                    Sqft = 0,
                     FlatType = "bungalow",
                     Status = "available"
                 });
@@ -217,7 +293,7 @@ public sealed class WingService : IWingService
                 {
                     WingId = wing.Id,
                     FlatNo = $"{wing.WingName}{floor}{pos.ToString().PadLeft(positionWidth, '0')}",
-                    Sqft = defaultSqft,
+                    Sqft = 0,
                     FlatType = "flat",
                     Status = "available"
                 });
@@ -230,7 +306,7 @@ public sealed class WingService : IWingService
             {
                 WingId = wing.Id,
                 FlatNo = $"{wing.WingName}S{shop:D2}",
-                Sqft = defaultSqft,
+                Sqft = 0,
                 FlatType = "shop",
                 Status = "available"
             });
@@ -248,6 +324,7 @@ public sealed class WingService : IWingService
         FlatsPerFloor = w.FlatsPerFloor,
         Shops = w.Shops,
         IsBungalow = w.IsBungalow,
+        IsPlot = w.IsPlot,
         FlatCount = w.Flats.Count
     };
 }
@@ -274,6 +351,7 @@ public sealed class FlatService : IFlatService
             Floors = wing.Floors,
             FlatsPerFloor = wing.FlatsPerFloor,
             IsBungalow = wing.IsBungalow,
+            IsPlot = wing.IsPlot,
             BookedCount = flats.Count(f => f.Status == "booked"),
             AvailableCount = flats.Count(f => f.Status == "available"),
             CancelledCount = flats.Count(f => f.Status == "cancelled"),
@@ -313,7 +391,7 @@ public sealed class FlatService : IFlatService
     internal static int ResolveFloor(Flat flat, Wing wing)
     {
         var flatType = flat.FlatType?.ToLowerInvariant();
-        if (wing.IsBungalow || flatType is "shop" or "bungalow")
+        if (wing.IsPlot || wing.IsBungalow || flatType is "shop" or "bungalow" or "plot")
             return 0;
 
         var suffix = ExtractTowerSuffix(flat.FlatNo, wing);

@@ -33,7 +33,21 @@ public class WingDto
     public int FlatsPerFloor { get; set; }
     public int Shops { get; set; }
     public bool IsBungalow { get; set; }
+    public bool IsPlot { get; set; }
     public int FlatCount { get; set; }
+}
+
+public class CreatePlotDto
+{
+    public Guid SiteId { get; set; }
+    public string PlotName { get; set; } = string.Empty;
+    public int PlotCount { get; set; }
+}
+
+public class UpdatePlotDto
+{
+    public string PlotName { get; set; } = string.Empty;
+    public int PlotCount { get; set; }
 }
 
 public class CreateWingDto
@@ -44,7 +58,6 @@ public class CreateWingDto
     public int FlatsPerFloor { get; set; }
     public int Shops { get; set; }
     public bool IsBungalow { get; set; }
-    public decimal DefaultSqft { get; set; } = 1000;
 }
 
 public class UpdateWingDto
@@ -74,6 +87,7 @@ public class FlatGridDto
     public int Floors { get; set; }
     public int FlatsPerFloor { get; set; }
     public bool IsBungalow { get; set; }
+    public bool IsPlot { get; set; }
     public int BookedCount { get; set; }
     public int AvailableCount { get; set; }
     public int CancelledCount { get; set; }

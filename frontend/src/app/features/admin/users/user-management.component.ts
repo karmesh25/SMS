@@ -8,8 +8,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { ApiService } from '../../../core/services/api.service';
+import { RoleService } from '../../../core/services/role.service';
+import { SiteContextService } from '../../../core/services/site-context.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CurrentUser } from '../../../core/models/api-response.model';
+import { AppRole } from '../../../core/models/permission.model';
 
 @Component({
   selector: 'app-user-management',
@@ -25,7 +28,7 @@ import { CurrentUser } from '../../../core/models/api-response.model';
     PageHeaderComponent
   ],
   template: `
-    <app-page-header title="User Management" subtitle="Manage system users (Super Admin)"></app-page-header>
+    <app-page-header title="Users" subtitle="Create and manage system users"></app-page-header>
 
     <form [formGroup]="form" class="form-grid" (ngSubmit)="createUser()">
       <mat-form-field appearance="outline">
@@ -42,14 +45,23 @@ import { CurrentUser } from '../../../core/models/api-response.model';
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Role</mat-label>
-        <mat-select formControlName="role">
-          @for (role of roles; track role) {
-            <mat-option [value]="role">{{ role }}</mat-option>
+        <mat-select formControlName="roleId">
+          @for (role of availableRoles; track role.id) {
+            <mat-option [value]="role.id">{{ role.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="sites-field">
+        <mat-label>Sites</mat-label>
+        <mat-select formControlName="siteIds" multiple>
+          @for (site of sites(); track site.id) {
+            <mat-option [value]="site.id">{{ site.siteName }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add User</button>
     </form>
+    <p class="password-hint">Password must be 8+ characters with uppercase, number, and special character.</p>
 
     <div class="abr-scroll-x">
 
@@ -65,6 +77,10 @@ import { CurrentUser } from '../../../core/models/api-response.model';
       <ng-container matColumnDef="role">
         <th mat-header-cell *matHeaderCellDef>Role</th>
         <td mat-cell *matCellDef="let row">{{ row.role }}</td>
+      </ng-container>
+      <ng-container matColumnDef="sites">
+        <th mat-header-cell *matHeaderCellDef>Sites</th>
+        <td mat-cell *matCellDef="let row">{{ formatSites(row) }}</td>
       </ng-container>
       <ng-container matColumnDef="isActive">
         <th mat-header-cell *matHeaderCellDef>Active</th>
@@ -93,6 +109,16 @@ import { CurrentUser } from '../../../core/models/api-response.model';
       align-items: center;
     }
 
+    .sites-field {
+      min-width: 160px;
+    }
+
+    .password-hint {
+      margin: -0.5rem 0 1.25rem;
+      color: #666;
+      font-size: 0.8rem;
+    }
+
     table {
       width: 100%;
     }
@@ -100,22 +126,67 @@ import { CurrentUser } from '../../../core/models/api-response.model';
 })
 export class UserManagementComponent implements OnInit {
   private readonly api = inject(ApiService);
+  private readonly roleService = inject(RoleService);
+  private readonly siteContext = inject(SiteContextService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
 
   users: CurrentUser[] = [];
-  roles = ['SuperAdmin', 'Admin', 'OfficeStaff', 'ViewOnly'];
-  displayedColumns = ['username', 'email', 'role', 'isActive', 'actions'];
+  availableRoles: AppRole[] = [];
+  displayedColumns = ['username', 'email', 'role', 'sites', 'isActive', 'actions'];
+  readonly sites = this.siteContext.sites;
 
   readonly form = this.fb.nonNullable.group({
     username: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
-    role: ['OfficeStaff', Validators.required]
+    password: ['', [
+      Validators.required,
+      Validators.minLength(8),
+      Validators.pattern(/^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/)
+    ]],
+    roleId: ['', Validators.required],
+    siteIds: [[] as string[], Validators.required]
   });
 
   ngOnInit(): void {
+    this.loadRoles();
+    this.siteContext.loadSites().subscribe({
+      next: () => this.setDefaultSites()
+    });
     this.loadUsers();
+  }
+
+  private loadRoles(): void {
+    this.roleService.getAll().subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.availableRoles = response.data;
+          const officeStaff = this.availableRoles.find((r) => r.name === 'OfficeStaff');
+          if (officeStaff && !this.form.controls.roleId.value) {
+            this.form.controls.roleId.setValue(officeStaff.id);
+          }
+        }
+      }
+    });
+  }
+
+  private setDefaultSites(): void {
+    const activeSiteId = this.siteContext.activeSiteId();
+    const siteIds = activeSiteId ? [activeSiteId] : this.sites().map((s) => s.id);
+    if (siteIds.length > 0 && this.form.controls.siteIds.value.length === 0) {
+      this.form.controls.siteIds.setValue(siteIds);
+    }
+  }
+
+  formatSites(row: CurrentUser): string {
+    const access = row.siteAccess as unknown as { siteName?: string }[] | string[] | undefined;
+    if (!access?.length) {
+      return '—';
+    }
+    return access
+      .map((s) => (typeof s === 'string' ? s : s.siteName ?? ''))
+      .filter(Boolean)
+      .join(', ');
   }
 
   loadUsers(): void {
@@ -133,11 +204,13 @@ export class UserManagementComponent implements OnInit {
       return;
     }
 
-    this.api.post<CurrentUser>('/users', { ...this.form.getRawValue(), siteIds: [] }).subscribe({
+    this.api.post<CurrentUser>('/users', this.form.getRawValue()).subscribe({
       next: (response) => {
         if (response.success) {
           this.toast.success('User created');
-          this.form.reset({ role: 'OfficeStaff' });
+          const defaultRoleId = this.form.controls.roleId.value;
+          const defaultSites = this.form.controls.siteIds.value;
+          this.form.reset({ roleId: defaultRoleId, siteIds: defaultSites });
           this.loadUsers();
         }
       },

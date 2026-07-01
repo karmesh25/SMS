@@ -1,4 +1,5 @@
 using System.Text;
+using ABR.Api.Authorization;
 using ABR.Api.Middleware;
 using ABR.Application;
 using ABR.Application.Common;
@@ -112,18 +113,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("SuperAdmin", policy => policy.RequireRole(nameof(UserRole.SuperAdmin)));
-    options.AddPolicy("Admin", policy => policy.RequireRole(nameof(UserRole.SuperAdmin), nameof(UserRole.Admin)));
-    options.AddPolicy("Staff", policy => policy.RequireRole(
-        nameof(UserRole.SuperAdmin), nameof(UserRole.Admin), nameof(UserRole.OfficeStaff)));
-    options.AddPolicy("Viewer", policy => policy.RequireRole(
-        nameof(UserRole.SuperAdmin), nameof(UserRole.Admin), nameof(UserRole.OfficeStaff), nameof(UserRole.ViewOnly)));
-});
+builder.Services.AddAuthorization();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection")!);
+builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection")!, builder.Configuration);
 
 builder.Services.AddCors(options =>
 {

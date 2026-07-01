@@ -1,3 +1,4 @@
+using ABR.Api.Authorization;
 using ABR.Application.Common;
 using ABR.Application.DTOs.Reports;
 using ABR.Application.Interfaces;
@@ -9,6 +10,7 @@ namespace ABR.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[RequirePermission(AppModules.Reports, PermissionLevel.View)]
 [Route("api/reports")]
 public class ReportController : ControllerBase
 {

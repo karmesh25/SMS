@@ -13,10 +13,12 @@ public interface ISiteService
 
 public interface IWingService
 {
-    Task<IReadOnlyList<WingDto>> GetBySiteAsync(Guid siteId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<WingDto>> GetBySiteAsync(Guid siteId, string? type = "wing", CancellationToken cancellationToken = default);
     Task<WingDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<WingDto> CreateAsync(CreateWingDto dto, CancellationToken cancellationToken = default);
     Task<WingDto?> UpdateAsync(Guid id, UpdateWingDto dto, CancellationToken cancellationToken = default);
+    Task<WingDto> CreatePlotAsync(CreatePlotDto dto, CancellationToken cancellationToken = default);
+    Task<WingDto?> UpdatePlotAsync(Guid id, UpdatePlotDto dto, CancellationToken cancellationToken = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }
 

@@ -3,11 +3,14 @@ import { Router } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { MasterDataService } from '../../../core/services/master-data.service';
 import { SiteContextService } from '../../../core/services/site-context.service';
 import { BookingDetailDialogComponent } from '../booking-detail/booking-detail-dialog.component';
+
+type ViewMode = 'wing' | 'plot';
 
 interface FlatItem {
   id: string;
@@ -24,18 +27,20 @@ interface FlatGrid {
   floors: number;
   flatsPerFloor: number;
   isBungalow: boolean;
+  isPlot?: boolean;
   bookedCount: number;
   availableCount: number;
   cancelledCount: number;
   flats: FlatItem[];
 }
 
-interface WingOption {
+interface AssetOption {
   id: string;
   wingName: string;
   floors: number;
   flatsPerFloor: number;
   isBungalow: boolean;
+  isPlot?: boolean;
 }
 
 interface FloorGroup {
@@ -47,18 +52,28 @@ interface FloorGroup {
 @Component({
   selector: 'app-flat-grid',
   standalone: true,
-  imports: [MatSelectModule, MatFormFieldModule, MatButtonModule, PageHeaderComponent],
+  imports: [MatSelectModule, MatFormFieldModule, MatButtonModule, MatButtonToggleModule, PageHeaderComponent],
   template: `
-    <app-page-header title="Flat Booking Grid" subtitle="Select wing to view flat status by floor"></app-page-header>
+    <app-page-header
+      title="Wing & Plot Booking Grid"
+      [subtitle]="viewMode === 'wing' ? 'Select a wing to view flat status by floor' : 'Select a plot scheme to view plot units'">
+    </app-page-header>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Wing</mat-label>
-      <mat-select [(value)]="selectedWingId" (selectionChange)="loadGrid()">
-        @for (wing of wings; track wing.id) {
-          <mat-option [value]="wing.id">{{ wing.wingName }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <div class="toolbar">
+      <mat-button-toggle-group [value]="viewMode" (change)="onViewModeChange($event.value)">
+        <mat-button-toggle value="wing">Wing</mat-button-toggle>
+        <mat-button-toggle value="plot">Plot</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ viewMode === 'wing' ? 'Wing' : 'Plot Scheme' }}</mat-label>
+        <mat-select [(value)]="selectedAssetId" (selectionChange)="loadGrid()">
+          @for (asset of assets; track asset.id) {
+            <mat-option [value]="asset.id">{{ asset.wingName }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
 
     @if (grid) {
       <div class="legend">
@@ -90,6 +105,13 @@ interface FloorGroup {
     }
   `,
   styles: [`
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
     .legend { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
     .chip { padding: 0.25rem 0.75rem; border-radius: 4px; color: #fff; font-size: 0.875rem; }
     .chip.available { background: #2c3e50; }
@@ -160,32 +182,49 @@ export class FlatGridComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
 
-  wings: WingOption[] = [];
-  selectedWingId: string | null = null;
+  viewMode: ViewMode = 'wing';
+  assets: AssetOption[] = [];
+  selectedAssetId: string | null = null;
   grid: FlatGrid | null = null;
   floorGroups: FloorGroup[] = [];
 
   ngOnInit(): void {
     const siteId = this.siteContext.activeSiteId();
-    if (siteId) this.loadWings(siteId);
+    if (siteId) this.loadAssets(siteId);
     else {
       this.siteContext.loadSites().subscribe({
         next: () => {
           const id = this.siteContext.activeSiteId();
-          if (id) this.loadWings(id);
+          if (id) this.loadAssets(id);
         }
       });
     }
   }
 
-  loadWings(siteId: string): void {
-    this.masterData.getWings(siteId).subscribe({
+  onViewModeChange(mode: ViewMode): void {
+    this.viewMode = mode;
+    this.grid = null;
+    this.floorGroups = [];
+    const siteId = this.siteContext.activeSiteId();
+    if (siteId) this.loadAssets(siteId);
+  }
+
+  loadAssets(siteId: string): void {
+    const request = this.viewMode === 'wing'
+      ? this.masterData.getWings(siteId)
+      : this.masterData.getPlots(siteId);
+
+    request.subscribe({
       next: (r) => {
         if (r.success) {
-          this.wings = r.data as WingOption[];
-          if (this.wings.length > 0) {
-            this.selectedWingId = this.wings[0].id;
+          this.assets = r.data as AssetOption[];
+          if (this.assets.length > 0) {
+            this.selectedAssetId = this.assets[0].id;
             this.loadGrid();
+          } else {
+            this.selectedAssetId = null;
+            this.grid = null;
+            this.floorGroups = [];
           }
         }
       }
@@ -193,30 +232,40 @@ export class FlatGridComponent implements OnInit {
   }
 
   loadGrid(): void {
-    if (!this.selectedWingId) return;
-    this.masterData.getFlatGrid(this.selectedWingId).subscribe({
+    if (!this.selectedAssetId) return;
+    this.masterData.getFlatGrid(this.selectedAssetId).subscribe({
       next: (r) => {
         if (r.success) {
           this.grid = r.data as FlatGrid;
-          this.applyWingDefaults();
+          this.applyAssetDefaults();
           this.buildFloorGroups();
         }
       }
     });
   }
 
-  private applyWingDefaults(): void {
-    if (!this.grid || !this.selectedWingId) return;
-    const wing = this.wings.find((w) => w.id === this.selectedWingId);
-    if (!wing) return;
+  private applyAssetDefaults(): void {
+    if (!this.grid || !this.selectedAssetId) return;
+    const asset = this.assets.find((w) => w.id === this.selectedAssetId);
+    if (!asset) return;
 
-    if (!this.grid.floors) this.grid.floors = wing.floors;
-    if (!this.grid.flatsPerFloor) this.grid.flatsPerFloor = wing.flatsPerFloor;
-    if (this.grid.isBungalow === undefined) this.grid.isBungalow = wing.isBungalow;
+    if (!this.grid.floors) this.grid.floors = asset.floors;
+    if (!this.grid.flatsPerFloor) this.grid.flatsPerFloor = asset.flatsPerFloor;
+    if (this.grid.isBungalow === undefined) this.grid.isBungalow = asset.isBungalow;
+    if (this.grid.isPlot === undefined) this.grid.isPlot = asset.isPlot ?? this.viewMode === 'plot';
   }
 
   buildFloorGroups(): void {
     if (!this.grid) return;
+
+    if (this.grid.isPlot || this.viewMode === 'plot') {
+      this.floorGroups = [{
+        key: 'plots',
+        title: this.grid.wingName,
+        flats: this.sortFlats([...this.grid.flats])
+      }];
+      return;
+    }
 
     const towerMap = new Map<number, FlatItem[]>();
     const shops: FlatItem[] = [];
@@ -289,8 +338,12 @@ export class FlatGridComponent implements OnInit {
     return (flat.flatType ?? '').toLowerCase() === 'shop';
   }
 
+  private isPlotUnit(flat: FlatItem): boolean {
+    return (flat.flatType ?? '').toLowerCase() === 'plot';
+  }
+
   private resolveFloor(flat: FlatItem): number {
-    if (!this.grid || this.grid.isBungalow || this.isShop(flat)) {
+    if (!this.grid || this.grid.isPlot || this.grid.isBungalow || this.isShop(flat) || this.isPlotUnit(flat)) {
       return 0;
     }
 

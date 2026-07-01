@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
+import { FileDownloadService } from './file-download.service';
 
 export interface DailyEntry {
   id: string;
@@ -50,6 +51,7 @@ export interface DailyEntryImportResult {
 @Injectable({ providedIn: 'root' })
 export class DailyEntryService {
   private readonly api = inject(ApiService);
+  private readonly downloads = inject(FileDownloadService);
 
   getList(params: Record<string, string | number | boolean>) {
     return this.api.get<{ items: DailyEntry[]; totalCount: number }>('/daily-entries', params);
@@ -76,7 +78,7 @@ export class DailyEntryService {
   }
 
   downloadImportSample() {
-    return this.api.downloadBlob('/daily-entries/import/sample');
+    return this.downloads.download('/daily-entries/import/sample');
   }
 
   importExcel(siteId: string, file: File) {
@@ -86,6 +88,6 @@ export class DailyEntryService {
   }
 
   exportLedgerExcel(siteId: string, params?: { dateFrom?: string; dateTo?: string }) {
-    return this.api.downloadBlob('/daily-entries/export/ledger-excel', { siteId, ...params });
+    return this.downloads.download('/daily-entries/export/ledger-excel', { siteId, ...params });
   }
 }

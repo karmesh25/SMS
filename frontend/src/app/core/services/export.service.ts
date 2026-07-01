@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, finalize, switchMap } from 'rxjs';
-import { ApiService } from './api.service';
+import { finalize } from 'rxjs';
 import { LoaderService } from './loader.service';
 import { ToastService } from './toast.service';
+import { FileDownloadOutcome, FileDownloadService } from './file-download.service';
 
 export type ReportExportType =
   | 'all-entry'
@@ -16,7 +16,7 @@ export type ReportExportType =
 
 @Injectable({ providedIn: 'root' })
 export class ExportService {
-  private readonly api = inject(ApiService);
+  private readonly downloads = inject(FileDownloadService);
   private readonly loader = inject(LoaderService);
   private readonly toast = inject(ToastService);
 
@@ -40,59 +40,24 @@ export class ExportService {
   ): void {
     const params = { reportType, ...filters };
     this.loader.show();
-    this.api.downloadBlob(path, params).pipe(
-      switchMap(blob => this.ensureBlob(blob)),
+    this.downloads.download(path, params).pipe(
       finalize(() => this.loader.hide())
     ).subscribe({
-      next: (blob) => {
-        const filename = `${reportType}-${new Date().toISOString().slice(0, 10)}.${fallbackExt}`;
-        this.triggerDownload(blob, filename);
-        this.toast.success('Export downloaded');
-      },
-      error: (err) => {
-        if (err instanceof HttpErrorResponse && err.error instanceof Blob) {
-          err.error.text().then(text => {
-            try {
-              const parsed = JSON.parse(text) as { message?: string };
-              this.toast.error(parsed.message ?? 'Export failed');
-            } catch {
-              this.toast.error('Export failed');
-            }
-          });
-          return;
-        }
-        this.toast.error(this.extractError(err));
-      }
+      next: (outcome) => this.handleOutcome(outcome, `${reportType}-${new Date().toISOString().slice(0, 10)}.${fallbackExt}`),
+      error: (err) => this.toast.error(this.extractError(err))
     });
   }
 
-  private ensureBlob(blob: Blob): Observable<Blob> {
-    if (blob.type !== 'application/json') {
-      return new Observable(observer => {
-        observer.next(blob);
-        observer.complete();
-      });
+  private handleOutcome(outcome: FileDownloadOutcome, fallbackFilename: string): void {
+    if (outcome.mode === 'pendrive') {
+      this.toast.success(outcome.message ?? `Saved to pendrive: ${outcome.savedPath ?? outcome.filename ?? 'export'}`);
+      return;
     }
 
-    return new Observable(observer => {
-      blob.text().then(text => {
-        try {
-          const parsed = JSON.parse(text) as { message?: string };
-          observer.error(new Error(parsed.message ?? 'Export failed'));
-        } catch {
-          observer.error(new Error('Export failed'));
-        }
-      }).catch(() => observer.error(new Error('Export failed')));
-    });
-  }
-
-  private triggerDownload(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    if (outcome.blob) {
+      this.downloads.saveToBrowser(outcome.blob, outcome.filename ?? fallbackFilename);
+      this.toast.success('Export downloaded');
+    }
   }
 
   private extractError(err: unknown): string {

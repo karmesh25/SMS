@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { HasRoleDirective } from '../../../shared/directives/has-role.directive';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
 import { VyajPartySummary } from '../models/vyaj.models';
 
@@ -17,7 +17,7 @@ import { VyajPartySummary } from '../models/vyaj.models';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    HasRoleDirective,
+    HasPermissionDirective,
     IndianCurrencyPipe
   ],
   templateUrl: './party-sidebar.component.html',

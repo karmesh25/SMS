@@ -17,7 +17,7 @@ public class DashboardController : ControllerBase
     public DashboardController(IDashboardService service) => _service = service;
 
     [HttpGet("summary")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    [RequirePermission(AppModules.Dashboard, PermissionLevel.View)]
     public async Task<ActionResult<ApiResponse<DashboardSummaryDto>>> GetSummary([FromQuery] Guid siteId, CancellationToken cancellationToken)
     {
         if (siteId == Guid.Empty)

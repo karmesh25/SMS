@@ -3,7 +3,7 @@ namespace ABR.Application.Common;
 public static class SubscriptionLicense
 {
     public static readonly bool Enabled = true;
-    public static readonly DateOnly ExpiryDate = new(2026, 7, 20);
+    public static readonly DateOnly ExpiryDate = new(2028, 7, 20);
 
     public const string ExpiredMessage = "License expired. Please contact your administrator.";
 

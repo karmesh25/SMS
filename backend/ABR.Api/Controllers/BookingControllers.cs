@@ -65,7 +65,7 @@ public class BookingController : ControllerBase
         return Ok(ApiResponse<FlatDetailDto>.Ok(flat));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Booking, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<BookingDto>>> Create([FromBody] CreateBookingDto dto, CancellationToken cancellationToken)
     {
@@ -84,7 +84,7 @@ public class BookingController : ControllerBase
         }
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Booking, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<BookingDto>>> Update(Guid id, [FromBody] UpdateBookingDto dto, CancellationToken cancellationToken)
     {
@@ -104,7 +104,7 @@ public class BookingController : ControllerBase
         }
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Booking, PermissionLevel.Manage)]
     [HttpPost("{id:guid}/cancel")]
     public async Task<ActionResult<ApiResponse<BookingDto>>> Cancel(Guid id, [FromBody] CancelBookingDto dto, CancellationToken cancellationToken)
     {
@@ -125,13 +125,14 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet("dastavej/{siteId:guid}")]
+    [RequirePermission(AppModules.Dastavej, PermissionLevel.View)]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<DastavejBookingListDto>>>> GetDastavejList(Guid siteId, CancellationToken cancellationToken)
     {
         var list = await _bookingService.GetDastavejListAsync(siteId, cancellationToken);
         return Ok(ApiResponse<IReadOnlyList<DastavejBookingListDto>>.Ok(list));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Dastavej, PermissionLevel.Manage)]
     [HttpPut("{id:guid}/dastavej-satakhat")]
     public async Task<ActionResult<ApiResponse<BookingDto>>> UpdateDastavej(Guid id, [FromBody] UpdateDastavejDto dto, CancellationToken cancellationToken)
     {
@@ -175,7 +176,7 @@ public class InstallmentController : ControllerBase
         }
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Booking, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<InstallmentDto>>> RecordPayment([FromBody] RecordPaymentDto dto, CancellationToken cancellationToken)
     {

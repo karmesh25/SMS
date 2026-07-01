@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
-import { roleGuard } from './core/guards/role.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -55,37 +55,37 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    canActivate: [authGuard],
+    canActivate: [authGuard, permissionGuard('dashboard', 'view')],
     data: { breadcrumb: 'Dashboard' },
     loadChildren: () => import('./features/dashboard/dashboard.routes').then(m => m.DASHBOARD_ROUTES)
   },
   {
     path: 'admin',
-    canActivate: [authGuard, roleGuard('SuperAdmin', 'Admin')],
+    canActivate: [authGuard],
     data: { breadcrumb: 'Admin' },
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
   },
   {
     path: 'booking',
-    canActivate: [authGuard, roleGuard('SuperAdmin', 'Admin', 'OfficeStaff')],
+    canActivate: [authGuard, permissionGuard('booking', 'view')],
     data: { breadcrumb: 'Booking' },
     loadChildren: () => import('./features/booking/booking.routes').then(m => m.BOOKING_ROUTES)
   },
   {
     path: 'accounting',
-    canActivate: [authGuard, roleGuard('SuperAdmin', 'Admin', 'OfficeStaff')],
+    canActivate: [authGuard],
     data: { breadcrumb: 'Accounting' },
     loadChildren: () => import('./features/accounting/accounting.routes').then(m => m.ACCOUNTING_ROUTES)
   },
   {
     path: 'vyaj',
-    canActivate: [authGuard, roleGuard('SuperAdmin', 'Admin', 'OfficeStaff', 'ViewOnly')],
+    canActivate: [authGuard, permissionGuard('vyaj', 'view')],
     data: { breadcrumb: 'Vyaj Khata' },
     loadChildren: () => import('./features/vyaj/vyaj.routes').then(m => m.VYAJ_ROUTES)
   },
   {
     path: 'reports',
-    canActivate: [authGuard],
+    canActivate: [authGuard, permissionGuard('reports', 'view')],
     data: { breadcrumb: 'Reports' },
     loadChildren: () => import('./features/reports/reports.routes').then(m => m.REPORTS_ROUTES)
   },

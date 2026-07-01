@@ -34,7 +34,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpGet("parties")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.View)]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<VyajPartySummaryDto>>>> GetParties([FromQuery] Guid siteId, CancellationToken cancellationToken)
     {
         if (siteId == Guid.Empty)
@@ -45,7 +45,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpGet("parties/{id:guid}")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.View)]
     public async Task<ActionResult<ApiResponse<VyajPartyDetailDto>>> GetPartyDetail(Guid id, CancellationToken cancellationToken)
     {
         try
@@ -60,7 +60,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpPost("parties")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<VyajPartySummaryDto>>> CreateParty([FromBody] CreateVyajPartyDto dto, CancellationToken cancellationToken)
     {
         var validation = await _createPartyValidator.ValidateAsync(dto, cancellationToken);
@@ -79,7 +79,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpPut("parties/{id:guid}")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<VyajPartySummaryDto>>> UpdateParty(Guid id, [FromBody] UpdateVyajPartyDto dto, CancellationToken cancellationToken)
     {
         var validation = await _updatePartyValidator.ValidateAsync(dto, cancellationToken);
@@ -98,7 +98,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpDelete("parties/{id:guid}")]
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<object>>> DeleteParty(Guid id, CancellationToken cancellationToken)
     {
         try
@@ -113,7 +113,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpPost("entries")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<VyajEntryDto>>> CreateEntry([FromBody] CreateVyajEntryDto dto, CancellationToken cancellationToken)
     {
         var validation = await _createEntryValidator.ValidateAsync(dto, cancellationToken);
@@ -132,7 +132,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpPatch("entries/{id:guid}/closed")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<VyajEntryDto>>> ToggleEntryClosed(Guid id, [FromBody] ToggleVyajEntryClosedDto dto, CancellationToken cancellationToken)
     {
         try
@@ -147,7 +147,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpDelete("entries/{id:guid}")]
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<object>>> DeleteEntry(Guid id, CancellationToken cancellationToken)
     {
         try
@@ -162,7 +162,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpPost("payments")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<VyajPaymentDto>>> CreatePayment([FromBody] CreateVyajPaymentDto dto, CancellationToken cancellationToken)
     {
         var validation = await _createPaymentValidator.ValidateAsync(dto, cancellationToken);
@@ -181,7 +181,7 @@ public class VyajController : ControllerBase
     }
 
     [HttpDelete("payments/{id:guid}")]
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
     public async Task<ActionResult<ApiResponse<object>>> DeletePayment(Guid id, CancellationToken cancellationToken)
     {
         try

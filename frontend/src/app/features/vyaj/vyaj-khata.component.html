@@ -26,7 +26,7 @@
           }
         </mat-select>
       </mat-form-field>
-      <div class="mobile-add-party" *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']">
+      <div class="mobile-add-party" *appHasPermission="'vyaj'; level: 'manage'">
         <mat-form-field appearance="outline" class="party-name-field">
           <mat-label>New party name</mat-label>
           <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitNewParty()" />
@@ -81,7 +81,7 @@
           <button
             mat-flat-button
             color="primary"
-            *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']"
+            *appHasPermission="'vyaj'; level: 'manage'"
             (click)="addEntryOpen.set(!addEntryOpen())">
             <mat-icon>add</mat-icon>
             Add entry

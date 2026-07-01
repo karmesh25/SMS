@@ -13,7 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { LoaderComponent } from './shared/components/loader/loader.component';
 import { BreadcrumbComponent } from './shared/components/breadcrumb/breadcrumb.component';
-import { HasRoleDirective } from './shared/directives/has-role.directive';
+import { HasPermissionDirective } from './shared/directives/has-permission.directive';
 import { AuthService } from './core/services/auth.service';
 import { SiteContextService } from './core/services/site-context.service';
 
@@ -21,13 +21,12 @@ export interface NavLink {
   label: string;
   route: string;
   icon: string;
-  roles: string[];
+  moduleKey: string;
   exact?: boolean;
 }
 
 export interface NavSection {
   title: string;
-  roles: string[];
   items: NavLink[];
 }
 
@@ -48,7 +47,7 @@ export interface NavSection {
     MatDividerModule,
     LoaderComponent,
     BreadcrumbComponent,
-    HasRoleDirective
+    HasPermissionDirective
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
@@ -67,7 +66,6 @@ export class AppComponent {
     { initialValue: false }
   );
 
-  /** Small phones (≤599px) */
   readonly isHandset = toSignal(
     this.breakpointObserver.observe('(max-width: 599px)').pipe(map((r) => r.matches)),
     { initialValue: false }
@@ -100,39 +98,35 @@ export class AppComponent {
   readonly navSections: NavSection[] = [
     {
       title: 'Site Admin',
-      roles: ['SuperAdmin', 'Admin'],
       items: [
-        { label: 'Sites', route: '/admin/sites', icon: 'location_city', roles: ['SuperAdmin', 'Admin'] },
-        { label: 'Wings', route: '/admin/wings', icon: 'domain', roles: ['SuperAdmin', 'Admin'] },
-        { label: 'Conditions', route: '/admin/conditions', icon: 'rule', roles: ['SuperAdmin', 'Admin'] },
-        { label: 'Ledgers', route: '/admin/ledgers', icon: 'menu_book', roles: ['SuperAdmin', 'Admin'] },
-        { label: 'Banks', route: '/admin/banks', icon: 'account_balance', roles: ['SuperAdmin', 'Admin'] },
-        { label: 'Brokers', route: '/admin/brokers', icon: 'handshake', roles: ['SuperAdmin', 'Admin'] },
-        { label: 'Users', route: '/admin/users', icon: 'people', roles: ['SuperAdmin'] },
-        { label: 'Devices', route: '/admin/devices', icon: 'phonelink_lock', roles: ['SuperAdmin'] }
+        { label: 'Sites', route: '/admin/sites', icon: 'location_city', moduleKey: 'sites' },
+        { label: 'Wings & Plots', route: '/admin/wings', icon: 'domain', moduleKey: 'wings' },
+        { label: 'Conditions', route: '/admin/conditions', icon: 'rule', moduleKey: 'conditions' },
+        { label: 'Ledgers', route: '/admin/ledgers', icon: 'menu_book', moduleKey: 'ledgers' },
+        { label: 'Banks', route: '/admin/banks', icon: 'account_balance', moduleKey: 'banks' },
+        { label: 'Brokers', route: '/admin/brokers', icon: 'handshake', moduleKey: 'brokers' },
+        { label: 'Users', route: '/admin/users', icon: 'people', moduleKey: 'users' },
+        { label: 'Devices', route: '/admin/devices', icon: 'phonelink_lock', moduleKey: 'devices' }
       ]
     },
     {
       title: 'Booking',
-      roles: ['SuperAdmin', 'Admin', 'OfficeStaff'],
       items: [
-        { label: 'Flat Grid', route: '/booking', icon: 'grid_view', roles: ['SuperAdmin', 'Admin', 'OfficeStaff'], exact: true }
+        { label: 'Booking Grid', route: '/booking', icon: 'grid_view', moduleKey: 'booking', exact: true }
       ]
     },
     {
       title: 'Accounting',
-      roles: ['SuperAdmin', 'Admin', 'OfficeStaff', 'ViewOnly'],
       items: [
-        { label: 'Daily Entry', route: '/accounting', icon: 'receipt', roles: ['SuperAdmin', 'Admin', 'OfficeStaff'], exact: true },
-        { label: 'Dastavej', route: '/accounting/dastavej', icon: 'description', roles: ['SuperAdmin', 'Admin', 'OfficeStaff'] },
-        { label: 'Vyaj Khata', route: '/vyaj', icon: 'menu_book', roles: ['SuperAdmin', 'Admin', 'OfficeStaff', 'ViewOnly'], exact: true }
+        { label: 'Daily Entry', route: '/accounting', icon: 'receipt', moduleKey: 'daily_entry', exact: true },
+        { label: 'Dastavej', route: '/accounting/dastavej', icon: 'description', moduleKey: 'dastavej' },
+        { label: 'Vyaj Khata', route: '/vyaj', icon: 'menu_book', moduleKey: 'vyaj', exact: true }
       ]
     },
     {
       title: 'Reports',
-      roles: ['SuperAdmin', 'Admin', 'OfficeStaff', 'ViewOnly'],
       items: [
-        { label: 'All Reports', route: '/reports', icon: 'assessment', roles: ['SuperAdmin', 'Admin', 'OfficeStaff', 'ViewOnly'], exact: true }
+        { label: 'All Reports', route: '/reports', icon: 'assessment', moduleKey: 'reports', exact: true }
       ]
     }
   ];
@@ -141,9 +135,19 @@ export class AppComponent {
     label: 'Dashboard',
     route: '/dashboard',
     icon: 'dashboard',
-    roles: ['SuperAdmin', 'Admin', 'OfficeStaff', 'ViewOnly'],
+    moduleKey: 'dashboard',
     exact: true
   };
+
+  readonly visibleNavSections = computed(() => {
+    this.authService.currentUser();
+    return this.navSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => this.authService.hasPermission(item.moduleKey, 'view'))
+      }))
+      .filter((section) => section.items.length > 0);
+  });
 
   constructor() {
     effect(() => {

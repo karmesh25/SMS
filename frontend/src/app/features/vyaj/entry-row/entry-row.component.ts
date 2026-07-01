@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { HasRoleDirective } from '../../../shared/directives/has-role.directive';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { IndianAmountDirective } from '../../../shared/directives/indian-amount.directive';
 import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
@@ -25,7 +25,7 @@ import { PAYMENT_TYPE_OPTIONS, VyajEntry } from '../models/vyaj.models';
     MatSelectModule,
     MatSlideToggleModule,
     MatTooltipModule,
-    HasRoleDirective,
+    HasPermissionDirective,
     IndianAmountDirective,
     AppDatePipe,
     IndianCurrencyPipe

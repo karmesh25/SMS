@@ -12,7 +12,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { catchError, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
-import { HasRoleDirective } from '../../shared/directives/has-role.directive';
+import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
 import { AuthService } from '../../core/services/auth.service';
 import { SiteContextService } from '../../core/services/site-context.service';
@@ -36,7 +36,7 @@ import { RateBasis, VyajPartyDetail, VyajPartySummary } from './models/vyaj.mode
     MatProgressBarModule,
     MatSelectModule,
     PageHeaderComponent,
-    HasRoleDirective,
+    HasPermissionDirective,
     IndianCurrencyPipe,
     VyajPartySidebarComponent,
     VyajAddEntryPanelComponent,
@@ -65,7 +65,7 @@ export class VyajKhataComponent {
   readonly partyDetail = signal<VyajPartyDetail | null>(null);
   readonly addEntryOpen = signal(false);
 
-  readonly readOnly = computed(() => this.authService.hasRole('ViewOnly'));
+  readonly readOnly = computed(() => !this.authService.hasPermission('vyaj', 'manage'));
 
   constructor() {
     toObservable(this.siteContext.activeSiteId)

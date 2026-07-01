@@ -37,7 +37,7 @@ public class SiteController : ControllerBase
         return Ok(ApiResponse<SiteDto>.Ok(site));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Sites, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<SiteDto>>> Create([FromBody] CreateSiteDto dto, CancellationToken cancellationToken)
     {
@@ -49,7 +49,7 @@ public class SiteController : ControllerBase
         return Ok(ApiResponse<SiteDto>.Ok(site, "Site created."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Sites, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<SiteDto>>> Update(Guid id, [FromBody] UpdateSiteDto dto, CancellationToken cancellationToken)
     {
@@ -58,7 +58,7 @@ public class SiteController : ControllerBase
         return Ok(ApiResponse<SiteDto>.Ok(site, "Site updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Sites, PermissionLevel.Manage)]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -83,13 +83,16 @@ public class WingController : ControllerBase
     }
 
     [HttpGet("{siteId:guid}")]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<WingDto>>>> GetBySite(Guid siteId, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<WingDto>>>> GetBySite(
+        Guid siteId,
+        [FromQuery] string? type,
+        CancellationToken cancellationToken)
     {
-        var wings = await _wingService.GetBySiteAsync(siteId, cancellationToken);
+        var wings = await _wingService.GetBySiteAsync(siteId, type ?? "wing", cancellationToken);
         return Ok(ApiResponse<IReadOnlyList<WingDto>>.Ok(wings));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Wings, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<WingDto>>> Create([FromBody] CreateWingDto dto, CancellationToken cancellationToken)
     {
@@ -101,7 +104,7 @@ public class WingController : ControllerBase
         return Ok(ApiResponse<WingDto>.Ok(wing, "Wing created with flats."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Wings, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<WingDto>>> Update(Guid id, [FromBody] UpdateWingDto dto, CancellationToken cancellationToken)
     {
@@ -110,7 +113,7 @@ public class WingController : ControllerBase
         return Ok(ApiResponse<WingDto>.Ok(wing, "Wing updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Wings, PermissionLevel.Manage)]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -119,6 +122,74 @@ public class WingController : ControllerBase
             var deleted = await _wingService.DeleteAsync(id, cancellationToken);
             if (!deleted) return NotFound(ApiResponse<object>.Fail("Wing not found."));
             return Ok(ApiResponse<object>.Ok(new { }, "Wing deleted."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
+}
+
+[ApiController]
+[Authorize]
+[Route("api/plots")]
+public class PlotController : ControllerBase
+{
+    private readonly IWingService _wingService;
+    private readonly IValidator<CreatePlotDto> _createValidator;
+    private readonly IValidator<UpdatePlotDto> _updateValidator;
+
+    public PlotController(
+        IWingService wingService,
+        IValidator<CreatePlotDto> createValidator,
+        IValidator<UpdatePlotDto> updateValidator)
+    {
+        _wingService = wingService;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
+    }
+
+    [HttpGet("{siteId:guid}")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<WingDto>>>> GetBySite(Guid siteId, CancellationToken cancellationToken)
+    {
+        var plots = await _wingService.GetBySiteAsync(siteId, "plot", cancellationToken);
+        return Ok(ApiResponse<IReadOnlyList<WingDto>>.Ok(plots));
+    }
+
+    [RequirePermission(AppModules.Wings, PermissionLevel.Manage)]
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<WingDto>>> Create([FromBody] CreatePlotDto dto, CancellationToken cancellationToken)
+    {
+        var validation = await _createValidator.ValidateAsync(dto, cancellationToken);
+        if (!validation.IsValid)
+            return BadRequest(ApiResponse<WingDto>.Fail("Validation failed.", validation.Errors.Select(e => e.ErrorMessage).ToList()));
+
+        var plot = await _wingService.CreatePlotAsync(dto, cancellationToken);
+        return Ok(ApiResponse<WingDto>.Ok(plot, "Plot scheme created with units."));
+    }
+
+    [RequirePermission(AppModules.Wings, PermissionLevel.Manage)]
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<WingDto>>> Update(Guid id, [FromBody] UpdatePlotDto dto, CancellationToken cancellationToken)
+    {
+        var validation = await _updateValidator.ValidateAsync(dto, cancellationToken);
+        if (!validation.IsValid)
+            return BadRequest(ApiResponse<WingDto>.Fail("Validation failed.", validation.Errors.Select(e => e.ErrorMessage).ToList()));
+
+        var plot = await _wingService.UpdatePlotAsync(id, dto, cancellationToken);
+        if (plot is null) return NotFound(ApiResponse<WingDto>.Fail("Plot not found."));
+        return Ok(ApiResponse<WingDto>.Ok(plot, "Plot updated."));
+    }
+
+    [RequirePermission(AppModules.Wings, PermissionLevel.Manage)]
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var deleted = await _wingService.DeleteAsync(id, cancellationToken);
+            if (!deleted) return NotFound(ApiResponse<object>.Fail("Plot not found."));
+            return Ok(ApiResponse<object>.Ok(new { }, "Plot deleted."));
         }
         catch (InvalidOperationException ex)
         {
@@ -179,7 +250,7 @@ public class MainLedgerController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<MainLedgerDto>>.Ok(ledgers));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Ledgers, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<MainLedgerDto>>> Create([FromBody] CreateMainLedgerDto dto, CancellationToken cancellationToken)
     {
@@ -191,7 +262,7 @@ public class MainLedgerController : ControllerBase
         return Ok(ApiResponse<MainLedgerDto>.Ok(ledger, "Main ledger created."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Ledgers, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<MainLedgerDto>>> Update(Guid id, [FromBody] CreateMainLedgerDto dto, CancellationToken cancellationToken)
     {
@@ -200,7 +271,7 @@ public class MainLedgerController : ControllerBase
         return Ok(ApiResponse<MainLedgerDto>.Ok(ledger, "Main ledger updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Ledgers, PermissionLevel.Manage)]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -245,7 +316,7 @@ public class SubLedgerController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<SubLedgerDto>>.Ok(ledgers));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Ledgers, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<SubLedgerDto>>> Create([FromBody] CreateSubLedgerDto dto, CancellationToken cancellationToken)
     {
@@ -257,7 +328,7 @@ public class SubLedgerController : ControllerBase
         return Ok(ApiResponse<SubLedgerDto>.Ok(ledger, "Sub ledger created."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Ledgers, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<SubLedgerDto>>> Update(Guid id, [FromBody] CreateSubLedgerDto dto, CancellationToken cancellationToken)
     {
@@ -266,7 +337,7 @@ public class SubLedgerController : ControllerBase
         return Ok(ApiResponse<SubLedgerDto>.Ok(ledger, "Sub ledger updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Ledgers, PermissionLevel.Manage)]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -315,7 +386,7 @@ public class ConditionController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ConditionDto>>.Ok(conditions));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Conditions, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ConditionDto>>> Create([FromBody] CreateConditionDto dto, CancellationToken cancellationToken)
     {
@@ -334,7 +405,7 @@ public class ConditionController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ConditionItemDto>>.Ok(items));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Conditions, PermissionLevel.Manage)]
     [HttpPost("{id:guid}/items")]
     public async Task<ActionResult<ApiResponse<ConditionItemDto>>> AddItem(Guid id, [FromBody] CreateConditionItemDto dto, CancellationToken cancellationToken)
     {
@@ -346,7 +417,7 @@ public class ConditionController : ControllerBase
         return Ok(ApiResponse<ConditionItemDto>.Ok(item, "Condition item added."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Conditions, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<ConditionDto>>> Update(Guid id, [FromBody] UpdateConditionDto dto, CancellationToken cancellationToken)
     {
@@ -359,7 +430,7 @@ public class ConditionController : ControllerBase
         return Ok(ApiResponse<ConditionDto>.Ok(condition, "Condition updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Conditions, PermissionLevel.Manage)]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -375,7 +446,7 @@ public class ConditionController : ControllerBase
         }
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Conditions, PermissionLevel.Manage)]
     [HttpPut("items/{itemId:guid}")]
     public async Task<ActionResult<ApiResponse<ConditionItemDto>>> UpdateItem(Guid itemId, [FromBody] UpdateConditionItemDto dto, CancellationToken cancellationToken)
     {
@@ -395,7 +466,7 @@ public class ConditionController : ControllerBase
         }
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Conditions, PermissionLevel.Manage)]
     [HttpDelete("items/{itemId:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> DeleteItem(Guid itemId, CancellationToken cancellationToken)
     {
@@ -433,7 +504,7 @@ public class BankController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<BankAccountDto>>.Ok(banks));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Banks, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<BankAccountDto>>> Create([FromBody] CreateBankAccountDto dto, CancellationToken cancellationToken)
     {
@@ -445,7 +516,7 @@ public class BankController : ControllerBase
         return Ok(ApiResponse<BankAccountDto>.Ok(bank, "Bank account created."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Banks, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<BankAccountDto>>> Update(Guid id, [FromBody] UpdateBankAccountDto dto, CancellationToken cancellationToken)
     {
@@ -454,7 +525,7 @@ public class BankController : ControllerBase
         return Ok(ApiResponse<BankAccountDto>.Ok(bank, "Bank account updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Banks, PermissionLevel.Manage)]
     [HttpPut("{id:guid}/toggle")]
     public async Task<ActionResult<ApiResponse<object>>> Toggle(Guid id, CancellationToken cancellationToken)
     {
@@ -485,7 +556,7 @@ public class BrokerController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<BrokerDto>>.Ok(brokers));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Brokers, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<BrokerDto>>> Create([FromBody] CreateBrokerDto dto, CancellationToken cancellationToken)
     {
@@ -497,7 +568,7 @@ public class BrokerController : ControllerBase
         return Ok(ApiResponse<BrokerDto>.Ok(broker, "Broker created."));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.Brokers, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<BrokerDto>>> Update(Guid id, [FromBody] CreateBrokerDto dto, CancellationToken cancellationToken)
     {
@@ -506,7 +577,7 @@ public class BrokerController : ControllerBase
         return Ok(ApiResponse<BrokerDto>.Ok(broker, "Broker updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin")]
+    [RequirePermission(AppModules.Brokers, PermissionLevel.Manage)]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {

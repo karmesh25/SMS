@@ -5,10 +5,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Booking, BookingService, InstallmentSummary } from '../../../core/services/booking.service';
+import { Booking, BookingService, InstallmentMilestone, InstallmentSummary } from '../../../core/services/booking.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
 import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
+import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { RecordPaymentDialogComponent } from './record-payment-dialog.component';
 
 export interface BookingDetailDialogData {
@@ -19,14 +21,16 @@ export interface BookingDetailDialogData {
 @Component({
   selector: 'app-booking-detail-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, MatTableModule, MatIconModule, MatProgressBarModule, IndianCurrencyPipe, AppDatePipe],
+  imports: [MatDialogModule, MatButtonModule, MatTableModule, MatIconModule, MatProgressBarModule, IndianCurrencyPipe, AppDatePipe, HasPermissionDirective],
   template: `
-    <h2 mat-dialog-title>Flat {{ booking?.flatNo ?? 'Details' }}</h2>
+    <h2 mat-dialog-title>{{ unitLabel }} {{ booking?.flatNo ?? 'Details' }}</h2>
     <mat-dialog-content>
       @if (booking) {
         <div class="summary">
           <p><strong>Member:</strong> {{ booking.memberName }}</p>
+          <p><strong>Contact:</strong> {{ booking.customerContact || '—' }}</p>
           <p><strong>Wing:</strong> {{ booking.wingName }} | <strong>Status:</strong> {{ booking.status }}</p>
+          <p><strong>Total SQFT:</strong> {{ booking.sqft }} | <strong>Rate/SQFT:</strong> {{ booking.rate | indianCurrency }}</p>
           <p><strong>Total Price:</strong> {{ booking.totalPrice | indianCurrency }} | <strong>Broker:</strong> {{ booking.brokerName ?? 'None' }}</p>
           <p><strong>Condition:</strong> {{ booking.conditionName }} | <strong>Date:</strong> {{ booking.bookingDate | appDate }}</p>
         </div>
@@ -45,7 +49,7 @@ export interface BookingDetailDialogData {
             <ng-container matColumnDef="paidAmount"><th mat-header-cell *matHeaderCellDef>Paid</th><td mat-cell *matCellDef="let row">{{ row.paidAmount | indianCurrency }}</td></ng-container>
             <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let row"><span [class]="'status-' + row.status">{{ row.status }}</span></td></ng-container>
             <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef></th><td mat-cell *matCellDef="let row">
-              @if (booking.status === 'active' && row.status !== 'paid') {
+              @if (booking.status === 'active' && row.status !== 'paid' && authService.hasPermission('booking', 'manage')) {
                 <button mat-button (click)="recordPayment(row)">Pay</button>
               }
             </td></ng-container>
@@ -65,6 +69,15 @@ export interface BookingDetailDialogData {
       <button mat-button (click)="close()">Close</button>
       @if (booking) {
         <button mat-button (click)="goDastavej()">Dastavej</button>
+      }
+      @if (booking && booking.status === 'active' && nextPendingMilestone()) {
+        <button
+          mat-flat-button
+          color="accent"
+          *appHasPermission="'booking'; level: 'manage'"
+          (click)="addBookingPayment()">
+          Add Booking Payment
+        </button>
       }
       @if (booking && booking.status === 'active') {
         <button mat-flat-button color="primary" (click)="edit()">Edit Booking</button>
@@ -87,6 +100,7 @@ export interface BookingDetailDialogData {
 })
 export class BookingDetailDialogComponent implements OnInit {
   readonly data = inject<BookingDetailDialogData>(MAT_DIALOG_DATA);
+  readonly authService = inject(AuthService);
   private readonly dialogRef = inject(MatDialogRef<BookingDetailDialogComponent>);
   private readonly bookingService = inject(BookingService);
   private readonly router = inject(Router);
@@ -97,6 +111,7 @@ export class BookingDetailDialogComponent implements OnInit {
   installments: InstallmentSummary | null = null;
   loading = true;
   cols = ['milestoneName', 'dueDate', 'dueAmount', 'paidAmount', 'status', 'actions'];
+  unitLabel = 'Flat';
 
   ngOnInit(): void {
     if (this.data.flatStatus === 'available') {
@@ -127,10 +142,35 @@ export class BookingDetailDialogComponent implements OnInit {
     });
   }
 
-  recordPayment(milestone: InstallmentSummary['milestones'][0]): void {
+  nextPendingMilestone(): InstallmentMilestone | null {
+    if (!this.installments?.milestones?.length) return null;
+    const pending = this.installments.milestones
+      .filter((m) => m.status !== 'paid' && m.remainingAmount > 0)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return pending[0] ?? null;
+  }
+
+  recordPayment(milestone: InstallmentMilestone): void {
+    this.openPaymentDialog(milestone);
+  }
+
+  addBookingPayment(): void {
+    const milestone = this.nextPendingMilestone();
+    if (!milestone) {
+      this.toast.error('No pending payment for this booking.');
+      return;
+    }
+    this.openPaymentDialog(milestone);
+  }
+
+  private openPaymentDialog(milestone: InstallmentMilestone): void {
     const ref = this.dialog.open(RecordPaymentDialogComponent, {
-      data: { milestone },
-      width: '400px'
+      data: {
+        milestone,
+        memberName: this.booking?.memberName,
+        flatNo: this.booking?.flatNo
+      },
+      width: 'min(420px, calc(100vw - 2rem))'
     });
     ref.afterClosed().subscribe((saved) => {
       if (saved && this.booking) this.loadInstallments(this.booking.id);

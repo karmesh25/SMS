@@ -17,6 +17,7 @@ import { DailyEntry, DailyEntryService, ProfitSummary } from '../../../core/serv
 import { MasterDataService } from '../../../core/services/master-data.service';
 import { SiteContextService } from '../../../core/services/site-context.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { FileDownloadOutcome, FileDownloadService } from '../../../core/services/file-download.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { BalanceDialogComponent } from './balance-dialog.component';
 import { ImportResultDialogComponent } from './import-result-dialog.component';
@@ -186,6 +187,7 @@ export class DailyEntryComponent implements OnInit {
   private readonly masterData = inject(MasterDataService);
   private readonly siteContext = inject(SiteContextService);
   private readonly toast = inject(ToastService);
+  private readonly fileDownloads = inject(FileDownloadService);
   private readonly dialog = inject(MatDialog);
   private readonly breakpointObserver = inject(BreakpointObserver);
 
@@ -334,7 +336,7 @@ export class DailyEntryComponent implements OnInit {
 
   downloadSample(): void {
     this.dailyEntryService.downloadImportSample().subscribe({
-      next: (blob) => this.triggerDownload(blob, 'daily-entry-import-sample.xlsx'),
+      next: (outcome) => this.handleDownloadOutcome(outcome, 'daily-entry-import-sample.xlsx', 'Sample file ready'),
       error: () => this.toast.error('Failed to download sample file')
     });
   }
@@ -369,22 +371,29 @@ export class DailyEntryComponent implements OnInit {
   exportExcel(): void {
     if (!this.siteId) return;
     this.dailyEntryService.exportLedgerExcel(this.siteId).subscribe({
-      next: (blob) => {
-        const name = `daily-entry-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`;
-        this.triggerDownload(blob, name);
-        this.toast.success('Export downloaded');
-      },
+      next: (outcome) => this.handleDownloadOutcome(
+        outcome,
+        `daily-entry-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`,
+        'Export downloaded'
+      ),
       error: () => this.toast.error('Export failed')
     });
   }
 
-  private triggerDownload(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
+  private handleDownloadOutcome(
+    outcome: FileDownloadOutcome,
+    fallbackFilename: string,
+    browserSuccessMessage: string
+  ): void {
+    if (outcome.mode === 'pendrive') {
+      this.toast.success(outcome.message ?? `Saved to pendrive: ${outcome.savedPath ?? fallbackFilename}`);
+      return;
+    }
+
+    if (outcome.blob) {
+      this.fileDownloads.saveToBrowser(outcome.blob, outcome.filename ?? fallbackFilename);
+      this.toast.success(browserSuccessMessage);
+    }
   }
 
   private extractImportError(err: unknown): string {

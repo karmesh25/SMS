@@ -37,7 +37,7 @@
       <button
         mat-stroked-button
         type="button"
-        *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']"
+        *appHasPermission="'vyaj'; level: 'manage'"
         (click)="showPayment.set(!showPayment())">
         Record payment
       </button>
@@ -45,7 +45,7 @@
         mat-icon-button
         type="button"
         color="warn"
-        *appHasRole="['SuperAdmin', 'Admin']"
+        *appHasPermission="'vyaj'; level: 'manage'"
         matTooltip="Delete mistaken entry"
         (click)="deleteEntry.emit()">
         <mat-icon>delete</mat-icon>
@@ -91,7 +91,7 @@
           <button
             mat-icon-button
             type="button"
-            *appHasRole="['SuperAdmin', 'Admin']"
+            *appHasPermission="'vyaj'; level: 'manage'"
             (click)="deletePayment.emit(p.id)">
             <mat-icon>close</mat-icon>
           </button>

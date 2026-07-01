@@ -4,13 +4,15 @@ using ABR.Application.DTOs.Auth;
 using ABR.Application.DTOs.Users;
 using ABR.Application.Interfaces;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ABR.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/users")]
-[RequireRole("SuperAdmin")]
+[RequirePermission(AppModules.Users, PermissionLevel.Manage)]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;

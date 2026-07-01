@@ -21,7 +21,7 @@
     }
   </div>
 
-  <div class="add-party" *appHasRole="['SuperAdmin', 'Admin', 'OfficeStaff']">
+  <div class="add-party" *appHasPermission="'vyaj'; level: 'manage'">
     <mat-form-field appearance="outline" class="dense">
       <mat-label>Party name</mat-label>
       <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitParty()" />

@@ -14,29 +14,26 @@
           [routerLink]="dashboardLink.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
-          *appHasRole="dashboardLink.roles"
+          *appHasPermission="dashboardLink.moduleKey"
           (click)="closeSidenavOnNavigate()">
           <mat-icon matListItemIcon>{{ dashboardLink.icon }}</mat-icon>
           <span matListItemTitle>{{ dashboardLink.label }}</span>
         </a>
 
-        @for (section of navSections; track section.title) {
-          <ng-container *appHasRole="section.roles">
-            <mat-divider class="nav-divider" />
-            <div class="nav-section-label">{{ section.title }}</div>
-            @for (item of section.items; track item.route) {
-              <a
-                mat-list-item
-                [routerLink]="item.route"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
-                *appHasRole="item.roles"
-                (click)="closeSidenavOnNavigate()">
-                <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-                <span matListItemTitle>{{ item.label }}</span>
-              </a>
-            }
-          </ng-container>
+        @for (section of visibleNavSections(); track section.title) {
+          <mat-divider class="nav-divider" />
+          <div class="nav-section-label">{{ section.title }}</div>
+          @for (item of section.items; track item.route) {
+            <a
+              mat-list-item
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              (click)="closeSidenavOnNavigate()">
+              <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+              <span matListItemTitle>{{ item.label }}</span>
+            </a>
+          }
         }
       </mat-nav-list>
     </mat-sidenav>

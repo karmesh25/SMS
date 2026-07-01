@@ -7,6 +7,7 @@ import { Observable, tap, firstValueFrom, finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 import { ApiResponse, CurrentUser } from '../models/api-response.model';
+import { PermissionLevel } from '../models/permission.model';
 
 
 
@@ -184,6 +185,50 @@ export class AuthService {
 
 
 
+  isSuperAdmin(): boolean {
+
+    return this.hasRole('SuperAdmin');
+
+  }
+
+
+
+  hasPermission(moduleKey: string, level: PermissionLevel = 'view'): boolean {
+
+    const user = this.currentUserSignal();
+
+    if (!user) {
+
+      return false;
+
+    }
+
+
+
+    if (this.isSuperAdmin()) {
+
+      return true;
+
+    }
+
+
+
+    const perm = user.permissions?.find((p) => p.moduleKey === moduleKey);
+
+    if (!perm) {
+
+      return false;
+
+    }
+
+
+
+    return level === 'manage' ? perm.canManage : perm.canView;
+
+  }
+
+
+
   clearSession(): void {
 
     if (this.refreshTimer) {
@@ -254,7 +299,11 @@ export class AuthService {
 
       email: user.email,
 
+      roleId: user.roleId ?? (user as { roleId?: string }).roleId ?? '',
+
       role: user.role,
+
+      permissions: user.permissions ?? [],
 
       isActive: user.isActive,
 

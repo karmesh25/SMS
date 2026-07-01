@@ -1,3 +1,4 @@
+using ABR.Api.Helpers;
 using ABR.Api.Authorization;
 using ABR.Application.Common;
 using ABR.Application.DTOs.Reports;
@@ -13,21 +14,26 @@ namespace ABR.Api.Controllers;
 public class ExportController : ControllerBase
 {
     private readonly IReportExportService _exportService;
+    private readonly IExportFileStorage _exportStorage;
 
-    public ExportController(IReportExportService exportService) => _exportService = exportService;
+    public ExportController(IReportExportService exportService, IExportFileStorage exportStorage)
+    {
+        _exportService = exportService;
+        _exportStorage = exportStorage;
+    }
 
     [HttpGet("excel")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    [RequirePermission(AppModules.Reports, PermissionLevel.View)]
     public Task<IActionResult> ExportExcel([FromQuery] ReportExportRequestDto request, CancellationToken cancellationToken)
         => ExportFileAsync(request, _exportService.GenerateExcelAsync, cancellationToken);
 
     [HttpGet("pdf")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    [RequirePermission(AppModules.Reports, PermissionLevel.View)]
     public Task<IActionResult> ExportPdf([FromQuery] ReportExportRequestDto request, CancellationToken cancellationToken)
         => ExportFileAsync(request, _exportService.GeneratePdfAsync, cancellationToken);
 
     [HttpGet("word")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    [RequirePermission(AppModules.Reports, PermissionLevel.View)]
     public Task<IActionResult> ExportWord([FromQuery] ReportExportRequestDto request, CancellationToken cancellationToken)
         => ExportFileAsync(request, _exportService.GenerateWordAsync, cancellationToken);
 
@@ -45,8 +51,12 @@ public class ExportController : ControllerBase
         try
         {
             var result = await generator(request, cancellationToken);
-            Response.Headers.ContentDisposition = $"attachment; filename=\"{result.FileName}\"";
-            return File(result.Content, result.ContentType, result.FileName);
+            return await ExportDownloadResults.FromBytesAsync(
+                _exportStorage,
+                result.Content,
+                result.ContentType,
+                result.FileName,
+                cancellationToken);
         }
         catch (ExportLimitExceededException ex)
         {

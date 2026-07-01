@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ABR.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/device")]
 public class DeviceController : ControllerBase
 {
@@ -37,7 +38,7 @@ public class DeviceController : ControllerBase
         }));
     }
 
-    [RequireRole("SuperAdmin")]
+    [RequirePermission(AppModules.Devices, PermissionLevel.Manage)]
     [HttpGet("licenses")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<DeviceLicenseDto>>>> GetLicenses(CancellationToken cancellationToken)
     {
@@ -45,7 +46,7 @@ public class DeviceController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<DeviceLicenseDto>>.Ok(licenses));
     }
 
-    [RequireRole("SuperAdmin")]
+    [RequirePermission(AppModules.Devices, PermissionLevel.Manage)]
     [HttpPost("authorize")]
     public async Task<ActionResult<ApiResponse<DeviceLicenseDto>>> Authorize(
         [FromBody] AuthorizeDeviceRequest request,
@@ -62,7 +63,7 @@ public class DeviceController : ControllerBase
         return Ok(ApiResponse<DeviceLicenseDto>.Ok(license, "Device authorized."));
     }
 
-    [RequireRole("SuperAdmin")]
+    [RequirePermission(AppModules.Devices, PermissionLevel.Manage)]
     [HttpPut("licenses/{id:guid}/toggle")]
     public async Task<ActionResult<ApiResponse<object>>> ToggleActive(Guid id, CancellationToken cancellationToken)
     {

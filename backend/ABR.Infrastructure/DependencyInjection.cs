@@ -1,4 +1,5 @@
 using ABR.Application.Interfaces;
+using ABR.Application.Common;
 using ABR.Domain.Entities;
 using ABR.Domain.Enums;
 using ABR.Infrastructure.Persistence;
@@ -11,6 +12,7 @@ using ABR.Infrastructure.Services.MasterData;
 using ABR.Infrastructure.Services.Reports;
 using ABR.Infrastructure.Services.Vyaj;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -18,8 +20,13 @@ namespace ABR.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, IConfiguration configuration)
     {
+        var exportSettings = new ExportSettings();
+        configuration.GetSection("Export").Bind(exportSettings);
+        services.AddSingleton(exportSettings);
+        services.AddSingleton<IExportFileStorage, ExportFileStorage>();
+
         services.AddSingleton<SlowQueryInterceptor>();
         services.AddDbContext<AbrDbContext>((sp, options) =>
             options.UseNpgsql(connectionString)
@@ -27,6 +34,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IDeviceLicenseService, DeviceLicenseService>();
         services.AddSingleton<IDeviceFingerprintService, DeviceFingerprintService>();
 
@@ -58,7 +66,27 @@ public static class DependencyInjection
         var context = scope.ServiceProvider.GetRequiredService<AbrDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AbrDbContext>>();
 
-        await context.Database.MigrateAsync();
+        try
+        {
+            await context.Database.MigrateAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Database migration failed; attempting schema repair.");
+            await DatabaseRepair.RepairRoleSchemaAsync(context, logger);
+
+            try
+            {
+                await context.Database.MigrateAsync();
+            }
+            catch (Exception retryEx)
+            {
+                logger.LogWarning(retryEx, "Database migration retry failed; applying role repair again.");
+                await DatabaseRepair.RepairRoleSchemaAsync(context, logger);
+            }
+        }
+
+        await DatabaseRepair.RepairRoleSchemaAsync(context, logger);
         await DbInitializer.SeedAsync(context, logger);
     }
 }
@@ -85,12 +113,15 @@ public static class DbInitializer
 
         logger.LogInformation("Seeding initial database data...");
 
+        var superAdminRole = await context.AppRoles.FirstAsync(r => r.Name == SystemRoleNames.SuperAdmin);
+
         var admin = new User
         {
             Username = "admin",
             Email = "admin@abr.local",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", workFactor: 12),
-            Role = UserRole.SuperAdmin.ToString(),
+            RoleId = superAdminRole.Id,
+            Role = superAdminRole.Name,
             IsActive = true
         };
 

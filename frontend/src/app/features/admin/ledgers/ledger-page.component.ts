@@ -6,6 +6,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { MasterDataService } from '../../../core/services/master-data.service';
@@ -24,7 +25,7 @@ type LedgerPanel = 'main' | 'sub';
   standalone: true,
   imports: [
     ReactiveFormsModule, MatTableModule, MatButtonModule, MatButtonToggleModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, PageHeaderComponent
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, PageHeaderComponent
   ],
   template: `
     <app-page-header title="Ledger Management" subtitle="Main and sub ledgers"></app-page-header>
@@ -39,9 +40,12 @@ type LedgerPanel = 'main' | 'sub';
 
     @if (activePanel === 'main') {
       <section class="panel">
-        <form [formGroup]="mainForm" class="row" (ngSubmit)="addMain()">
-          <mat-form-field appearance="outline"><mat-label>Name</mat-label><input matInput formControlName="ledgerName" /></mat-form-field>
-          <button mat-flat-button color="primary" type="submit" [disabled]="mainForm.invalid">Add</button>
+        <form [formGroup]="mainForm" class="compact-bar" (ngSubmit)="addMain()">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="name-field">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="ledgerName" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="submit" [disabled]="mainForm.invalid">+ Add</button>
         </form>
 
         <div class="abr-scroll-x">
@@ -61,8 +65,8 @@ type LedgerPanel = 'main' | 'sub';
     } @else {
       <section class="panel">
         @if (selectedMainId && mainLedgers.length > 0) {
-          <div class="sub-toolbar">
-            <mat-form-field appearance="outline" class="main-ledger-picker">
+          <div class="compact-bar">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="picker-field">
               <mat-label>Main Ledger</mat-label>
               <mat-select [value]="selectedMainId" (selectionChange)="onMainLedgerPick($event.value)">
                 @for (main of mainLedgers; track main.id) {
@@ -70,19 +74,24 @@ type LedgerPanel = 'main' | 'sub';
                 }
               </mat-select>
             </mat-form-field>
-          </div>
 
-          <form [formGroup]="subForm" class="row" (ngSubmit)="addSub()">
-            <mat-form-field appearance="outline"><mat-label>Name</mat-label><input matInput formControlName="ledgerName" /></mat-form-field>
-            @if (isMemberAccount) {
-              <mat-form-field appearance="outline"><mat-label>Flat No</mat-label><input matInput formControlName="flatNo" placeholder="Search flat" /></mat-form-field>
-            }
-            <button mat-flat-button color="primary" type="submit" [disabled]="subForm.invalid">Add Sub</button>
-          </form>
+            <ng-container [formGroup]="subForm">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="name-field">
+                <mat-label>Sub Name</mat-label>
+                <input matInput formControlName="ledgerName" (keyup.enter)="addSub()" />
+              </mat-form-field>
+              <button mat-flat-button color="primary" type="button" (click)="addSub()" [disabled]="subForm.invalid">+ Add Sub</button>
+            </ng-container>
 
-          <div class="row" [formGroup]="searchForm">
-            <mat-form-field appearance="outline"><mat-label>Search by Flat</mat-label><input matInput formControlName="searchFlat" (keyup.enter)="search()" /></mat-form-field>
-            <button mat-button (click)="search()">Search</button>
+            <ng-container [formGroup]="searchForm">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
+                <mat-label>Search by Flat</mat-label>
+                <input matInput formControlName="searchFlat" (keyup.enter)="search()" />
+                <button matSuffix mat-icon-button type="button" (click)="search()" aria-label="Search">
+                  <mat-icon>search</mat-icon>
+                </button>
+              </mat-form-field>
+            </ng-container>
           </div>
 
           <div class="abr-scroll-x">
@@ -109,19 +118,33 @@ type LedgerPanel = 'main' | 'sub';
     .ledger-tabs {
       display: flex;
       width: 100%;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
     .ledger-tabs mat-button-toggle {
       flex: 1;
+      height: 36px;
+      line-height: 36px;
     }
     .panel { margin-top: 0.5rem; }
-    .row { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; align-items:center; }
-    table { width:100%; min-width: 320px; }
-    tr.selected { background:rgba(25,118,210,0.08); }
-    .sub-context { margin: 0 0 1rem; color: #555; }
-    .sub-toolbar { margin-bottom: 1rem; }
-    .main-ledger-picker { width: 100%; max-width: 420px; }
+    .compact-bar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .picker-field { width: 180px; flex-shrink: 0; }
+    .name-field { flex: 1; min-width: 160px; }
+    .search-field { width: 200px; flex-shrink: 0; }
+    table { width: 100%; min-width: 320px; }
+    tr.selected { background: rgba(25, 118, 210, 0.08); }
     .empty-hint { color: #888; padding: 1rem 0; }
+
+    @media (max-width: 599px) {
+      .picker-field,
+      .search-field,
+      .name-field { width: 100%; }
+    }
   `]
 })
 export class LedgerPageComponent implements OnInit {

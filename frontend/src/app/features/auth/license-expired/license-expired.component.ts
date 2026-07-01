@@ -1,7 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { LicenseService } from '../../../core/services/license.service';
+import { LICENSE_EXPIRED_MESSAGE, LicenseService } from '../../../core/services/license.service';
 
 @Component({
   selector: 'app-license-expired',
@@ -12,7 +12,7 @@ import { LicenseService } from '../../../core/services/license.service';
       <mat-card class="locked-card">
         <mat-icon class="lock-icon">event_busy</mat-icon>
         <h1>License Expired</h1>
-        <p>{{ licenseService.message() }}</p>
+        <p class="message">{{ licenseService.message() || expiredMessage }}</p>
         @if (licenseService.expiryDate()) {
           <div class="expiry">
             <strong>Expiry Date</strong>
@@ -38,6 +38,20 @@ import { LicenseService } from '../../../core/services/license.service';
       max-width: 640px;
       text-align: center;
       padding: 2rem;
+      color: #1f2937;
+    }
+
+    .locked-card h1 {
+      color: #111827;
+      margin: 0 0 0.75rem;
+      font-size: 1.75rem;
+    }
+
+    .locked-card p {
+      color: #374151;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      line-height: 1.5;
     }
 
     .lock-icon {
@@ -53,19 +67,34 @@ import { LicenseService } from '../../../core/services/license.service';
       text-align: center;
     }
 
+    .expiry strong {
+      color: #111827;
+    }
+
     .expiry span {
       display: block;
       margin-top: 0.5rem;
       font-size: 1.1rem;
-      color: #93c5fd;
+      font-weight: 600;
+      color: #1d4ed8;
+    }
+
+    .locked-card p.message {
+      color: #1e40af;
+      font-weight: 500;
     }
 
     .hint {
-      color: #666;
+      color: #4b5563;
       font-size: 0.875rem;
     }
   `]
 })
-export class LicenseExpiredComponent {
+export class LicenseExpiredComponent implements OnInit {
   readonly licenseService = inject(LicenseService);
+  readonly expiredMessage = LICENSE_EXPIRED_MESSAGE;
+
+  ngOnInit(): void {
+    void this.licenseService.checkStatus();
+  }
 }

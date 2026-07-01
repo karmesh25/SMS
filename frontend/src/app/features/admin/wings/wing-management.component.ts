@@ -74,8 +74,6 @@ interface WingRow {
 
       <mat-form-field appearance="outline"><mat-label>Shops</mat-label><input matInput type="number" formControlName="shops" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Default SQFT</mat-label><input matInput type="number" formControlName="defaultSqft" /></mat-form-field>
-
       <mat-checkbox formControlName="isBungalow">Is Bungalow</mat-checkbox>
 
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || !siteId">Add Wing</button>
@@ -157,8 +155,6 @@ export class WingManagementComponent implements OnInit {
     flatsPerFloor: [4, [Validators.required, Validators.min(1)]],
 
     shops: [0, Validators.min(0)],
-
-    defaultSqft: [1000, Validators.min(1)],
 
     isBungalow: [false]
 

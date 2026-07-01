@@ -2,10 +2,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using ABR.Application.Common;
 using ABR.Application.DTOs.Auth;
 using ABR.Application.Interfaces;
 using ABR.Domain.Entities;
+using ABR.Infrastructure;
 using ABR.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -73,6 +75,8 @@ public sealed class AuthService : IAuthService
             return null;
         }
 
+        await EnsureUserRoleLoadedAsync(user, cancellationToken);
+
         if (_fingerprintService.IsDeviceLockEnforced())
         {
             var deviceVerify = await _deviceLicenseService.VerifyAsync(cancellationToken);
@@ -97,6 +101,9 @@ public sealed class AuthService : IAuthService
             .Include(rt => rt.User)
             .ThenInclude(u => u.SiteAccesses)
             .ThenInclude(sa => sa.Site)
+            .Include(rt => rt.User)
+            .ThenInclude(u => u.AppRole)
+            .ThenInclude(r => r.Permissions)
             .FirstOrDefaultAsync(rt => rt.Token == refreshToken && !rt.IsRevoked, cancellationToken);
 
         if (stored is null || stored.ExpiresAt <= DateTimeOffset.UtcNow || !stored.User.IsActive)
@@ -129,6 +136,25 @@ public sealed class AuthService : IAuthService
 
     public bool IsTokenBlacklisted(string accessToken) =>
         _cache.TryGetValue(GetBlacklistKey(accessToken), out _);
+
+    private async Task EnsureUserRoleLoadedAsync(User user, CancellationToken cancellationToken)
+    {
+        if (user.RoleId == Guid.Empty)
+            await RoleSeeder.BackfillUserRoleIdsAsync(_context, cancellationToken);
+
+        await _context.Entry(user).Reference(u => u.AppRole).Query()
+            .Include(r => r.Permissions)
+            .LoadAsync(cancellationToken);
+
+        if (user.AppRole is null)
+        {
+            await RoleSeeder.BackfillUserRoleIdsAsync(_context, cancellationToken);
+            await _context.Entry(user).ReloadAsync(cancellationToken);
+            await _context.Entry(user).Reference(u => u.AppRole).Query()
+                .Include(r => r.Permissions)
+                .LoadAsync(cancellationToken);
+        }
+    }
 
     private async Task<LoginResponse> BuildLoginResponseAsync(User user, CancellationToken cancellationToken)
     {
@@ -164,6 +190,8 @@ public sealed class AuthService : IAuthService
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, user.Username),
             new("role", user.Role),
+            new("roleId", user.RoleId.ToString()),
+            new("permissions", SerializePermissions(user)),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -188,6 +216,7 @@ public sealed class AuthService : IAuthService
         Id = user.Id,
         Username = user.Username,
         Email = user.Email,
+        RoleId = user.RoleId,
         Role = user.Role,
         IsActive = user.IsActive,
         ForcePasswordChange = user.ForcePasswordChange,
@@ -199,8 +228,25 @@ public sealed class AuthService : IAuthService
             CanRead = sa.CanRead,
             CanWrite = sa.CanWrite,
             CanDelete = sa.CanDelete
-        }).ToList()
+        }).ToList(),
+        Permissions = user.AppRole?.Permissions.Select(p => new ModulePermissionDto
+        {
+            ModuleKey = p.ModuleKey,
+            CanView = p.CanView,
+            CanManage = p.CanManage
+        }).ToList() ?? []
     };
+
+    private static string SerializePermissions(User user)
+    {
+        var permissions = user.AppRole?.Permissions.Select(p => new
+        {
+            moduleKey = p.ModuleKey,
+            canView = p.CanView,
+            canManage = p.CanManage
+        }) ?? [];
+        return JsonSerializer.Serialize(permissions);
+    }
 
     private static string GetBlacklistKey(string accessToken)
     {

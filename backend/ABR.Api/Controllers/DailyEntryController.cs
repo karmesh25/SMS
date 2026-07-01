@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ABR.Api.Authorization;
+using ABR.Api.Helpers;
 using ABR.Application.Common;
 using ABR.Application.DTOs.Accounting;
 using ABR.Application.Interfaces;
@@ -16,17 +17,20 @@ public class DailyEntryController : ControllerBase
 {
     private readonly IDailyEntryService _service;
     private readonly IDailyEntryExcelService _excelService;
+    private readonly IExportFileStorage _exportStorage;
     private readonly IValidator<CreateDailyEntryDto> _createValidator;
     private readonly IValidator<UpdateDailyEntryDto> _updateValidator;
 
     public DailyEntryController(
         IDailyEntryService service,
         IDailyEntryExcelService excelService,
+        IExportFileStorage exportStorage,
         IValidator<CreateDailyEntryDto> createValidator,
         IValidator<UpdateDailyEntryDto> updateValidator)
     {
         _service = service;
         _excelService = excelService;
+        _exportStorage = exportStorage;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
@@ -46,7 +50,7 @@ public class DailyEntryController : ControllerBase
         return Ok(ApiResponse<DailyEntryDto>.Ok(entry));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.DailyEntry, PermissionLevel.Manage)]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<DailyEntryDto>>> Create([FromBody] CreateDailyEntryDto dto, CancellationToken cancellationToken)
     {
@@ -58,7 +62,7 @@ public class DailyEntryController : ControllerBase
         return Ok(ApiResponse<DailyEntryDto>.Ok(entry, "Entry created."));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.DailyEntry, PermissionLevel.Manage)]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<DailyEntryDto>>> Update(Guid id, [FromBody] UpdateDailyEntryDto dto, CancellationToken cancellationToken)
     {
@@ -71,7 +75,7 @@ public class DailyEntryController : ControllerBase
         return Ok(ApiResponse<DailyEntryDto>.Ok(entry, "Entry updated."));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.DailyEntry, PermissionLevel.Manage)]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -94,15 +98,20 @@ public class DailyEntryController : ControllerBase
         return Ok(ApiResponse<BalanceSummaryDto>.Ok(balance));
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.DailyEntry, PermissionLevel.Manage)]
     [HttpGet("import/sample")]
     public async Task<IActionResult> DownloadImportSample(CancellationToken cancellationToken)
     {
         var file = await _excelService.GetSampleAsync(cancellationToken);
-        return File(file.Content, file.ContentType, file.FileName);
+        return await ExportDownloadResults.FromBytesAsync(
+            _exportStorage,
+            file.Content,
+            file.ContentType,
+            file.FileName,
+            cancellationToken);
     }
 
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff")]
+    [RequirePermission(AppModules.DailyEntry, PermissionLevel.Manage)]
     [HttpPost("import")]
     [RequestSizeLimit(5 * 1024 * 1024)]
     public async Task<ActionResult<ApiResponse<DailyEntryImportResultDto>>> ImportExcel(
@@ -133,7 +142,7 @@ public class DailyEntryController : ControllerBase
     }
 
     [HttpGet("export/ledger-excel")]
-    [RequireRole("SuperAdmin", "Admin", "OfficeStaff", "ViewOnly")]
+    [RequirePermission(AppModules.DailyEntry, PermissionLevel.View)]
     public async Task<IActionResult> ExportLedgerExcel(
         [FromQuery] DailyEntryLedgerExportRequestDto request,
         CancellationToken cancellationToken)
@@ -142,7 +151,12 @@ public class DailyEntryController : ControllerBase
             return BadRequest(new { message = "SiteId is required." });
 
         var file = await _excelService.ExportLedgerExcelAsync(request, cancellationToken);
-        return File(file.Content, file.ContentType, file.FileName);
+        return await ExportDownloadResults.FromBytesAsync(
+            _exportStorage,
+            file.Content,
+            file.ContentType,
+            file.FileName,
+            cancellationToken);
     }
 
     private Guid? GetUserId()

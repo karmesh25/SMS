@@ -10,6 +10,8 @@ public class AbrDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<AppRole> AppRoles => Set<AppRole>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserSiteAccess> UserSiteAccesses => Set<UserSiteAccess>();
     public DbSet<DeviceLicense> DeviceLicenses => Set<DeviceLicense>();
     public DbSet<Site> Sites => Set<Site>();
@@ -37,6 +39,8 @@ public class AbrDbContext : DbContext
         modelBuilder.HasPostgresExtension("pgcrypto");
 
         ConfigureUser(modelBuilder);
+        ConfigureAppRole(modelBuilder);
+        ConfigureRolePermission(modelBuilder);
         ConfigureUserSiteAccess(modelBuilder);
         ConfigureDeviceLicense(modelBuilder);
         ConfigureSite(modelBuilder);
@@ -86,6 +90,7 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.Username).HasColumnName("username").HasMaxLength(100).IsRequired();
         entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(200).IsRequired();
         entity.Property(e => e.PasswordHash).HasColumnName("password_hash").IsRequired();
+        entity.Property(e => e.RoleId).HasColumnName("role_id");
         entity.Property(e => e.Role).HasColumnName("role").HasMaxLength(50).IsRequired();
         entity.Property(e => e.IsActive).HasColumnName("is_active");
         entity.Property(e => e.FailedAttempts).HasColumnName("failed_attempts");
@@ -94,7 +99,40 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.ForcePasswordChange).HasColumnName("force_password_change");
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
         entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        entity.HasOne(e => e.AppRole).WithMany(r => r.Users).HasForeignKey(e => e.RoleId).OnDelete(DeleteBehavior.Restrict);
         entity.HasIndex(e => e.Username).IsUnique();
+    }
+
+    private static void ConfigureAppRole(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<AppRole>();
+        entity.ToTable("app_roles");
+        entity.HasKey(e => e.Id);
+        entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+        entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(500);
+        entity.Property(e => e.IsSystem).HasColumnName("is_system");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+        entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+        entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        entity.HasIndex(e => e.Name).IsUnique();
+    }
+
+    private static void ConfigureRolePermission(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<RolePermission>();
+        entity.ToTable("role_permissions");
+        entity.HasKey(e => e.Id);
+        entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        entity.Property(e => e.RoleId).HasColumnName("role_id");
+        entity.Property(e => e.ModuleKey).HasColumnName("module_key").HasMaxLength(50).IsRequired();
+        entity.Property(e => e.CanView).HasColumnName("can_view");
+        entity.Property(e => e.CanManage).HasColumnName("can_manage");
+        entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+        entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        entity.HasOne(e => e.Role).WithMany(r => r.Permissions).HasForeignKey(e => e.RoleId).OnDelete(DeleteBehavior.Cascade);
+        entity.HasIndex(e => new { e.RoleId, e.ModuleKey }).IsUnique();
     }
 
     private static void ConfigureUserSiteAccess(ModelBuilder modelBuilder)
@@ -157,6 +195,7 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.FlatsPerFloor).HasColumnName("flats_per_floor");
         entity.Property(e => e.Shops).HasColumnName("shops");
         entity.Property(e => e.IsBungalow).HasColumnName("is_bungalow");
+        entity.Property(e => e.IsPlot).HasColumnName("is_plot");
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
         entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         entity.HasOne(e => e.Site).WithMany(s => s.Wings).HasForeignKey(e => e.SiteId).OnDelete(DeleteBehavior.Cascade);

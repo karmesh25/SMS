@@ -45,9 +45,23 @@ export class MasterDataService {
 
 
   getWings(siteId: string) {
+    return this.api.get<unknown[]>(`/wings/${siteId}`, { type: 'wing' });
+  }
 
-    return this.api.get<unknown[]>(`/wings/${siteId}`);
+  getPlots(siteId: string) {
+    return this.api.get<unknown[]>(`/plots/${siteId}`);
+  }
 
+  createPlot(body: unknown) {
+    return this.api.post<unknown>('/plots', body);
+  }
+
+  updatePlot(id: string, body: unknown) {
+    return this.api.put<unknown>(`/plots/${id}`, body);
+  }
+
+  deletePlot(id: string) {
+    return this.api.delete<unknown>(`/plots/${id}`);
   }
 
 

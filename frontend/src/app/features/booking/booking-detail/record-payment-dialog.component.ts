@@ -4,13 +4,15 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { BookingService, InstallmentMilestone, InstallmentSummary } from '../../../core/services/booking.service';
+import { BookingService, InstallmentMilestone } from '../../../core/services/booking.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { IndianAmountDirective } from '../../../shared/directives/indian-amount.directive';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
 
 export interface RecordPaymentDialogData {
   milestone: InstallmentMilestone;
+  memberName?: string;
+  flatNo?: string;
 }
 
 @Component({
@@ -18,7 +20,13 @@ export interface RecordPaymentDialogData {
   standalone: true,
   imports: [IndianCurrencyPipe, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, IndianAmountDirective],
   template: `
-    <h2 mat-dialog-title>Record Payment</h2>
+    <h2 mat-dialog-title>
+      @if (data.memberName && data.flatNo) {
+        Payment — {{ data.memberName }} ({{ unitLabel }} {{ data.flatNo }})
+      } @else {
+        Record Payment
+      }
+    </h2>
     <mat-dialog-content>
       <p><strong>{{ data.milestone.milestoneName }}</strong> — Due: {{ data.milestone.dueAmount | indianCurrency }} | Remaining: {{ data.milestone.remainingAmount | indianCurrency }}</p>
       <form [formGroup]="form" class="form">
@@ -41,8 +49,10 @@ export class RecordPaymentDialogComponent {
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
 
+  readonly unitLabel = 'Flat';
+
   form = this.fb.nonNullable.group({
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+    amount: [this.data.milestone.remainingAmount || 0, [Validators.required, Validators.min(0.01)]],
     paidDate: [new Date().toISOString().slice(0, 10), Validators.required],
     notes: ['']
   });
@@ -60,7 +70,8 @@ export class RecordPaymentDialogComponent {
           this.toast.success('Payment recorded — accounting entry created');
           this.dialogRef.close(true);
         }
-      }
+      },
+      error: (err) => this.toast.error(err.error?.message ?? 'Failed to record payment')
     });
   }
 

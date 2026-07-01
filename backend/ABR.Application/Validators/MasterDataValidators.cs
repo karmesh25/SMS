@@ -20,7 +20,25 @@ public class CreateWingDtoValidator : AbstractValidator<CreateWingDto>
         RuleFor(x => x.Floors).GreaterThan(0);
         RuleFor(x => x.FlatsPerFloor).GreaterThan(0);
         RuleFor(x => x.Shops).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.DefaultSqft).GreaterThan(0);
+    }
+}
+
+public class CreatePlotDtoValidator : AbstractValidator<CreatePlotDto>
+{
+    public CreatePlotDtoValidator()
+    {
+        RuleFor(x => x.SiteId).NotEmpty();
+        RuleFor(x => x.PlotName).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.PlotCount).GreaterThan(0);
+    }
+}
+
+public class UpdatePlotDtoValidator : AbstractValidator<UpdatePlotDto>
+{
+    public UpdatePlotDtoValidator()
+    {
+        RuleFor(x => x.PlotName).NotEmpty().MaximumLength(50);
+        RuleFor(x => x.PlotCount).GreaterThan(0);
     }
 }
 

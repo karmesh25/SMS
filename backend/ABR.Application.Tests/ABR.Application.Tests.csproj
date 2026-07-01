@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ABR.Application\ABR.Application.csproj" />
+    <ProjectReference Include="..\ABR.Infrastructure\ABR.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,6 +7,7 @@ public class User : BaseEntity
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
+    public Guid RoleId { get; set; }
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public int FailedAttempts { get; set; }
@@ -14,6 +15,7 @@ public class User : BaseEntity
     public DateTimeOffset? LastLoginAt { get; set; }
     public bool ForcePasswordChange { get; set; }
 
+    public AppRole AppRole { get; set; } = null!;
     public ICollection<UserSiteAccess> SiteAccesses { get; set; } = new List<UserSiteAccess>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     public ICollection<DeviceLicense> AuthorizedDevices { get; set; } = new List<DeviceLicense>();
@@ -68,6 +70,7 @@ public class Wing : BaseEntity
     public int FlatsPerFloor { get; set; }
     public int Shops { get; set; }
     public bool IsBungalow { get; set; }
+    public bool IsPlot { get; set; }
 
     public Site Site { get; set; } = null!;
     public ICollection<Flat> Flats { get; set; } = new List<Flat>();

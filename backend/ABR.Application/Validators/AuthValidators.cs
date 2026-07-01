@@ -24,7 +24,8 @@ public class CreateUserRequestValidator : AbstractValidator<DTOs.Users.CreateUse
             .Matches("[A-Z]").WithMessage("Password must contain at least one uppercase letter.")
             .Matches("[0-9]").WithMessage("Password must contain at least one number.")
             .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
-        RuleFor(x => x.Role).NotEmpty();
+        RuleFor(x => x.RoleId).NotEmpty();
+        RuleFor(x => x.SiteIds).NotEmpty().WithMessage("At least one site must be assigned.");
     }
 }
 

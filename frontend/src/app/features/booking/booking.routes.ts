@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const BOOKING_ROUTES: Routes = [
   {
     path: '',
-    data: { breadcrumb: 'Flat Grid' },
+    data: { breadcrumb: 'Booking Grid' },
     loadComponent: () => import('./flat-grid/flat-grid.component').then(m => m.FlatGridComponent)
   },
   {

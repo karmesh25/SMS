@@ -1,6 +1,7 @@
 using ABR.Application.DTOs.Auth;
 using ABR.Application.Interfaces;
 using ABR.Domain.Entities;
+using ABR.Infrastructure;
 using ABR.Infrastructure.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -15,12 +16,14 @@ public class AuthServiceTests
     public async Task LoginAsync_ReturnsNull_WhenPasswordIsWrong()
     {
         await using var context = TestDbContextFactory.Create();
+        var roleId = await SeedRoleAsync(context, "Admin");
         var user = new User
         {
             Username = "staff",
             Email = "staff@test.local",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPass1"),
             Role = "Admin",
+            RoleId = roleId,
             IsActive = true
         };
         context.Users.Add(user);
@@ -58,12 +61,14 @@ public class AuthServiceTests
     public async Task LoginAsync_Throws_WhenDeviceLockEnforcedAndDeviceInvalid()
     {
         await using var context = TestDbContextFactory.Create();
+        var roleId = await SeedRoleAsync(context, "SuperAdmin");
         var user = new User
         {
             Username = "admin",
             Email = "admin@test.local",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
             Role = "SuperAdmin",
+            RoleId = roleId,
             IsActive = true
         };
         context.Users.Add(user);
@@ -112,5 +117,11 @@ public class AuthServiceTests
             Mock.Of<ILogger<AuthService>>(),
             fingerprintService,
             deviceLicenseService);
+    }
+
+    private static async Task<Guid> SeedRoleAsync(Persistence.AbrDbContext context, string roleName)
+    {
+        await RoleSeeder.EnsureRolesAsync(context, Mock.Of<ILogger>());
+        return context.AppRoles.First(r => r.Name == roleName).Id;
     }
 }

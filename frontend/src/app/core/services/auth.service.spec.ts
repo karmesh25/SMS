@@ -22,11 +22,11 @@ describe('AuthService', () => {
     expect(service.isLoggedIn()).toBeFalse();
   });
 
-  it('hasRole returns false when no user', () => {
-    expect(service.hasRole('Admin')).toBeFalse();
+  it('hasPermission returns false when no user', () => {
+    expect(service.hasPermission('sites', 'view')).toBeFalse();
   });
 
-  it('login stores user and token on success', () => {
+  it('login stores user, token, and permissions on success', () => {
     service.login({ username: 'admin', password: 'Admin@123' }).subscribe();
     const req = http.expectOne(`${environment.apiUrl}/auth/login`);
     expect(req.request.method).toBe('POST');
@@ -36,10 +36,19 @@ describe('AuthService', () => {
         token: 'jwt-token',
         refreshToken: 'refresh',
         expiresAt: new Date(Date.now() + 3600000).toISOString(),
-        user: { id: '1', username: 'admin', role: 'Admin', siteIds: [] }
+        user: {
+          id: '1',
+          username: 'admin',
+          roleId: 'role-1',
+          role: 'Admin',
+          permissions: [{ moduleKey: 'sites', canView: true, canManage: true }],
+          siteAccess: []
+        }
       }
     });
     expect(service.isLoggedIn()).toBeTrue();
     expect(service.hasRole('Admin')).toBeTrue();
+    expect(service.hasPermission('sites', 'view')).toBeTrue();
+    expect(service.hasPermission('users', 'manage')).toBeFalse();
   });
 });
