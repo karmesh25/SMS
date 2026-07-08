@@ -1,0 +1,152 @@
+================================================================================
+  ABR Society & Real Estate Management System
+  USB Pendrive - Setup and Daily Use Guide
+================================================================================
+
+REQUIREMENTS (client PC)
+------------------------
+  - Windows 10 or 11 (64-bit)
+  - NO PostgreSQL installation required
+  - NO .NET installation required
+  - USB 3.0 drive recommended (8 GB or larger)
+
+USB FOLDER LAYOUT
+-----------------
+  START.bat                  - Start app daily
+  STOP.bat                   - Stop app before removing USB
+  SETUP_FIRST_RUN.bat        - Run once on first use (creates encrypted secrets)
+  REGISTER_THIS_PC.bat       - Run once to authorize this computer
+  UPGRADE_SECURITY.bat       - Upgrade old USB without encrypted secrets
+  DAILY_BACKUP.bat           - Backup database to backup\ folder
+  CLIENT_SETUP_AND_START.txt - This file
+
+  api\           - Application (ABR.Api.exe + wwwroot UI)
+  tools\         - ABR.Secrets.exe (setup/backup utility)
+  db\bin\        - Portable PostgreSQL 15 binaries
+  db\data\       - Database files (created by setup)
+  config\        - secrets.enc (encrypted) + device.lic
+  exports\       - Excel/PDF reports (saved on USB, not PC)
+  backup\        - SQL backup files
+  logs\          - Application and database logs
+
+
+================================================================================
+PART 1 - DEVELOPER: Prepare the USB (before giving to client)
+================================================================================
+
+Step 1 - Build the package (on your development PC)
+  Open Command Prompt in the project folder and run:
+    pendrive\build_pendrive.bat
+
+  This creates the folder: pendrive\package\
+
+Step 2 - Add portable PostgreSQL 15
+  Copy PostgreSQL binaries into:
+    pendrive\package\db\bin\
+
+  Required files: initdb.exe, pg_ctl.exe, pg_isready.exe, createdb.exe,
+                  psql.exe, pg_dump.exe (and their DLL dependencies)
+
+  See db\README_POSTGRES.txt for detailed instructions.
+
+Step 3 - Validate the package
+  Run:
+    pendrive\validate_package.bat
+
+  Or from inside the package folder:
+    validate_package.bat
+
+  All checks must pass before client delivery.
+
+Step 4 - Copy to USB
+  Copy EVERYTHING inside pendrive\package\ to the root of the USB drive.
+  Example: files should be at E:\START.bat, E:\api\, E:\db\, etc.
+
+Step 5 - Optional: pre-load demo data
+  On your PC: run SETUP_FIRST_RUN.bat, REGISTER_THIS_PC.bat, add sample
+  sites/bookings, then STOP.bat. Hand the USB to the client ready to demo.
+
+
+================================================================================
+PART 2 - CLIENT: First-time setup (once per USB + PC combination)
+================================================================================
+
+Step 1 - Insert USB and run setup
+  1. Insert the USB drive
+  2. Double-click SETUP_FIRST_RUN.bat
+  3. Choose a MASTER PASSWORD when prompted (twice for confirmation)
+     IMPORTANT: If you forget this password, encrypted secrets cannot be recovered.
+  4. Wait until you see "Setup complete"
+
+Step 2 - Register this computer (device lock - one time)
+  1. Double-click REGISTER_THIS_PC.bat
+  2. Enter master password when prompted (if START asks)
+  3. Browser opens at http://localhost:5050
+  3. Login:
+       Username: admin
+       Password: Admin@123
+  4. Go to: Admin -> Devices
+  5. Click "Authorize This PC" (or equivalent authorize button)
+  6. Double-click STOP.bat
+
+Step 3 - Normal start
+  1. Double-click START.bat
+  2. Enter your MASTER PASSWORD when prompted
+  3. Browser opens - login with your credentials
+  4. Change the admin password after first login (recommended)
+
+Demo / empty sandbox login (real data stays in the database):
+   Username: demo
+   Password: Demo@123
+   Site: Demo only — no wings, bookings, or entries seeded
+
+
+================================================================================
+PART 3 - CLIENT: Daily use
+================================================================================
+
+  START the app     -> Double-click START.bat (enter master password)
+  STOP the app      -> Double-click STOP.bat (always before removing USB)
+  Backup database   -> Double-click DAILY_BACKUP.bat (enter master password)
+  Export reports    -> Use Export buttons in the app; files save to exports\
+
+  Application URL: http://localhost:5050
+
+  IMPORTANT:
+  - Always run STOP.bat before removing the USB drive
+  - Do not delete the db\data folder (contains all your data)
+  - Reports and exports stay on the USB for security
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+  "Portable PostgreSQL not found"
+    -> db\bin\ folder is missing PostgreSQL files. Contact your vendor.
+
+  "Invalid master password"
+    -> Re-enter the master password chosen during SETUP_FIRST_RUN.bat.
+
+  "Encrypted secrets not found"
+    -> Run SETUP_FIRST_RUN.bat first, or UPGRADE_SECURITY.bat on old USB.
+
+  "Database not initialized"
+    -> Run SETUP_FIRST_RUN.bat first.
+
+  "This device is not authorized"
+    -> Run REGISTER_THIS_PC.bat and authorize in Admin -> Devices.
+
+  Login fails with admin / Admin@123
+    -> Database may already have a changed password. Contact administrator.
+
+  Demo user login: demo / Demo@123
+    -> Shows only the empty Demo site; real sites stay with admin.
+
+  Windows Defender blocks the app
+    -> Allow ABR.Api.exe from the USB drive (local trusted application).
+
+  Browser shows blank page
+    -> Wait 10 seconds after START.bat and refresh. Ensure api\wwwroot exists.
+
+================================================================================

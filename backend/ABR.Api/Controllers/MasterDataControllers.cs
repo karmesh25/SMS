@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ABR.Api.Authorization;
 using ABR.Application.Common;
 using ABR.Application.DTOs.MasterData;
@@ -25,7 +26,9 @@ public class SiteController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<SiteDto>>>> GetAll(CancellationToken cancellationToken)
     {
-        var sites = await _siteService.GetAllAsync(cancellationToken);
+        var userId = GetUserId();
+        var isSuperAdmin = string.Equals(User.FindFirstValue("role"), SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase);
+        var sites = await _siteService.GetAllAsync(userId, isSuperAdmin, cancellationToken);
         return Ok(ApiResponse<IReadOnlyList<SiteDto>>.Ok(sites));
     }
 
@@ -65,6 +68,12 @@ public class SiteController : ControllerBase
         var deleted = await _siteService.DeleteAsync(id, cancellationToken);
         if (!deleted) return NotFound(ApiResponse<object>.Fail("Site not found."));
         return Ok(ApiResponse<object>.Ok(new { }, "Site disabled."));
+    }
+
+    private Guid? GetUserId()
+    {
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return Guid.TryParse(sub, out var id) ? id : null;
     }
 }
 

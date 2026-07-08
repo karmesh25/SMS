@@ -52,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IInstallmentService, InstallmentService>();
         services.AddScoped<IDailyEntryService, DailyEntryService>();
         services.AddScoped<IDailyEntryExcelService, DailyEntryExcelService>();
+        services.AddScoped<IJournalVoucherService, JournalVoucherService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IReportExportService, ReportExportService>();
         services.AddScoped<IDashboardService, DashboardService>();
@@ -108,69 +109,143 @@ public static class DbInitializer
 
     public static async Task SeedAsync(AbrDbContext context, ILogger logger)
     {
-        if (await context.Users.AnyAsync())
-            return;
-
-        logger.LogInformation("Seeding initial database data...");
-
-        var superAdminRole = await context.AppRoles.FirstAsync(r => r.Name == SystemRoleNames.SuperAdmin);
-
-        var admin = new User
+        if (!await context.Users.AnyAsync())
         {
-            Username = "admin",
-            Email = "admin@abr.local",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", workFactor: 12),
-            RoleId = superAdminRole.Id,
-            Role = superAdminRole.Name,
-            IsActive = true
-        };
+            logger.LogInformation("Seeding initial database data...");
 
-        var site = new Site
-        {
-            SiteName = "Tapi",
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
-            Address = "Default Site",
-            IsActive = true
-        };
+            var superAdminRole = await context.AppRoles.FirstAsync(r => r.Name == SystemRoleNames.SuperAdmin);
 
-        context.Users.Add(admin);
-        context.Sites.Add(site);
-        await context.SaveChangesAsync();
-
-        context.UserSiteAccesses.Add(new UserSiteAccess
-        {
-            UserId = admin.Id,
-            SiteId = site.Id,
-            CanRead = true,
-            CanWrite = true,
-            CanDelete = true
-        });
-
-        foreach (var ledgerName in DefaultMainLedgers)
-        {
-            var mainLedger = new MainLedger
+            var admin = new User
             {
-                SiteId = site.Id,
-                LedgerName = ledgerName,
-                Description = $"{ledgerName} ledger"
+                Username = "admin",
+                Email = "admin@abr.local",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", workFactor: 12),
+                RoleId = superAdminRole.Id,
+                Role = superAdminRole.Name,
+                IsActive = true
             };
-            context.MainLedgers.Add(mainLedger);
+
+            var site = new Site
+            {
+                SiteName = "Tapi",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Address = "Default Site",
+                IsActive = true
+            };
+
+            context.Users.Add(admin);
+            context.Sites.Add(site);
             await context.SaveChangesAsync();
 
-            if (ledgerName == "Construction")
+            context.UserSiteAccesses.Add(new UserSiteAccess
             {
-                foreach (var subName in ConstructionSubLedgers)
+                UserId = admin.Id,
+                SiteId = site.Id,
+                CanRead = true,
+                CanWrite = true,
+                CanDelete = true
+            });
+
+            foreach (var ledgerName in DefaultMainLedgers)
+            {
+                var mainLedger = new MainLedger
                 {
-                    context.SubLedgers.Add(new SubLedger
+                    SiteId = site.Id,
+                    LedgerName = ledgerName,
+                    Description = $"{ledgerName} ledger"
+                };
+                context.MainLedgers.Add(mainLedger);
+                await context.SaveChangesAsync();
+
+                if (ledgerName == "Construction")
+                {
+                    foreach (var subName in ConstructionSubLedgers)
                     {
-                        MainLedgerId = mainLedger.Id,
-                        LedgerName = subName
-                    });
+                        context.SubLedgers.Add(new SubLedger
+                        {
+                            MainLedgerId = mainLedger.Id,
+                            LedgerName = subName
+                        });
+                    }
                 }
             }
+
+            await context.SaveChangesAsync();
+            logger.LogInformation("Database seed completed. Default admin: admin / Admin@123");
         }
 
-        await context.SaveChangesAsync();
-        logger.LogInformation("Database seed completed. Default admin: admin / Admin@123");
+        await EnsureDemoSandboxAsync(context, logger);
+    }
+
+    public static async Task EnsureDemoSandboxAsync(AbrDbContext context, ILogger logger)
+    {
+        var demoSite = await context.Sites.FirstOrDefaultAsync(s => s.SiteName == "Demo");
+        if (demoSite is null)
+        {
+            demoSite = new Site
+            {
+                SiteName = "Demo",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                Address = "Empty sandbox for demo user",
+                IsActive = true,
+                IsSandbox = true
+            };
+            context.Sites.Add(demoSite);
+            await context.SaveChangesAsync();
+            logger.LogInformation("Created empty Demo sandbox site.");
+        }
+        else if (!demoSite.IsSandbox)
+        {
+            demoSite.IsSandbox = true;
+            await context.SaveChangesAsync();
+        }
+
+        var officeRole = await context.AppRoles.FirstOrDefaultAsync(r => r.Name == SystemRoleNames.OfficeStaff)
+            ?? await context.AppRoles.FirstAsync(r => r.Name == SystemRoleNames.ViewOnly);
+
+        var demoUser = await context.Users
+            .Include(u => u.SiteAccesses)
+            .FirstOrDefaultAsync(u => u.Username == "demo");
+
+        if (demoUser is null)
+        {
+            demoUser = new User
+            {
+                Username = "demo",
+                Email = "demo@abr.local",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Demo@123", workFactor: 12),
+                RoleId = officeRole.Id,
+                Role = officeRole.Name,
+                IsActive = true
+            };
+            context.Users.Add(demoUser);
+            await context.SaveChangesAsync();
+
+            context.UserSiteAccesses.Add(new UserSiteAccess
+            {
+                UserId = demoUser.Id,
+                SiteId = demoSite.Id,
+                CanRead = true,
+                CanWrite = true,
+                CanDelete = false
+            });
+            await context.SaveChangesAsync();
+            logger.LogInformation("Created demo user: demo / Demo@123 (Demo site only).");
+            return;
+        }
+
+        var hasDemoAccess = demoUser.SiteAccesses.Any(a => a.SiteId == demoSite.Id);
+        if (!hasDemoAccess)
+        {
+            context.UserSiteAccesses.Add(new UserSiteAccess
+            {
+                UserId = demoUser.Id,
+                SiteId = demoSite.Id,
+                CanRead = true,
+                CanWrite = true,
+                CanDelete = false
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

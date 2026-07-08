@@ -52,7 +52,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
         }
         <button mat-stroked-button (click)="downloadSample()">Sample Excel</button>
         <button mat-stroked-button (click)="fileInput.click()" [disabled]="importing">Import Excel</button>
-        <button mat-stroked-button (click)="exportExcel()">Export Excel</button>
+        <button mat-stroked-button (click)="exportExcel()" [disabled]="!siteId">Excel</button>
+        <button mat-stroked-button (click)="exportPdf()" [disabled]="!siteId">PDF</button>
         <button mat-stroked-button (click)="openBalance()">Balance</button>
         <input #fileInput type="file" accept=".xlsx" class="file-input" (change)="onFileSelected($event)" />
       </div>
@@ -85,7 +86,11 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
           }
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Description</mat-label><input matInput formControlName="description" /></mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Description</mat-label>
+        <input matInput formControlName="description" maxlength="200" />
+        <mat-hint align="end">{{ form.controls.description.value?.length || 0 }}/200</mat-hint>
+      </mat-form-field>
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Entry</button>
     </form>
 
@@ -224,7 +229,7 @@ export class DailyEntryComponent implements OnInit {
     subLedgerId: ['', Validators.required],
     amount: [0, [Validators.required, Validators.min(0.01)]],
     cashBank: ['Cash', Validators.required],
-    description: ['']
+    description: ['', Validators.maxLength(200)]
   });
 
   constructor() {
@@ -374,6 +379,18 @@ export class DailyEntryComponent implements OnInit {
       next: (outcome) => this.handleDownloadOutcome(
         outcome,
         `daily-entry-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`,
+        'Export downloaded'
+      ),
+      error: () => this.toast.error('Export failed')
+    });
+  }
+
+  exportPdf(): void {
+    if (!this.siteId) return;
+    this.dailyEntryService.exportLedgerPdf(this.siteId).subscribe({
+      next: (outcome) => this.handleDownloadOutcome(
+        outcome,
+        `daily-entry-ledger-${new Date().toISOString().slice(0, 10)}.pdf`,
         'Export downloaded'
       ),
       error: () => this.toast.error('Export failed')

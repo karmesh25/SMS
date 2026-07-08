@@ -5,4 +5,5 @@
   <Project Path="ABR.Domain/ABR.Domain.csproj" />
   <Project Path="ABR.Infrastructure/ABR.Infrastructure.csproj" />
   <Project Path="ABR.Infrastructure.Tests/ABR.Infrastructure.Tests.csproj" />
+  <Project Path="ABR.Tools.Secrets/ABR.Tools.Secrets.csproj" />
 </Solution>

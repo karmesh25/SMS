@@ -114,11 +114,13 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
       </mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>SQFT</mat-label><input matInput type="number" formControlName="sqft" /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>SQFT</mat-label><input matInput type="number" formControlName="sqft" (input)="onSqftChange()" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Rate</mat-label><input matInput type="number" formControlName="rate" appIndianAmount /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Rate / SQFT</mat-label><input matInput type="number" formControlName="rate" appIndianAmount (input)="onRateChange()" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Total Price</mat-label><input matInput formControlName="totalPrice" readonly /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Total Price</mat-label><input matInput type="number" formControlName="totalPrice" appIndianAmount (input)="onTotalChange()" /></mat-form-field>
+
+      <p class="pricing-hint">Enter Rate or Total — the other is calculated automatically from SQFT.</p>
 
       <mat-form-field appearance="outline">
 
@@ -138,9 +140,11 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
       </mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Brokerage %</mat-label><input matInput type="number" formControlName="brokeragePct" /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Brokerage %</mat-label><input matInput type="number" formControlName="brokeragePct" (input)="onBrokeragePctChange()" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Brokerage Amount</mat-label><input matInput formControlName="brokerageAmount" readonly /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Brokerage Amount</mat-label><input matInput type="number" formControlName="brokerageAmount" appIndianAmount (input)="onBrokerageAmountChange()" /></mat-form-field>
+
+      <p class="pricing-hint">Enter Brokerage % or Amount — the other is calculated from Total Price.</p>
 
       <mat-form-field appearance="outline" class="full"><mat-label>Notes</mat-label><textarea matInput formControlName="notes" rows="2"></textarea></mat-form-field>
 
@@ -179,6 +183,8 @@ interface SubLedgerOption { id: string; ledgerName: string; }
     }
 
     .warning { color: #c0392b; margin-bottom: 1rem; font-size: 0.875rem; }
+
+    .pricing-hint { grid-column: 1 / -1; margin: -0.5rem 0 0; color: #64748b; font-size: 0.8rem; }
 
   `]
 
@@ -224,6 +230,10 @@ export class BookingFormComponent implements OnInit {
 
   private lastLoadedSiteId: string | null = null;
 
+  private lastPricingDriver: 'rate' | 'total' = 'rate';
+
+  private lastBrokerageDriver: 'pct' | 'amount' = 'pct';
+
 
 
   form = this.fb.nonNullable.group({
@@ -242,15 +252,15 @@ export class BookingFormComponent implements OnInit {
 
     sqft: [0, [Validators.required, Validators.min(1)]],
 
-    rate: [0, [Validators.required, Validators.min(1)]],
+    rate: [0, [Validators.required, Validators.min(0)]],
 
-    totalPrice: [{ value: 0, disabled: true }],
+    totalPrice: [0, [Validators.required, Validators.min(0)]],
 
     brokerId: [null as string | null],
 
     brokeragePct: [0, [Validators.min(0), Validators.max(2)]],
 
-    brokerageAmount: [{ value: 0, disabled: true }],
+    brokerageAmount: [0, [Validators.min(0)]],
 
     isArjaMarjaSell: [false],
 
@@ -288,13 +298,7 @@ export class BookingFormComponent implements OnInit {
 
 
 
-    this.form.get('sqft')!.valueChanges.subscribe(() => this.recalc());
-
-    this.form.get('rate')!.valueChanges.subscribe(() => this.recalc());
-
-    this.form.get('brokeragePct')!.valueChanges.subscribe(() => this.recalc());
-
-
+    this.form.get('sqft')!.valueChanges.subscribe(() => this.recalcFromPricing());
 
     if (this.isEdit && this.bookingId) {
 
@@ -444,51 +448,104 @@ export class BookingFormComponent implements OnInit {
 
 
 
+  onSqftChange(): void {
+    this.recalcFromPricing();
+  }
+
+  onRateChange(): void {
+    this.lastPricingDriver = 'rate';
+    this.recalcFromPricing();
+  }
+
+  onTotalChange(): void {
+    this.lastPricingDriver = 'total';
+    this.recalcFromPricing();
+  }
+
+  onBrokeragePctChange(): void {
+    this.lastBrokerageDriver = 'pct';
+    this.recalcBrokerage();
+  }
+
+  onBrokerageAmountChange(): void {
+    this.lastBrokerageDriver = 'amount';
+    this.recalcBrokerage();
+  }
+
+  /** Kept for callers; prefers last pricing/brokerage drivers. */
   recalc(): void {
+    this.recalcFromPricing();
+  }
 
+  private recalcFromPricing(): void {
     const sqft = this.form.getRawValue().sqft ?? 0;
+    let rate = this.form.getRawValue().rate ?? 0;
+    let total = this.form.getRawValue().totalPrice ?? 0;
 
-    const rate = this.form.getRawValue().rate ?? 0;
+    if (this.lastPricingDriver === 'total' && sqft > 0) {
+      rate = Math.round((total / sqft) * 100) / 100;
+      this.form.patchValue({ rate }, { emitEvent: false });
+    } else {
+      total = Math.round(sqft * rate * 100) / 100;
+      this.form.patchValue({ totalPrice: total }, { emitEvent: false });
+    }
 
-    const pct = this.form.getRawValue().brokeragePct ?? 0;
+    this.recalcBrokerage();
+  }
 
-    const total = Math.round(sqft * rate * 100) / 100;
+  private recalcBrokerage(): void {
+    const total = this.form.getRawValue().totalPrice ?? 0;
+    let pct = this.form.getRawValue().brokeragePct ?? 0;
+    let amount = this.form.getRawValue().brokerageAmount ?? 0;
 
-    const brokerage = Math.round(total * (pct / 100) * 100) / 100;
-
-    this.form.patchValue({ totalPrice: total, brokerageAmount: brokerage }, { emitEvent: false });
-
+    if (this.lastBrokerageDriver === 'amount' && total > 0) {
+      pct = Math.round((amount / total) * 10000) / 100;
+      if (pct > 2) {
+        pct = 2;
+        amount = Math.round(total * (pct / 100) * 100) / 100;
+        this.toast.error('Brokerage cannot exceed 2% of total price.');
+      }
+      this.form.patchValue({ brokeragePct: pct, brokerageAmount: amount }, { emitEvent: false });
+    } else {
+      amount = Math.round(total * (pct / 100) * 100) / 100;
+      this.form.patchValue({ brokerageAmount: amount }, { emitEvent: false });
+    }
   }
 
 
 
   save(): void {
 
-    const raw = this.form.getRawValue();
+    this.recalcFromPricing();
+    const priced = this.form.getRawValue();
+    if ((priced.rate ?? 0) <= 0 || (priced.totalPrice ?? 0) <= 0) {
+      this.toast.error('Enter SQFT with Rate or Total Price.');
+      return;
+    }
 
     const payload = {
 
-      memberName: raw.memberName,
+      memberName: priced.memberName,
 
-      conditionId: raw.conditionId,
+      conditionId: priced.conditionId,
 
-      brokerId: raw.brokerId || null,
+      brokerId: priced.brokerId || null,
 
-      bookingDate: raw.bookingDate,
+      bookingDate: priced.bookingDate,
 
-      customerContact: raw.customerContact || null,
+      customerContact: priced.customerContact || null,
 
-      sqft: raw.sqft,
+      sqft: priced.sqft,
 
-      rate: raw.rate,
+      rate: priced.rate,
 
-      brokeragePct: raw.brokeragePct,
+      brokeragePct: priced.brokeragePct,
 
-      customerType: raw.customerType,
+      customerType: priced.customerType,
 
-      isArjaMarjaSell: raw.isArjaMarjaSell,
+      isArjaMarjaSell: priced.isArjaMarjaSell,
 
-      notes: raw.notes || null
+      notes: priced.notes || null
 
     };
 

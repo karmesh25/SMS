@@ -18,6 +18,7 @@ export const APP_MODULES: { key: string; label: string }[] = [
   { key: 'devices', label: 'Devices' },
   { key: 'booking', label: 'Booking' },
   { key: 'daily_entry', label: 'Daily Entry' },
+  { key: 'journal_voucher', label: 'Journal Voucher' },
   { key: 'dastavej', label: 'Dastavej' },
   { key: 'vyaj', label: 'Vyaj Khata' },
   { key: 'reports', label: 'Reports' }

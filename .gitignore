@@ -27,6 +27,9 @@ exports/
 backup/
 config/device.lic
 config/*.local.json
+pendrive/package/
+config/secrets.enc
+pendrive/package/config/secrets.enc
 
 # IDE
 .idea/

@@ -9,7 +9,6 @@ import { ExportService, ReportExportType } from '../../../core/services/export.s
   template: `
     <button mat-stroked-button type="button" [disabled]="disabled" (click)="exportExcel()">Excel</button>
     <button mat-stroked-button type="button" [disabled]="disabled" (click)="exportPdf()">PDF</button>
-    <button mat-stroked-button type="button" [disabled]="disabled" (click)="exportWord()">Word</button>
     <button mat-stroked-button type="button" (click)="print()">Print</button>
   `,
   styles: [`
@@ -34,10 +33,6 @@ export class ReportExportButtonsComponent {
 
   exportPdf(): void {
     this.exportService.exportPdf(this.reportType, this.filters);
-  }
-
-  exportWord(): void {
-    this.exportService.exportWord(this.reportType, this.filters);
   }
 
   print(): void {

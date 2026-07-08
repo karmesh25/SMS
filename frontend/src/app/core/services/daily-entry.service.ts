@@ -90,4 +90,8 @@ export class DailyEntryService {
   exportLedgerExcel(siteId: string, params?: { dateFrom?: string; dateTo?: string }) {
     return this.downloads.download('/daily-entries/export/ledger-excel', { siteId, ...params });
   }
+
+  exportLedgerPdf(siteId: string, params?: { dateFrom?: string; dateTo?: string }) {
+    return this.downloads.download('/daily-entries/export/ledger-pdf', { siteId, ...params });
+  }
 }

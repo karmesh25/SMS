@@ -217,6 +217,9 @@ internal static class DailyEntryExcelParser
             sub = "General";
 
         var remark = ws.Cell(row, headerMap["REMARK"]).GetString().Trim();
+        if (remark.Length > 200)
+            return (null, "REMARK must be 200 characters or fewer.");
+
         var cr = ParseAmount(ws.Cell(row, headerMap["CR"]));
         var dr = ParseAmount(ws.Cell(row, headerMap["DR"]));
 

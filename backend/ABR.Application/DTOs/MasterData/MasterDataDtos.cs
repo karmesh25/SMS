@@ -7,6 +7,7 @@ public class SiteDto
     public DateOnly? StartDate { get; set; }
     public string? Address { get; set; }
     public bool IsActive { get; set; }
+    public bool IsSandbox { get; set; }
 }
 
 public class CreateSiteDto

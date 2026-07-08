@@ -6,6 +6,7 @@ using ABR.Application.Common;
 using ABR.Application.Interfaces;
 using ABR.Domain.Enums;
 using ABR.Infrastructure;
+using ABR.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -16,6 +17,12 @@ using Serilog;
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (PendriveSecretsLoader.SecretsFileExists())
+{
+    var secretOverrides = PendriveSecretsLoader.LoadConfigurationOverrides();
+    builder.Configuration.AddInMemoryCollection(secretOverrides);
+}
 
 builder.Host.UseSerilog((context, configuration) =>
 {
@@ -117,7 +124,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("DefaultConnection")!, builder.Configuration);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+builder.Services.AddInfrastructure(connectionString, builder.Configuration);
 
 builder.Services.AddCors(options =>
 {

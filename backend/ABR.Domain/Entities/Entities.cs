@@ -51,6 +51,7 @@ public class Site : BaseEntity
     public DateOnly? StartDate { get; set; }
     public string? Address { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsSandbox { get; set; }
 
     public ICollection<Wing> Wings { get; set; } = new List<Wing>();
     public ICollection<MainLedger> MainLedgers { get; set; } = new List<MainLedger>();
@@ -58,6 +59,7 @@ public class Site : BaseEntity
     public ICollection<Broker> Brokers { get; set; } = new List<Broker>();
     public ICollection<Condition> Conditions { get; set; } = new List<Condition>();
     public ICollection<DailyEntry> DailyEntries { get; set; } = new List<DailyEntry>();
+    public ICollection<JournalVoucher> JournalVouchers { get; set; } = new List<JournalVoucher>();
     public ICollection<VyajParty> VyajParties { get; set; } = new List<VyajParty>();
     public ICollection<UserSiteAccess> UserAccesses { get; set; } = new List<UserSiteAccess>();
 }
@@ -109,6 +111,7 @@ public class SubLedger : BaseEntity
     public MainLedger MainLedger { get; set; } = null!;
     public Flat? Flat { get; set; }
     public ICollection<DailyEntry> DailyEntries { get; set; } = new List<DailyEntry>();
+    public ICollection<JournalVoucherLine> JournalVoucherLines { get; set; } = new List<JournalVoucherLine>();
     public ICollection<Booking> MemberBookings { get; set; } = new List<Booking>();
 }
 
@@ -220,6 +223,31 @@ public class DailyEntry : SoftDeleteEntity
 
     public Site Site { get; set; } = null!;
     public MainLedger MainLedger { get; set; } = null!;
+    public SubLedger SubLedger { get; set; } = null!;
+}
+
+public class JournalVoucher : SoftDeleteEntity
+{
+    public Guid SiteId { get; set; }
+    public string VoucherNo { get; set; } = string.Empty;
+    public DateOnly VoucherDate { get; set; }
+    public string? Narration { get; set; }
+    public decimal TotalDebit { get; set; }
+    public decimal TotalCredit { get; set; }
+
+    public Site Site { get; set; } = null!;
+    public ICollection<JournalVoucherLine> Lines { get; set; } = new List<JournalVoucherLine>();
+}
+
+public class JournalVoucherLine : BaseEntity
+{
+    public Guid JournalVoucherId { get; set; }
+    public Guid SubLedgerId { get; set; }
+    public string EntryType { get; set; } = "dr";
+    public decimal Amount { get; set; }
+    public int LineNo { get; set; }
+
+    public JournalVoucher JournalVoucher { get; set; } = null!;
     public SubLedger SubLedger { get; set; } = null!;
 }
 

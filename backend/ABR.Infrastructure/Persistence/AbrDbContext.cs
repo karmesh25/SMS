@@ -26,6 +26,8 @@ public class AbrDbContext : DbContext
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<BookingInstallment> BookingInstallments => Set<BookingInstallment>();
     public DbSet<DailyEntry> DailyEntries => Set<DailyEntry>();
+    public DbSet<JournalVoucher> JournalVouchers => Set<JournalVoucher>();
+    public DbSet<JournalVoucherLine> JournalVoucherLines => Set<JournalVoucherLine>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<VyajParty> VyajParties => Set<VyajParty>();
@@ -55,6 +57,7 @@ public class AbrDbContext : DbContext
         ConfigureBooking(modelBuilder);
         ConfigureBookingInstallment(modelBuilder);
         ConfigureDailyEntry(modelBuilder);
+        ConfigureJournalVoucher(modelBuilder);
         ConfigureVyaj(modelBuilder);
         ConfigureAuditLog(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
@@ -179,6 +182,7 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.StartDate).HasColumnName("start_date");
         entity.Property(e => e.Address).HasColumnName("address");
         entity.Property(e => e.IsActive).HasColumnName("is_active");
+        entity.Property(e => e.IsSandbox).HasColumnName("is_sandbox");
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
         entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
     }
@@ -382,7 +386,7 @@ public class AbrDbContext : DbContext
         entity.Property(e => e.SubLedgerId).HasColumnName("sub_ledger_id");
         entity.Property(e => e.Amount).HasColumnName("amount").HasColumnType("decimal(15,2)");
         entity.Property(e => e.CashBank).HasColumnName("cash_bank");
-        entity.Property(e => e.Description).HasColumnName("description");
+        entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(200);
         entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
         entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
         entity.Property(e => e.CreatedAt).HasColumnName("created_at");
@@ -392,6 +396,42 @@ public class AbrDbContext : DbContext
         entity.HasOne(e => e.SubLedger).WithMany(s => s.DailyEntries).HasForeignKey(e => e.SubLedgerId).OnDelete(DeleteBehavior.Restrict);
         entity.HasIndex(e => new { e.SiteId, e.EntryDate, e.EntryType, e.IsDeleted });
         entity.HasIndex(e => new { e.SiteId, e.MainLedgerId, e.SubLedgerId });
+    }
+
+    private static void ConfigureJournalVoucher(ModelBuilder modelBuilder)
+    {
+        var voucher = modelBuilder.Entity<JournalVoucher>();
+        voucher.ToTable("journal_vouchers");
+        voucher.HasKey(e => e.Id);
+        voucher.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        voucher.Property(e => e.SiteId).HasColumnName("site_id");
+        voucher.Property(e => e.VoucherNo).HasColumnName("voucher_no").HasMaxLength(30).IsRequired();
+        voucher.Property(e => e.VoucherDate).HasColumnName("voucher_date");
+        voucher.Property(e => e.Narration).HasColumnName("narration").HasMaxLength(500);
+        voucher.Property(e => e.TotalDebit).HasColumnName("total_debit").HasColumnType("decimal(15,2)");
+        voucher.Property(e => e.TotalCredit).HasColumnName("total_credit").HasColumnType("decimal(15,2)");
+        voucher.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        voucher.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+        voucher.Property(e => e.CreatedAt).HasColumnName("created_at");
+        voucher.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        voucher.HasOne(e => e.Site).WithMany(s => s.JournalVouchers).HasForeignKey(e => e.SiteId).OnDelete(DeleteBehavior.Cascade);
+        voucher.HasIndex(e => new { e.SiteId, e.VoucherDate, e.IsDeleted });
+        voucher.HasIndex(e => new { e.SiteId, e.VoucherNo }).IsUnique();
+
+        var line = modelBuilder.Entity<JournalVoucherLine>();
+        line.ToTable("journal_voucher_lines");
+        line.HasKey(e => e.Id);
+        line.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        line.Property(e => e.JournalVoucherId).HasColumnName("journal_voucher_id");
+        line.Property(e => e.SubLedgerId).HasColumnName("sub_ledger_id");
+        line.Property(e => e.EntryType).HasColumnName("entry_type").HasMaxLength(2).IsRequired();
+        line.Property(e => e.Amount).HasColumnName("amount").HasColumnType("decimal(15,2)");
+        line.Property(e => e.LineNo).HasColumnName("line_no");
+        line.Property(e => e.CreatedAt).HasColumnName("created_at");
+        line.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        line.HasOne(e => e.JournalVoucher).WithMany(v => v.Lines).HasForeignKey(e => e.JournalVoucherId).OnDelete(DeleteBehavior.Cascade);
+        line.HasOne(e => e.SubLedger).WithMany(s => s.JournalVoucherLines).HasForeignKey(e => e.SubLedgerId).OnDelete(DeleteBehavior.Restrict);
+        line.HasIndex(e => new { e.JournalVoucherId, e.LineNo }).IsUnique();
     }
 
     private static void ConfigureVyaj(ModelBuilder modelBuilder)

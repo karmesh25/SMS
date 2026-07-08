@@ -160,6 +160,52 @@ public sealed class DailyEntryExcelService : IDailyEntryExcelService
         };
     }
 
+    public async Task<DailyEntryExcelFileDto> ExportLedgerPdfAsync(
+        DailyEntryLedgerExportRequestDto request,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureSiteExistsAsync(request.SiteId, cancellationToken);
+
+        var siteName = await _context.Sites.AsNoTracking()
+            .Where(s => s.Id == request.SiteId)
+            .Select(s => s.SiteName)
+            .FirstAsync(cancellationToken);
+
+        var q = _context.DailyEntries
+            .AsNoTracking()
+            .Include(e => e.MainLedger)
+            .Include(e => e.SubLedger)
+            .Where(e => e.SiteId == request.SiteId && !e.IsDeleted);
+
+        if (request.DateFrom.HasValue)
+            q = q.Where(e => e.EntryDate >= request.DateFrom.Value);
+        if (request.DateTo.HasValue)
+            q = q.Where(e => e.EntryDate <= request.DateTo.Value);
+
+        var entries = await q
+            .OrderBy(e => e.EntryDate)
+            .ThenBy(e => e.CreatedAt)
+            .Select(e => new LedgerExportRow
+            {
+                EntryDate = e.EntryDate,
+                EntryType = e.EntryType,
+                MainLedgerName = e.MainLedger.LedgerName,
+                SubLedgerName = e.SubLedger.LedgerName,
+                Description = e.Description,
+                Amount = e.Amount
+            })
+            .ToListAsync(cancellationToken);
+
+        var content = DailyEntryLedgerPdfBuilder.Build(entries, siteName);
+        var suffix = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd");
+        return new DailyEntryExcelFileDto
+        {
+            Content = content,
+            FileName = $"daily-entry-ledger-{suffix}.pdf",
+            ContentType = "application/pdf"
+        };
+    }
+
     private async Task<Guid> ResolveMainLedgerAsync(
         Guid siteId,
         string name,

@@ -21,22 +21,43 @@ public sealed class SiteService : ISiteService
         _cache = cache;
     }
 
-    public async Task<IReadOnlyList<SiteDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SiteDto>> GetAllAsync(
+        Guid? userId = null,
+        bool isSuperAdmin = false,
+        CancellationToken cancellationToken = default)
     {
-        return await _cache.GetOrCreateAsync(SitesCacheKey, async entry =>
+        if (isSuperAdmin || userId is null)
         {
-            entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-            return await _context.Sites.OrderBy(s => s.SiteName)
-                .Select(s => new SiteDto
-                {
-                    Id = s.Id,
-                    SiteName = s.SiteName,
-                    StartDate = s.StartDate,
-                    Address = s.Address,
-                    IsActive = s.IsActive
-                }).ToListAsync(cancellationToken);
-        }) ?? [];
+            return await _cache.GetOrCreateAsync(SitesCacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+                return await QuerySiteDtos().ToListAsync(cancellationToken);
+            }) ?? [];
+        }
+
+        var allowedSiteIds = await _context.UserSiteAccesses
+            .AsNoTracking()
+            .Where(a => a.UserId == userId.Value && a.CanRead)
+            .Select(a => a.SiteId)
+            .ToListAsync(cancellationToken);
+
+        return await QuerySiteDtos()
+            .Where(s => allowedSiteIds.Contains(s.Id))
+            .ToListAsync(cancellationToken);
     }
+
+    private IQueryable<SiteDto> QuerySiteDtos() =>
+        _context.Sites.AsNoTracking()
+            .OrderBy(s => s.SiteName)
+            .Select(s => new SiteDto
+            {
+                Id = s.Id,
+                SiteName = s.SiteName,
+                StartDate = s.StartDate,
+                Address = s.Address,
+                IsActive = s.IsActive,
+                IsSandbox = s.IsSandbox
+            });
 
     public async Task<SiteDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -90,7 +111,8 @@ public sealed class SiteService : ISiteService
         SiteName = s.SiteName,
         StartDate = s.StartDate,
         Address = s.Address,
-        IsActive = s.IsActive
+        IsActive = s.IsActive,
+        IsSandbox = s.IsSandbox
     };
 }
 

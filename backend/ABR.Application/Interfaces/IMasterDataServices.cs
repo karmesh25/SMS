@@ -4,7 +4,7 @@ namespace ABR.Application.Interfaces;
 
 public interface ISiteService
 {
-    Task<IReadOnlyList<SiteDto>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SiteDto>> GetAllAsync(Guid? userId = null, bool isSuperAdmin = false, CancellationToken cancellationToken = default);
     Task<SiteDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<SiteDto> CreateAsync(CreateSiteDto dto, CancellationToken cancellationToken = default);
     Task<SiteDto?> UpdateAsync(Guid id, UpdateSiteDto dto, CancellationToken cancellationToken = default);

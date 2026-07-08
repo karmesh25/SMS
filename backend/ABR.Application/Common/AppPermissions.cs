@@ -13,6 +13,7 @@ public static class AppModules
     public const string Devices = "devices";
     public const string Booking = "booking";
     public const string DailyEntry = "daily_entry";
+    public const string JournalVoucher = "journal_voucher";
     public const string Dastavej = "dastavej";
     public const string Vyaj = "vyaj";
     public const string Reports = "reports";
@@ -20,7 +21,7 @@ public static class AppModules
     public static readonly string[] All =
     [
         Dashboard, Sites, Wings, Conditions, Ledgers, Banks, Brokers,
-        Users, Devices, Booking, DailyEntry, Dastavej, Vyaj, Reports
+        Users, Devices, Booking, DailyEntry, JournalVoucher, Dastavej, Vyaj, Reports
     ];
 
     public static readonly IReadOnlyDictionary<string, string> DisplayNames = new Dictionary<string, string>
@@ -36,6 +37,7 @@ public static class AppModules
         [Devices] = "Devices",
         [Booking] = "Booking",
         [DailyEntry] = "Daily Entry",
+        [JournalVoucher] = "Journal Voucher",
         [Dastavej] = "Dastavej",
         [Vyaj] = "Vyaj Khata",
         [Reports] = "Reports"

@@ -13,5 +13,11 @@ export const ACCOUNTING_ROUTES: Routes = [
     data: { breadcrumb: 'Dastavej Entry' },
     canActivate: [permissionGuard('dastavej', 'view')],
     loadComponent: () => import('./dastavej/dastavej-entry.component').then(m => m.DastavejEntryComponent)
+  },
+  {
+    path: 'journal-voucher',
+    data: { breadcrumb: 'Journal Voucher' },
+    canActivate: [permissionGuard('journal_voucher', 'view')],
+    loadComponent: () => import('./journal-voucher/journal-voucher.component').then(m => m.JournalVoucherComponent)
   }
 ];

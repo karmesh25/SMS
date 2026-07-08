@@ -137,15 +137,15 @@ public static class RoleSeeder
         var officeView = new HashSet<string>
         {
             AppModules.Dashboard, AppModules.Booking, AppModules.DailyEntry,
-            AppModules.Dastavej, AppModules.Vyaj, AppModules.Reports
+            AppModules.JournalVoucher, AppModules.Dastavej, AppModules.Vyaj, AppModules.Reports
         };
         var officeManage = new HashSet<string>
         {
-            AppModules.Booking, AppModules.DailyEntry, AppModules.Dastavej, AppModules.Vyaj
+            AppModules.Booking, AppModules.DailyEntry, AppModules.JournalVoucher, AppModules.Dastavej, AppModules.Vyaj
         };
         var viewOnlyView = new HashSet<string>
         {
-            AppModules.Dashboard, AppModules.Vyaj, AppModules.Reports
+            AppModules.Dashboard, AppModules.JournalVoucher, AppModules.Vyaj, AppModules.Reports
         };
 
         return roleName switch

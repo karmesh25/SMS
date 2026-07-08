@@ -515,7 +515,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .HasColumnName("deleted_at");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("description");
 
                     b.Property<DateOnly>("EntryDate")
@@ -660,6 +661,115 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.ToTable("flats", (string)null);
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.JournalVoucher", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Narration")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("narration");
+
+                    b.Property<Guid>("SiteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("site_id");
+
+                    b.Property<decimal>("TotalCredit")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("total_credit");
+
+                    b.Property<decimal>("TotalDebit")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("total_debit");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<DateOnly>("VoucherDate")
+                        .HasColumnType("date")
+                        .HasColumnName("voucher_date");
+
+                    b.Property<string>("VoucherNo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("voucher_no");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SiteId", "VoucherNo")
+                        .IsUnique();
+
+                    b.HasIndex("SiteId", "VoucherDate", "IsDeleted");
+
+                    b.ToTable("journal_vouchers", (string)null);
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.JournalVoucherLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(15,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EntryType")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("entry_type");
+
+                    b.Property<Guid>("JournalVoucherId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("journal_voucher_id");
+
+                    b.Property<int>("LineNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("line_no");
+
+                    b.Property<Guid>("SubLedgerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sub_ledger_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubLedgerId");
+
+                    b.HasIndex("JournalVoucherId", "LineNo")
+                        .IsUnique();
+
+                    b.ToTable("journal_voucher_lines", (string)null);
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.MainLedger", b =>
                 {
                     b.Property<Guid>("Id")
@@ -802,6 +912,10 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
+
+                    b.Property<bool>("IsSandbox")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_sandbox");
 
                     b.Property<string>("SiteName")
                         .IsRequired()
@@ -1337,6 +1451,36 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.Navigation("Wing");
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.JournalVoucher", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.Site", "Site")
+                        .WithMany("JournalVouchers")
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Site");
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.JournalVoucherLine", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.JournalVoucher", "JournalVoucher")
+                        .WithMany("Lines")
+                        .HasForeignKey("JournalVoucherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ABR.Domain.Entities.SubLedger", "SubLedger")
+                        .WithMany("JournalVoucherLines")
+                        .HasForeignKey("SubLedgerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("JournalVoucher");
+
+                    b.Navigation("SubLedger");
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.MainLedger", b =>
                 {
                     b.HasOne("ABR.Domain.Entities.Site", "Site")
@@ -1493,6 +1637,11 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.Navigation("SubLedgers");
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.JournalVoucher", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.MainLedger", b =>
                 {
                     b.Navigation("DailyEntries");
@@ -1510,6 +1659,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
 
                     b.Navigation("DailyEntries");
 
+                    b.Navigation("JournalVouchers");
+
                     b.Navigation("MainLedgers");
 
                     b.Navigation("UserAccesses");
@@ -1522,6 +1673,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("ABR.Domain.Entities.SubLedger", b =>
                 {
                     b.Navigation("DailyEntries");
+
+                    b.Navigation("JournalVoucherLines");
 
                     b.Navigation("MemberBookings");
                 });

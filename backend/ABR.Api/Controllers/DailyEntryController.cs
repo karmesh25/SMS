@@ -159,6 +159,24 @@ public class DailyEntryController : ControllerBase
             cancellationToken);
     }
 
+    [HttpGet("export/ledger-pdf")]
+    [RequirePermission(AppModules.DailyEntry, PermissionLevel.View)]
+    public async Task<IActionResult> ExportLedgerPdf(
+        [FromQuery] DailyEntryLedgerExportRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (request.SiteId == Guid.Empty)
+            return BadRequest(new { message = "SiteId is required." });
+
+        var file = await _excelService.ExportLedgerPdfAsync(request, cancellationToken);
+        return await ExportDownloadResults.FromBytesAsync(
+            _exportStorage,
+            file.Content,
+            file.ContentType,
+            file.FileName,
+            cancellationToken);
+    }
+
     private Guid? GetUserId()
     {
         var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
