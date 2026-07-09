@@ -1,4 +1,5 @@
-import { Directive, ElementRef, HostListener, inject, OnInit } from '@angular/core';
+import { DestroyRef, Directive, ElementRef, HostListener, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl } from '@angular/forms';
 import { IndianCurrencyPipe } from '../pipes/indian-currency.pipe';
 
@@ -11,10 +12,21 @@ export class IndianAmountDirective implements OnInit {
   private readonly el = inject(ElementRef<HTMLInputElement>);
   private readonly control = inject(NgControl, { optional: true });
   private readonly currencyPipe = inject(IndianCurrencyPipe);
+  private readonly destroyRef = inject(DestroyRef);
   private editing = false;
 
   ngOnInit(): void {
     this.formatDisplay();
+    const ctrl = this.control?.control;
+    if (ctrl) {
+      ctrl.valueChanges
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((value) => {
+          if (!this.editing) {
+            this.formatDisplay(value as number);
+          }
+        });
+    }
   }
 
   @HostListener('focus')

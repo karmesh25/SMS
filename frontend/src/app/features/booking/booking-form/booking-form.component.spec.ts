@@ -25,4 +25,22 @@ describe('BookingForm calculations', () => {
     const pct = Math.round((brokerageAmount / total) * 10000) / 100;
     expect(pct).toBe(2);
   });
+
+  it('allows brokerage above 2% when amount is within total', () => {
+    const total = 15000000;
+    const brokeragePct = 5;
+    const amount = Math.round(total * (brokeragePct / 100) * 100) / 100;
+    expect(amount).toBe(750000);
+    expect(amount).toBeLessThanOrEqual(total);
+  });
+
+  it('caps brokerage amount to total price', () => {
+    const total = 15000000;
+    const amount = 16000000;
+    const cappedAmount = total;
+    const cappedPct = Math.round((cappedAmount / total) * 10000) / 100;
+    expect(cappedAmount).toBe(total);
+    expect(cappedPct).toBe(100);
+    expect(amount).toBeGreaterThan(total);
+  });
 });

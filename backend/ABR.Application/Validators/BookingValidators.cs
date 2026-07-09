@@ -12,7 +12,10 @@ public class CreateBookingDtoValidator : AbstractValidator<CreateBookingDto>
         RuleFor(x => x.ConditionId).NotEmpty();
         RuleFor(x => x.Sqft).GreaterThan(0);
         RuleFor(x => x.Rate).GreaterThan(0);
-        RuleFor(x => x.BrokeragePct).InclusiveBetween(0, 2);
+        RuleFor(x => x.BrokeragePct).GreaterThanOrEqualTo(0);
+        RuleFor(x => x)
+            .Must(dto => BookingValidationRules.BrokerageWithinTotal(dto.Sqft, dto.Rate, dto.BrokeragePct))
+            .WithMessage("Brokerage cannot exceed total price.");
         RuleFor(x => x.CustomerType).Must(t => t is "real" or "investor");
     }
 }
@@ -25,8 +28,24 @@ public class UpdateBookingDtoValidator : AbstractValidator<UpdateBookingDto>
         RuleFor(x => x.ConditionId).NotEmpty();
         RuleFor(x => x.Sqft).GreaterThan(0);
         RuleFor(x => x.Rate).GreaterThan(0);
-        RuleFor(x => x.BrokeragePct).InclusiveBetween(0, 2);
+        RuleFor(x => x.BrokeragePct).GreaterThanOrEqualTo(0);
+        RuleFor(x => x)
+            .Must(dto => BookingValidationRules.BrokerageWithinTotal(dto.Sqft, dto.Rate, dto.BrokeragePct))
+            .WithMessage("Brokerage cannot exceed total price.");
         RuleFor(x => x.CustomerType).Must(t => t is "real" or "investor");
+    }
+}
+
+internal static class BookingValidationRules
+{
+    internal static bool BrokerageWithinTotal(decimal sqft, decimal rate, decimal brokeragePct)
+    {
+        var total = sqft * rate;
+        if (total <= 0)
+            return true;
+
+        var brokerage = Math.Round(total * (brokeragePct / 100m), 2);
+        return brokerage <= total;
     }
 }
 

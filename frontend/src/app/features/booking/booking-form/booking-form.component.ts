@@ -258,7 +258,7 @@ export class BookingFormComponent implements OnInit {
 
     brokerId: [null as string | null],
 
-    brokeragePct: [0, [Validators.min(0), Validators.max(2)]],
+    brokeragePct: [0, [Validators.min(0)]],
 
     brokerageAmount: [0, [Validators.min(0)]],
 
@@ -484,10 +484,10 @@ export class BookingFormComponent implements OnInit {
 
     if (this.lastPricingDriver === 'total' && sqft > 0) {
       rate = Math.round((total / sqft) * 100) / 100;
-      this.form.patchValue({ rate }, { emitEvent: false });
+      this.form.patchValue({ rate }, { emitEvent: true });
     } else {
       total = Math.round(sqft * rate * 100) / 100;
-      this.form.patchValue({ totalPrice: total }, { emitEvent: false });
+      this.form.patchValue({ totalPrice: total }, { emitEvent: true });
     }
 
     this.recalcBrokerage();
@@ -500,16 +500,32 @@ export class BookingFormComponent implements OnInit {
 
     if (this.lastBrokerageDriver === 'amount' && total > 0) {
       pct = Math.round((amount / total) * 10000) / 100;
-      if (pct > 2) {
-        pct = 2;
-        amount = Math.round(total * (pct / 100) * 100) / 100;
-        this.toast.error('Brokerage cannot exceed 2% of total price.');
-      }
-      this.form.patchValue({ brokeragePct: pct, brokerageAmount: amount }, { emitEvent: false });
     } else {
       amount = Math.round(total * (pct / 100) * 100) / 100;
-      this.form.patchValue({ brokerageAmount: amount }, { emitEvent: false });
     }
+
+    const capped = this.capBrokerageToTotal(total, pct, amount);
+    if (capped.wasCapped) {
+      this.toast.error('Brokerage cannot exceed total price.');
+    }
+
+    this.form.patchValue(
+      { brokeragePct: capped.pct, brokerageAmount: capped.amount },
+      { emitEvent: true }
+    );
+  }
+
+  private capBrokerageToTotal(
+    total: number,
+    pct: number,
+    amount: number
+  ): { pct: number; amount: number; wasCapped: boolean } {
+    if (total > 0 && amount > total) {
+      const cappedAmount = total;
+      const cappedPct = Math.round((cappedAmount / total) * 10000) / 100;
+      return { pct: cappedPct, amount: cappedAmount, wasCapped: true };
+    }
+    return { pct, amount, wasCapped: false };
   }
 
 
@@ -520,6 +536,10 @@ export class BookingFormComponent implements OnInit {
     const priced = this.form.getRawValue();
     if ((priced.rate ?? 0) <= 0 || (priced.totalPrice ?? 0) <= 0) {
       this.toast.error('Enter SQFT with Rate or Total Price.');
+      return;
+    }
+    if ((priced.brokerageAmount ?? 0) > (priced.totalPrice ?? 0)) {
+      this.toast.error('Brokerage cannot exceed total price.');
       return;
     }
 

@@ -56,4 +56,39 @@ public class BookingValidatorsTests
         });
         Assert.True(result.IsValid);
     }
+
+    [Fact]
+    public void CreateBookingDtoValidator_AcceptsBrokerageAboveTwoPercent_WhenWithinTotal()
+    {
+        var validator = new CreateBookingDtoValidator();
+        var result = validator.Validate(new CreateBookingDto
+        {
+            FlatId = Guid.NewGuid(),
+            MemberName = "Member",
+            ConditionId = Guid.NewGuid(),
+            Sqft = 1000,
+            Rate = 15000,
+            BrokeragePct = 5,
+            CustomerType = "real"
+        });
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void CreateBookingDtoValidator_RejectsBrokerageAboveTotal()
+    {
+        var validator = new CreateBookingDtoValidator();
+        var result = validator.Validate(new CreateBookingDto
+        {
+            FlatId = Guid.NewGuid(),
+            MemberName = "Member",
+            ConditionId = Guid.NewGuid(),
+            Sqft = 1000,
+            Rate = 5000,
+            BrokeragePct = 150,
+            CustomerType = "real"
+        });
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage == "Brokerage cannot exceed total price.");
+    }
 }
