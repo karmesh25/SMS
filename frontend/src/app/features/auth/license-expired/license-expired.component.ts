@@ -29,7 +29,7 @@ import { LICENSE_EXPIRED_MESSAGE, LicenseService } from '../../../core/services/
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #1f2937;
+      background: var(--abr-brand-gradient-vivid);
       color: #fff;
       padding: 1rem;
     }
@@ -38,17 +38,17 @@ import { LICENSE_EXPIRED_MESSAGE, LicenseService } from '../../../core/services/
       max-width: 640px;
       text-align: center;
       padding: 2rem;
-      color: #1f2937;
+      color: var(--abr-text);
     }
 
     .locked-card h1 {
-      color: #111827;
+      color: var(--abr-text);
       margin: 0 0 0.75rem;
       font-size: 1.75rem;
     }
 
     .locked-card p {
-      color: #374151;
+      color: var(--abr-text-secondary);
       margin: 0.5rem 0;
       font-size: 1rem;
       line-height: 1.5;
@@ -58,7 +58,7 @@ import { LICENSE_EXPIRED_MESSAGE, LicenseService } from '../../../core/services/
       font-size: 48px;
       width: 48px;
       height: 48px;
-      color: #c0392b;
+      color: var(--abr-danger);
       margin-bottom: 1rem;
     }
 
@@ -68,7 +68,7 @@ import { LICENSE_EXPIRED_MESSAGE, LicenseService } from '../../../core/services/
     }
 
     .expiry strong {
-      color: #111827;
+      color: var(--abr-text);
     }
 
     .expiry span {
@@ -76,16 +76,16 @@ import { LICENSE_EXPIRED_MESSAGE, LicenseService } from '../../../core/services/
       margin-top: 0.5rem;
       font-size: 1.1rem;
       font-weight: 600;
-      color: #1d4ed8;
+      color: var(--abr-info);
     }
 
     .locked-card p.message {
-      color: #1e40af;
+      color: var(--abr-info);
       font-weight: 500;
     }
 
     .hint {
-      color: #4b5563;
+      color: var(--abr-text-secondary);
       font-size: 0.875rem;
     }
   `]

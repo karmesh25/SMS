@@ -62,31 +62,39 @@ interface WingRow {
 
     <app-page-header title="Wing Management" subtitle="Create wings and auto-generate flats"></app-page-header>
 
+    <section class="abr-panel">
+
+      <h2 class="abr-panel__title"><mat-icon>apartment</mat-icon>Add Wing</h2>
+
+      <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="save()">
+
+        <mat-form-field appearance="outline"><mat-label>Wing Name</mat-label><input matInput formControlName="wingName" /></mat-form-field>
+
+        <mat-form-field appearance="outline"><mat-label>Floors</mat-label><input matInput type="number" formControlName="floors" /></mat-form-field>
+
+        <mat-form-field appearance="outline"><mat-label>Flats Per Floor</mat-label><input matInput type="number" formControlName="flatsPerFloor" /></mat-form-field>
+
+        <mat-form-field appearance="outline"><mat-label>Shops</mat-label><input matInput type="number" formControlName="shops" /></mat-form-field>
+
+        <mat-checkbox formControlName="isBungalow">Is Bungalow</mat-checkbox>
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || !siteId">
+
+          <mat-icon>add</mat-icon>
+
+          Add Wing
+
+        </button>
+
+      </form>
+
+    </section>
 
 
-    <form [formGroup]="form" class="form-grid" (ngSubmit)="save()">
 
-      <mat-form-field appearance="outline"><mat-label>Wing Name</mat-label><input matInput formControlName="wingName" /></mat-form-field>
+    <div class="abr-table-card">
 
-      <mat-form-field appearance="outline"><mat-label>Floors</mat-label><input matInput type="number" formControlName="floors" /></mat-form-field>
-
-      <mat-form-field appearance="outline"><mat-label>Flats Per Floor</mat-label><input matInput type="number" formControlName="flatsPerFloor" /></mat-form-field>
-
-      <mat-form-field appearance="outline"><mat-label>Shops</mat-label><input matInput type="number" formControlName="shops" /></mat-form-field>
-
-      <mat-checkbox formControlName="isBungalow">Is Bungalow</mat-checkbox>
-
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || !siteId">Add Wing</button>
-
-    </form>
-
-
-
-    <div class="abr-scroll-x">
-
-
-
-    <table mat-table [dataSource]="wings" class="mat-elevation-z1 abr-table sticky-header">
+    <table mat-table [dataSource]="wings" class="abr-table sticky-header">
 
       <ng-container matColumnDef="wingName"><th mat-header-cell *matHeaderCellDef>Wing</th><td mat-cell *matCellDef="let row">{{ row.wingName }}</td></ng-container>
 
@@ -112,7 +120,7 @@ interface WingRow {
 
       <tr mat-row *matRowDef="let row; columns: cols"></tr>
 
-      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
+      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>apartment</mat-icon>No wings yet.</td></tr>
 
     </table>
 
@@ -120,7 +128,7 @@ interface WingRow {
 
   `,
 
-  styles: [`.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.5rem; align-items:center; } table { width:100%; }`]
+  styles: [`.abr-form-grid button { min-width: 140px; } .abr-form-grid mat-checkbox { align-self: center; }`]
 
 })
 

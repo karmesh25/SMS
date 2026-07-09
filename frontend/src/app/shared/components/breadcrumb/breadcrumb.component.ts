@@ -28,16 +28,16 @@ import { BreadcrumbService } from '../../../core/services/breadcrumb.service';
       align-items: center;
       flex-wrap: wrap;
       gap: 0.35rem;
-      padding: 0.5rem 1.5rem;
-      background: #fff;
-      border-bottom: 1px solid #e0e6ed;
-      font-size: 0.875rem;
+      padding: 0.55rem 1.75rem;
+      background: var(--abr-surface);
+      border-bottom: 1px solid var(--abr-border);
+      font-size: 0.85rem;
     }
 
     a {
-      color: #1f4e79;
+      color: var(--abr-primary);
       text-decoration: none;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     a:hover {
@@ -45,11 +45,12 @@ import { BreadcrumbService } from '../../../core/services/breadcrumb.service';
     }
 
     .current {
-      color: #666;
+      color: var(--abr-text-secondary);
+      font-weight: 500;
     }
 
     .separator {
-      color: #999;
+      color: var(--abr-text-muted);
     }
 
     @media (max-width: 959px) {

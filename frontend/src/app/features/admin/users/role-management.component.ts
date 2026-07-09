@@ -43,6 +43,7 @@ interface RoleDialogData {
         </mat-form-field>
       </form>
 
+      <div class="abr-table-card">
       <table class="perm-table">
         <thead>
           <tr>
@@ -74,6 +75,7 @@ interface RoleDialogData {
           }
         </tbody>
       </table>
+      </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
@@ -97,12 +99,12 @@ interface RoleDialogData {
     .perm-table th,
     .perm-table td {
       padding: 0.35rem 0.5rem;
-      border-bottom: 1px solid #e0e0e0;
+      border-bottom: 1px solid var(--abr-border);
       text-align: left;
     }
 
     .na {
-      color: #999;
+      color: var(--abr-text-muted);
     }
   `]
 })
@@ -181,14 +183,14 @@ export class RoleEditDialogComponent {
       </button>
     </div>
 
-    <div class="abr-scroll-x">
-      <table mat-table [dataSource]="roles" class="mat-elevation-z1 abr-table sticky-header">
+    <div class="abr-table-card">
+      <table mat-table [dataSource]="roles" class="abr-table sticky-header">
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
           <td mat-cell *matCellDef="let row">
             {{ row.name }}
             @if (row.isSystem) {
-              <span class="badge">System</span>
+              <span class="abr-chip abr-chip--info">System</span>
             }
           </td>
         </ng-container>
@@ -214,7 +216,7 @@ export class RoleEditDialogComponent {
         <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         <tr class="empty-row" *matNoDataRow>
           <td [attr.colspan]="displayedColumns.length">
-            <mat-icon>info_outline</mat-icon>No roles found.
+            <mat-icon>admin_panel_settings</mat-icon>No roles yet.
           </td>
         </tr>
       </table>
@@ -223,19 +225,6 @@ export class RoleEditDialogComponent {
   styles: [`
     .toolbar {
       margin-bottom: 1rem;
-    }
-
-    table {
-      width: 100%;
-    }
-
-    .badge {
-      margin-left: 0.5rem;
-      padding: 0.1rem 0.4rem;
-      font-size: 0.7rem;
-      border-radius: 4px;
-      background: #e3f2fd;
-      color: #1565c0;
     }
   `]
 })

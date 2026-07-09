@@ -21,10 +21,11 @@ import { Component, Input } from '@angular/core';
   `,
   styles: [`
     .skeleton-table {
-      background: #fff;
-      border-radius: 8px;
+      background: var(--abr-surface);
+      border: 1px solid var(--abr-border);
+      border-radius: var(--abr-radius-lg);
       overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--abr-shadow-sm);
     }
     .skeleton-header, .skeleton-row {
       display: grid;
@@ -32,14 +33,14 @@ import { Component, Input } from '@angular/core';
       gap: 1rem;
       padding: 0.75rem 1rem;
     }
-    .skeleton-header { background: #f0f4f8; }
-    .skeleton-row:not(:last-child) { border-bottom: 1px solid #eef2f6; }
+    .skeleton-header { background: var(--abr-surface-2); }
+    .skeleton-row:not(:last-child) { border-bottom: 1px solid var(--abr-border); }
     .skeleton-cell {
       height: 14px;
-      background: linear-gradient(90deg, #eceff1 25%, #f5f7fa 50%, #eceff1 75%);
+      background: linear-gradient(90deg, var(--abr-surface-3) 25%, var(--abr-surface-2) 50%, var(--abr-surface-3) 75%);
       background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-      border-radius: 4px;
+      animation: shimmer 1.3s infinite;
+      border-radius: var(--abr-radius-sm);
     }
     .skeleton-cell.header { height: 16px; opacity: 0.7; }
     @keyframes shimmer {

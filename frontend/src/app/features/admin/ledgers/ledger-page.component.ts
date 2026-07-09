@@ -137,8 +137,8 @@ type LedgerPanel = 'main' | 'sub';
     .name-field { flex: 1; min-width: 160px; }
     .search-field { width: 200px; flex-shrink: 0; }
     table { width: 100%; min-width: 320px; }
-    tr.selected { background: rgba(25, 118, 210, 0.08); }
-    .empty-hint { color: #888; padding: 1rem 0; }
+    tr.selected { background: var(--abr-info-soft); }
+    .empty-hint { color: var(--abr-text-muted); padding: 1rem 0; }
 
     @media (max-width: 599px) {
       .picker-field,

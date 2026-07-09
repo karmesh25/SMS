@@ -74,7 +74,11 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
 
 
+    <section class="abr-panel">
+
     <form [formGroup]="form" class="form-grid" (ngSubmit)="save()">
+
+      <h3 class="form-section">Booking Details</h3>
 
       <mat-form-field appearance="outline"><mat-label>Flat No</mat-label><input matInput formControlName="flatNo" readonly /></mat-form-field>
 
@@ -114,6 +118,8 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
       </mat-form-field>
 
+      <h3 class="form-section">Pricing</h3>
+
       <mat-form-field appearance="outline"><mat-label>SQFT</mat-label><input matInput type="number" formControlName="sqft" (input)="onSqftChange()" /></mat-form-field>
 
       <mat-form-field appearance="outline"><mat-label>Rate / SQFT</mat-label><input matInput formControlName="rate" appIndianAmount (input)="onRateChange()" /></mat-form-field>
@@ -121,6 +127,8 @@ interface SubLedgerOption { id: string; ledgerName: string; }
       <mat-form-field appearance="outline"><mat-label>Total Price</mat-label><input matInput formControlName="totalPrice" appIndianAmount (input)="onTotalChange()" /></mat-form-field>
 
       <p class="pricing-hint">Enter Rate or Total — the other is calculated automatically from SQFT.</p>
+
+      <h3 class="form-section">Brokerage &amp; Other</h3>
 
       <mat-form-field appearance="outline">
 
@@ -168,11 +176,26 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
     </form>
 
+    </section>
+
   `,
 
   styles: [`
 
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; align-items: start; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem 1.15rem; align-items: start; }
+
+    .form-section {
+      grid-column: 1 / -1;
+      margin: 0.5rem 0 -0.25rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--abr-border);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--abr-primary);
+    }
+    .form-section:first-child { margin-top: 0; }
 
     .full { grid-column: 1 / -1; }
 
@@ -182,9 +205,9 @@ interface SubLedgerOption { id: string; ledgerName: string; }
       .actions button { width: 100%; }
     }
 
-    .warning { color: #c0392b; margin-bottom: 1rem; font-size: 0.875rem; }
+    .warning { color: var(--abr-danger); margin-bottom: 1rem; font-size: 0.875rem; }
 
-    .pricing-hint { grid-column: 1 / -1; margin: -0.5rem 0 0; color: #64748b; font-size: 0.8rem; }
+    .pricing-hint { grid-column: 1 / -1; margin: -0.5rem 0 0; color: var(--abr-text-muted); font-size: 0.8rem; }
 
   `]
 

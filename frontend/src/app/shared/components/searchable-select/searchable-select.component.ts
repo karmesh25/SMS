@@ -73,7 +73,7 @@ export interface SelectOption<T = string> {
       position: sticky;
       top: 0;
       z-index: 1;
-      background: #fff;
+      background: var(--abr-surface);
     }
     .virtual-viewport {
       height: 240px;

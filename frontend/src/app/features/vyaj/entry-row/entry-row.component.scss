@@ -1,11 +1,10 @@
-@use '../../../../styles/tokens' as tokens;
-
 .entry-row {
-  padding: tokens.$abr-spacing-md;
-  margin-bottom: tokens.$abr-spacing-sm;
-  border: 1px solid tokens.$abr-border;
-  border-radius: tokens.$abr-radius-md;
-  background: tokens.$abr-surface;
+  padding: var(--abr-space-md);
+  margin-bottom: var(--abr-space-sm);
+  border: 1px solid var(--abr-border);
+  border-radius: var(--abr-radius-md);
+  background: var(--abr-surface);
+  box-shadow: var(--abr-shadow-xs);
 }
 
 .entry-row.closed {
@@ -15,7 +14,7 @@
 .entry-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr) auto;
-  gap: tokens.$abr-spacing-md;
+  gap: var(--abr-space-md);
   align-items: center;
 }
 
@@ -35,27 +34,27 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: tokens.$abr-text-muted;
+  color: var(--abr-text-muted);
 }
 
 .mono {
-  font-family: 'Roboto Mono', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .due {
-  color: tokens.$abr-warn;
+  color: var(--abr-danger);
   font-weight: 600;
 }
 
 .due.settled {
-  color: tokens.$abr-success;
+  color: var(--abr-success);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: tokens.$abr-spacing-xs;
+  gap: var(--abr-space-xs);
   justify-content: flex-end;
   grid-column: 1 / -1;
 }
@@ -69,33 +68,33 @@
 
 .subtotals {
   display: flex;
-  gap: tokens.$abr-spacing-lg;
-  margin-top: tokens.$abr-spacing-sm;
+  gap: var(--abr-space-lg);
+  margin-top: var(--abr-space-sm);
   font-size: 0.85rem;
-  color: tokens.$abr-text-muted;
+  color: var(--abr-text-muted);
 }
 
 .payment-form {
   display: flex;
   flex-wrap: wrap;
-  gap: tokens.$abr-spacing-sm;
-  margin-top: tokens.$abr-spacing-md;
-  padding-top: tokens.$abr-spacing-md;
-  border-top: 1px dashed tokens.$abr-border;
+  gap: var(--abr-space-sm);
+  margin-top: var(--abr-space-md);
+  padding-top: var(--abr-space-md);
+  border-top: 1px dashed var(--abr-border-strong);
   align-items: center;
 }
 
 .payment-list {
   list-style: none;
-  margin: tokens.$abr-spacing-sm 0 0;
+  margin: var(--abr-space-sm) 0 0;
   padding: 0;
 }
 
 .payment-list li {
   display: flex;
   align-items: center;
-  gap: tokens.$abr-spacing-md;
+  gap: var(--abr-space-md);
   padding: 0.35rem 0;
   font-size: 0.85rem;
-  border-bottom: 1px solid tokens.$abr-border;
+  border-bottom: 1px solid var(--abr-border);
 }

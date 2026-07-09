@@ -43,31 +43,34 @@ interface AllEntryRow {
       <div class="no-print">
         <app-page-header title="All Daily Entry" subtitle="Aavak and Javak entries paired by date" />
         <app-module-subnav [items]="reportNav" />
-        <form [formGroup]="form" class="filters">
-          <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Main Ledger</mat-label>
-            <mat-select formControlName="mainLedgerId" (selectionChange)="loadSub()">
-              <mat-option value="">All</mat-option>
-              @for (m of mainLedgers; track m.id) { <mat-option [value]="m.id">{{ m.ledgerName }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Sub Ledger</mat-label>
-            <mat-select formControlName="subLedgerId">
-              <mat-option value="">All</mat-option>
-              @for (s of subLedgers; track s.id) { <mat-option [value]="s.id">{{ s.ledgerName }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Flat No</mat-label><input matInput formControlName="flatNo" /></mat-form-field>
-          <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
-          <app-report-export-buttons reportType="all-entry" [filters]="exportFilters()" [disabled]="!canExport" />
-        </form>
+        <section class="abr-panel">
+          <h2 class="abr-panel__title"><mat-icon>filter_alt</mat-icon>Filters</h2>
+          <form [formGroup]="form" class="filters">
+            <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Main Ledger</mat-label>
+              <mat-select formControlName="mainLedgerId" (selectionChange)="loadSub()">
+                <mat-option value="">All</mat-option>
+                @for (m of mainLedgers; track m.id) { <mat-option [value]="m.id">{{ m.ledgerName }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Sub Ledger</mat-label>
+              <mat-select formControlName="subLedgerId">
+                <mat-option value="">All</mat-option>
+                @for (s of subLedgers; track s.id) { <mat-option [value]="s.id">{{ s.ledgerName }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Flat No</mat-label><input matInput formControlName="flatNo" /></mat-form-field>
+            <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
+            <app-report-export-buttons reportType="all-entry" [filters]="exportFilters()" [disabled]="!canExport" />
+          </form>
+        </section>
       </div>
       <div class="print-only"><h2>All Daily Entry Report</h2><p>{{ form.value.dateFrom }} — {{ form.value.dateTo }}</p></div>
-      <div class="abr-scroll-x scroll-table">
-      <table mat-table class="mat-elevation-z1 abr-table sticky-header">
+      <div class="abr-table-card">
+      <table mat-table class="abr-table sticky-header">
         <thead>
           <tr>
             <th colspan="7" class="aavak-header">Aavak</th>

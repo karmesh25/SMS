@@ -4,102 +4,518 @@
 
 @include mat.core();
 
-$abr-primary-palette: (
-  50: #e8eef4,
-  100: #c5d5e4,
-  200: #9eb9d2,
-  300: #779dbf,
-  400: #5a88b2,
-  500: #3d73a5,
-  600: #376b9d,
-  700: #2f6093,
-  800: #27568a,
-  900: #1f4e79,
-  contrast: (
-    50: rgba(black, 0.87),
-    100: rgba(black, 0.87),
-    200: rgba(black, 0.87),
-    300: white,
-    400: white,
-    500: white,
-    600: white,
-    700: white,
-    800: white,
-    900: white
-  )
+// ---------------------------------------------------------------------------
+// Angular Material theme — teal primary / emerald accent
+// ---------------------------------------------------------------------------
+$abr-primary: mat.define-palette(tokens.$abr-teal-palette, 700);
+$abr-accent: mat.define-palette(tokens.$abr-emerald-palette, 600);
+$abr-warn: mat.define-palette(mat.$red-palette, 600);
+
+$abr-typography: mat.define-typography-config(
+  $font-family: "'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', sans-serif"
 );
 
-$abr-accent-palette: (
-  50: #e8f2fa,
-  100: #c5dff3,
-  200: #9ecaeb,
-  300: #77b5e3,
-  400: #59a5dd,
-  500: #3c95d7,
-  600: #368dd3,
-  700: #2e82cd,
-  800: #2778c7,
-  900: #1a67bd,
-  A100: #ffffff,
-  A200: #e3f1ff,
-  A400: #b0d7ff,
-  A700: #96caff,
-  contrast: (
-    50: rgba(black, 0.87),
-    100: rgba(black, 0.87),
-    200: rgba(black, 0.87),
-    300: rgba(black, 0.87),
-    400: white,
-    500: white,
-    600: white,
-    700: white,
-    800: white,
-    900: white,
-    A100: rgba(black, 0.87),
-    A200: rgba(black, 0.87),
-    A400: rgba(black, 0.87),
-    A700: rgba(black, 0.87)
-  )
-);
-
-$abr-primary: mat.define-palette($abr-primary-palette, 900);
-$abr-accent: mat.define-palette($abr-accent-palette, 700);
-$abr-warn: mat.define-palette(mat.$red-palette, 700);
-
-$abr-theme: mat.define-light-theme((
-  color: (
-    primary: $abr-primary,
-    accent: $abr-accent,
-    warn: $abr-warn
-  ),
-  typography: mat.define-typography-config(),
+$abr-light-theme: mat.define-light-theme((
+  color: (primary: $abr-primary, accent: $abr-accent, warn: $abr-warn),
+  typography: $abr-typography,
   density: 0
 ));
 
-@include mat.all-component-themes($abr-theme);
+$abr-dark-theme: mat.define-dark-theme((
+  color: (primary: mat.define-palette(tokens.$abr-teal-palette, 400), accent: mat.define-palette(tokens.$abr-emerald-palette, 400), warn: mat.define-palette(mat.$red-palette, 300)),
+  typography: $abr-typography,
+  density: 0
+));
 
-html, body {
+@include mat.all-component-themes($abr-light-theme);
+
+html[data-theme='dark'] {
+  @include mat.all-component-colors($abr-dark-theme);
+}
+
+// ---------------------------------------------------------------------------
+// Design tokens as CSS custom properties (LIGHT)
+// ---------------------------------------------------------------------------
+:root {
+  // Surfaces & structure
+  --abr-bg: #eef2f7;
+  --abr-bg-tint: #e6edf3;
+  --abr-surface: #ffffff;
+  --abr-surface-2: #f7fafc;
+  --abr-surface-3: #eef2f6;
+  --abr-border: #e3e9f0;
+  --abr-border-strong: #cbd5e1;
+
+  // Text
+  --abr-text: #0f172a;
+  --abr-text-secondary: #475569;
+  --abr-text-muted: #94a3b8;
+  --abr-text-on-brand: #ffffff;
+
+  // Brand
+  --abr-primary: #0f766e;
+  --abr-primary-strong: #115e59;
+  --abr-primary-hover: #0d9488;
+  --abr-primary-soft: #d5f5f0;
+  --abr-primary-contrast: #ffffff;
+  --abr-accent: #059669;
+
+  // Semantic
+  --abr-success: #059669;
+  --abr-success-soft: #d1fae5;
+  --abr-danger: #dc2626;
+  --abr-danger-soft: #fee2e2;
+  --abr-warning: #d97706;
+  --abr-warning-soft: #fef3c7;
+  --abr-info: #0891b2;
+  --abr-info-soft: #cffafe;
+
+  // Brand gradients
+  --abr-brand-gradient: linear-gradient(135deg, #0f766e 0%, #059669 100%);
+  --abr-brand-gradient-vivid: linear-gradient(140deg, #0d9488 0%, #059669 55%, #047857 100%);
+
+  // Elevation
+  --abr-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --abr-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
+  --abr-shadow-md: 0 6px 16px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.05);
+  --abr-shadow-lg: 0 14px 32px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06);
+  --abr-ring: 0 0 0 3px rgba(13, 148, 136, 0.32);
+
+  // Radius
+  --abr-radius-sm: 6px;
+  --abr-radius-md: 10px;
+  --abr-radius-lg: 14px;
+  --abr-radius-xl: 20px;
+  --abr-radius-pill: 999px;
+
+  // Spacing
+  --abr-space-xs: 0.25rem;
+  --abr-space-sm: 0.5rem;
+  --abr-space-md: 1rem;
+  --abr-space-lg: 1.5rem;
+  --abr-space-xl: 2rem;
+  --abr-space-2xl: 3rem;
+
+  // Motion
+  --abr-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --abr-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --abr-dur-fast: 120ms;
+  --abr-dur: 200ms;
+  --abr-dur-slow: 320ms;
+
+  // Type
+  --abr-font: 'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+}
+
+// ---------------------------------------------------------------------------
+// Design tokens (DARK)
+// ---------------------------------------------------------------------------
+html[data-theme='dark'] {
+  --abr-bg: #0b1220;
+  --abr-bg-tint: #0e1626;
+  --abr-surface: #172032;
+  --abr-surface-2: #1e2a3f;
+  --abr-surface-3: #26344c;
+  --abr-border: #2c3a53;
+  --abr-border-strong: #3d4f6d;
+
+  --abr-text: #eef2f8;
+  --abr-text-secondary: #b6c2d4;
+  --abr-text-muted: #7e8da4;
+  --abr-text-on-brand: #ffffff;
+
+  --abr-primary: #2dd4bf;
+  --abr-primary-strong: #5eead4;
+  --abr-primary-hover: #5eead4;
+  --abr-primary-soft: rgba(45, 212, 191, 0.14);
+  --abr-primary-contrast: #04211d;
+  --abr-accent: #34d399;
+
+  --abr-success: #34d399;
+  --abr-success-soft: rgba(52, 211, 153, 0.16);
+  --abr-danger: #f87171;
+  --abr-danger-soft: rgba(248, 113, 113, 0.16);
+  --abr-warning: #fbbf24;
+  --abr-warning-soft: rgba(251, 191, 36, 0.16);
+  --abr-info: #22d3ee;
+  --abr-info-soft: rgba(34, 211, 238, 0.16);
+
+  --abr-brand-gradient: linear-gradient(135deg, #0f766e 0%, #065f46 100%);
+  --abr-brand-gradient-vivid: linear-gradient(140deg, #0f766e 0%, #047857 60%, #065f46 100%);
+
+  --abr-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --abr-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --abr-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --abr-shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --abr-ring: 0 0 0 3px rgba(45, 212, 191, 0.4);
+}
+
+// ---------------------------------------------------------------------------
+// Base
+// ---------------------------------------------------------------------------
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
   height: 100%;
   margin: 0;
-  font-family: tokens.$abr-font-family;
-  background: tokens.$abr-bg;
+  font-family: var(--abr-font);
+  color: var(--abr-text);
+  background: var(--abr-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+body {
+  transition: background-color var(--abr-dur) var(--abr-ease), color var(--abr-dur) var(--abr-ease);
+}
+
+h1, h2, h3, h4 {
+  color: var(--abr-text);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--abr-primary);
+}
+
+// Accessible keyboard focus ring across the app
+:focus-visible {
+  outline: none;
+  box-shadow: var(--abr-ring);
+  border-radius: var(--abr-radius-sm);
+}
+
+// Subtle, modern scrollbars
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--abr-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--abr-border-strong);
+  border-radius: var(--abr-radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--abr-text-muted);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Material surface harmonisation (both themes read from our tokens)
+// ---------------------------------------------------------------------------
+.mat-mdc-card {
+  --mdc-elevated-card-container-color: var(--abr-surface);
+  border-radius: var(--abr-radius-lg) !important;
+  box-shadow: var(--abr-shadow-sm) !important;
+  border: 1px solid var(--abr-border);
+  color: var(--abr-text);
+}
+
+.mat-mdc-dialog-surface {
+  border-radius: var(--abr-radius-lg) !important;
+  background: var(--abr-surface) !important;
+  color: var(--abr-text);
+}
+
+.mat-drawer {
+  background: var(--abr-surface) !important;
+}
+
+// Buttons — a touch more presence
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-outlined-button,
+.mat-mdc-button {
+  border-radius: var(--abr-radius-md) !important;
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+
+.mat-mdc-raised-button:not(:disabled),
+.mat-mdc-unelevated-button:not(:disabled) {
+  transition: transform var(--abr-dur-fast) var(--abr-ease), box-shadow var(--abr-dur) var(--abr-ease);
+}
+.mat-mdc-raised-button:not(:disabled):hover,
+.mat-mdc-unelevated-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--abr-shadow-md) !important;
+}
+
+// Snackbars
 .success-snackbar {
-  --mdc-snackbar-container-color: #2e7d32;
+  --mdc-snackbar-container-color: #047857;
   --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #d1fae5;
 }
-
 .error-snackbar {
-  --mdc-snackbar-container-color: #c0392b;
+  --mdc-snackbar-container-color: #b91c1c;
   --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fee2e2;
 }
-
 .warning-snackbar {
-  --mdc-snackbar-container-color: #e67e22;
+  --mdc-snackbar-container-color: #b45309;
   --mdc-snackbar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fef3c7;
 }
 
+// ---------------------------------------------------------------------------
+// Form fields — compact, consistent density across every tab
+// (default Material fields are oversized/spacious; tighten globally)
+// ---------------------------------------------------------------------------
+.mat-mdc-form-field {
+  --mat-form-field-container-height: 48px;
+  --mat-form-field-container-vertical-padding: 11px;
+  --mat-form-field-container-text-size: 0.9rem;
+  font-size: 0.9rem;
+  letter-spacing: normal;
+}
+
+// Trim the reserved hint/error strip so stacked forms don't feel loose,
+// while still leaving room for a single-line message.
+.mat-mdc-form-field-subscript-wrapper {
+  min-height: 1.1em;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-infix {
+  min-height: 48px;
+}
+
+// Outline field resting/hover/focus states via tokens
+.mat-mdc-form-field-appearance-outline .mdc-notched-outline__leading,
+.mat-mdc-form-field-appearance-outline .mdc-notched-outline__notch,
+.mat-mdc-form-field-appearance-outline .mdc-notched-outline__trailing {
+  border-color: var(--abr-border-strong);
+}
+
+// Prefix / suffix icons sit a touch smaller and muted
+.mat-mdc-form-field-icon-prefix > .mat-icon,
+.mat-mdc-form-field-icon-suffix > .mat-icon {
+  color: var(--abr-text-muted);
+}
+
+// Selects and inputs read from tokens
+.mat-mdc-select-value,
+.mat-mdc-input-element {
+  color: var(--abr-text);
+}
+
+// Inline action buttons placed next to an input (e.g. "+ Add", pickers, search
+// bars) must line up with the field's outlined input box — which sits at the
+// TOP of the form field, above its hint/error strip. Match the box height and
+// top-align so the button reads on the same line as the textbox, on every tab.
+// (.mdc-button = text/flat/stroked/raised buttons; icon-buttons are excluded.)
+.mat-mdc-form-field + button.mdc-button,
+.mat-mdc-form-field + a.mdc-button {
+  height: 48px;
+  align-self: flex-start;
+}
+
+// Guard: in vertical (column) forms a following button is often a full-width
+// submit — keep it stretched rather than shrunk by the align rule above.
+[style*='flex-direction: column'] .mat-mdc-form-field + button.mdc-button,
+[style*='flex-direction:column'] .mat-mdc-form-field + button.mdc-button {
+  align-self: stretch;
+}
+
+// Dropdown / autocomplete panels
+.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel,
+.mat-mdc-menu-panel {
+  border-radius: var(--abr-radius-md) !important;
+  box-shadow: var(--abr-shadow-lg) !important;
+}
+
+// ---------------------------------------------------------------------------
+// Shared table styling
+// ---------------------------------------------------------------------------
+.abr-table {
+  width: 100%;
+  background: transparent;
+}
+
+.abr-table .mat-mdc-header-row {
+  background: var(--abr-surface-2);
+}
+
+.abr-table .mat-mdc-header-cell {
+  color: var(--abr-text-secondary);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom-color: var(--abr-border);
+}
+
+.abr-table .mat-mdc-cell {
+  color: var(--abr-text);
+  border-bottom-color: var(--abr-border);
+}
+
+.abr-table .mat-mdc-row {
+  transition: background-color var(--abr-dur-fast) var(--abr-ease);
+}
+.abr-table .mat-mdc-row:hover {
+  background: var(--abr-surface-2);
+}
+
+.abr-table.sticky-header .mat-mdc-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--abr-surface-2);
+}
+
+.abr-table .empty-row td {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--abr-text-muted);
+}
+
+.abr-table .empty-row mat-icon {
+  display: block;
+  margin: 0 auto 0.5rem;
+  color: var(--abr-border-strong);
+  width: 36px;
+  height: 36px;
+  font-size: 36px;
+}
+
+// ---------------------------------------------------------------------------
+// Reusable primitives (token-driven, usable from any component)
+// ---------------------------------------------------------------------------
+.abr-card {
+  background: var(--abr-surface);
+  border: 1px solid var(--abr-border);
+  border-radius: var(--abr-radius-lg);
+  box-shadow: var(--abr-shadow-sm);
+}
+
+.abr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border-radius: var(--abr-radius-pill);
+  text-transform: capitalize;
+  background: var(--abr-surface-3);
+  color: var(--abr-text-secondary);
+}
+.abr-chip--success { background: var(--abr-success-soft); color: var(--abr-success); }
+.abr-chip--danger  { background: var(--abr-danger-soft);  color: var(--abr-danger); }
+.abr-chip--warning { background: var(--abr-warning-soft); color: var(--abr-warning); }
+.abr-chip--info    { background: var(--abr-info-soft);    color: var(--abr-info); }
+.abr-chip--primary { background: var(--abr-primary-soft); color: var(--abr-primary-strong); }
+
+// ---------------------------------------------------------------------------
+// Panels & table cards — consistent page composition across every tab
+// ---------------------------------------------------------------------------
+.abr-panel {
+  background: var(--abr-surface);
+  border: 1px solid var(--abr-border);
+  border-radius: var(--abr-radius-lg);
+  box-shadow: var(--abr-shadow-sm);
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.abr-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--abr-text);
+}
+
+.abr-panel__title mat-icon {
+  color: var(--abr-primary);
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+// A table wrapped in a self-contained card (scrolls horizontally on small screens)
+.abr-table-card {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  background: var(--abr-surface);
+  border: 1px solid var(--abr-border);
+  border-radius: var(--abr-radius-lg);
+  box-shadow: var(--abr-shadow-sm);
+}
+
+.abr-table-card table {
+  width: 100%;
+}
+
+.abr-table-card .mat-mdc-table {
+  background: transparent;
+}
+
+// Tables that used Material elevation now defer to the card container
+.abr-table-card .mat-elevation-z1,
+.abr-table-card .mat-elevation-z2 {
+  box-shadow: none !important;
+}
+
+.abr-panel .mat-elevation-z1,
+.abr-panel .mat-elevation-z2 {
+  box-shadow: none !important;
+}
+
+// ---------------------------------------------------------------------------
+// Responsive layout utilities
+// ---------------------------------------------------------------------------
+.abr-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.abr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--abr-space-md);
+  align-items: start;
+}
+
+.abr-stack-mobile {
+  @include bp.tablet-down {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
+.cdk-overlay-pane.mat-mdc-dialog-panel {
+  max-width: min(720px, calc(100vw - 2rem)) !important;
+}
+
+// ---------------------------------------------------------------------------
+// Print
+// ---------------------------------------------------------------------------
 @media print {
   mat-sidenav,
   mat-toolbar,
@@ -117,52 +533,4 @@ html, body {
   .content {
     padding: 0 !important;
   }
-}
-
-.abr-table {
-  width: 100%;
-}
-
-.abr-table.sticky-header .mat-mdc-header-row {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: tokens.$abr-header-bg;
-}
-
-.abr-table .empty-row td {
-  text-align: center;
-  padding: 2rem 1rem;
-  color: #888;
-}
-
-.abr-table .empty-row mat-icon {
-  display: block;
-  margin: 0 auto 0.5rem;
-  color: #b0bec5;
-}
-
-// Responsive layout utilities
-.abr-scroll-x {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  width: 100%;
-}
-
-.abr-form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
-  gap: tokens.$abr-spacing-md;
-  align-items: start;
-}
-
-.abr-stack-mobile {
-  @include bp.tablet-down {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-}
-
-.cdk-overlay-pane.mat-mdc-dialog-panel {
-  max-width: min(720px, calc(100vw - 2rem)) !important;
 }

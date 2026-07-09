@@ -114,15 +114,15 @@ interface FloorGroup {
     }
     .legend { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
     .chip { padding: 0.25rem 0.75rem; border-radius: 4px; color: #fff; font-size: 0.875rem; }
-    .chip.available { background: #2c3e50; }
-    .chip.booked { background: #e74c3c; }
-    .chip.cancelled { background: #e67e22; }
+    .chip.available { background: var(--abr-success); }
+    .chip.booked { background: var(--abr-primary); }
+    .chip.cancelled { background: var(--abr-danger); }
     .floor-section {
       margin-bottom: 1.75rem;
       padding: 1rem;
-      background: #fff;
+      background: var(--abr-surface);
       border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--abr-shadow-sm);
     }
     .floor-header {
       display: flex;
@@ -131,16 +131,16 @@ interface FloorGroup {
       gap: 1rem;
       margin-bottom: 0.75rem;
       padding-bottom: 0.5rem;
-      border-bottom: 2px solid #1f4e79;
+      border-bottom: 2px solid var(--abr-primary-strong);
     }
     .floor-header h3 {
       margin: 0;
-      color: #1f4e79;
+      color: var(--abr-primary-strong);
       font-size: 1rem;
       font-weight: 600;
     }
     .floor-count {
-      color: #666;
+      color: var(--abr-text-secondary);
       font-size: 0.85rem;
     }
     .grid {
@@ -170,9 +170,9 @@ interface FloorGroup {
       line-height: 1.2;
       word-break: break-all;
     }
-    .flat-card.available { background: #2c3e50; }
-    .flat-card.booked { background: #e74c3c; }
-    .flat-card.cancelled { background: #e67e22; }
+    .flat-card.available { background: var(--abr-success); }
+    .flat-card.booked { background: var(--abr-primary); }
+    .flat-card.cancelled { background: var(--abr-danger); }
     .flat-card:hover { filter: brightness(1.08); }
   `]
 })

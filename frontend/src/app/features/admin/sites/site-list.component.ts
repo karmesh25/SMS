@@ -40,29 +40,35 @@ import { SiteEditDialogComponent } from '../../../shared/components/master-edit/
 
 
 
-    <form [formGroup]="form" class="form-row" (ngSubmit)="save()">
+    <section class="abr-panel">
 
-      <mat-form-field appearance="outline"><mat-label>Site Name</mat-label><input matInput formControlName="siteName" /></mat-form-field>
+      <h2 class="abr-panel__title"><mat-icon>add_circle</mat-icon>Add Site</h2>
 
-      <mat-form-field appearance="outline"><mat-label>Address</mat-label><input matInput formControlName="address" /></mat-form-field>
+      <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="save()">
 
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add Site</button>
+        <mat-form-field appearance="outline"><mat-label>Site Name</mat-label><input matInput formControlName="siteName" /></mat-form-field>
 
-    </form>
+        <mat-form-field appearance="outline"><mat-label>Address</mat-label><input matInput formControlName="address" /></mat-form-field>
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid"><mat-icon>add</mat-icon> Add Site</button>
+
+      </form>
+
+    </section>
 
 
 
-    <div class="abr-scroll-x">
+    <div class="abr-table-card">
 
 
 
-    <table mat-table [dataSource]="sites" class="mat-elevation-z1 abr-table sticky-header">
+    <table mat-table [dataSource]="sites" class="abr-table sticky-header">
 
       <ng-container matColumnDef="siteName"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.siteName }}</td></ng-container>
 
       <ng-container matColumnDef="address"><th mat-header-cell *matHeaderCellDef>Address</th><td mat-cell *matCellDef="let row">{{ row.address }}</td></ng-container>
 
-      <ng-container matColumnDef="isActive"><th mat-header-cell *matHeaderCellDef>Active</th><td mat-cell *matCellDef="let row">{{ row.isActive ? 'Yes' : 'No' }}</td></ng-container>
+      <ng-container matColumnDef="isActive"><th mat-header-cell *matHeaderCellDef>Active</th><td mat-cell *matCellDef="let row"><span class="abr-chip" [class.abr-chip--success]="row.isActive" [class.abr-chip--danger]="!row.isActive">{{ row.isActive ? 'Active' : 'Inactive' }}</span></td></ng-container>
 
       <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef>Actions</th>
 
@@ -88,7 +94,7 @@ import { SiteEditDialogComponent } from '../../../shared/components/master-edit/
 
       <tr mat-row *matRowDef="let row; columns: cols"></tr>
 
-      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
+      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>location_city</mat-icon>No sites yet.</td></tr>
 
     </table>
 
@@ -96,7 +102,7 @@ import { SiteEditDialogComponent } from '../../../shared/components/master-edit/
 
   `,
 
-  styles: [`.form-row { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; } table { width:100%; }`]
+  styles: [`.abr-form-grid button { min-width: 140px; }`]
 
 })
 

@@ -27,14 +27,20 @@ interface PlotRow {
   template: `
     <app-page-header title="Plots" subtitle="Create plot schemes and auto-generate plot units"></app-page-header>
 
-    <form [formGroup]="form" class="form-grid" (ngSubmit)="save()">
-      <mat-form-field appearance="outline"><mat-label>Plot Scheme Name</mat-label><input matInput formControlName="plotName" /></mat-form-field>
-      <mat-form-field appearance="outline"><mat-label>Number of Plots</mat-label><input matInput type="number" formControlName="plotCount" /></mat-form-field>
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || !siteId">Add Plot Scheme</button>
-    </form>
+    <section class="abr-panel">
+      <h2 class="abr-panel__title"><mat-icon>grid_on</mat-icon>Add Plot Scheme</h2>
+      <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="save()">
+        <mat-form-field appearance="outline"><mat-label>Plot Scheme Name</mat-label><input matInput formControlName="plotName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Number of Plots</mat-label><input matInput type="number" formControlName="plotCount" /></mat-form-field>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || !siteId">
+          <mat-icon>add</mat-icon>
+          Add Plot Scheme
+        </button>
+      </form>
+    </section>
 
-    <div class="abr-scroll-x">
-      <table mat-table [dataSource]="plots" class="mat-elevation-z1 abr-table sticky-header">
+    <div class="abr-table-card">
+      <table mat-table [dataSource]="plots" class="abr-table sticky-header">
         <ng-container matColumnDef="plotName"><th mat-header-cell *matHeaderCellDef>Scheme</th><td mat-cell *matCellDef="let row">{{ row.wingName }}</td></ng-container>
         <ng-container matColumnDef="plotCount"><th mat-header-cell *matHeaderCellDef>Plots</th><td mat-cell *matCellDef="let row">{{ row.flatsPerFloor }}</td></ng-container>
         <ng-container matColumnDef="flatCount"><th mat-header-cell *matHeaderCellDef>Total Units</th><td mat-cell *matCellDef="let row">{{ row.flatCount }}</td></ng-container>
@@ -46,11 +52,11 @@ interface PlotRow {
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="cols"></tr>
         <tr mat-row *matRowDef="let row; columns: cols"></tr>
-        <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
+        <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>grid_on</mat-icon>No plot schemes yet.</td></tr>
       </table>
     </div>
   `,
-  styles: [`.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.5rem; align-items:center; } table { width:100%; }`]
+  styles: [`.abr-form-grid button { min-width: 140px; }`]
 })
 export class PlotManagementComponent implements OnInit {
   private readonly masterData = inject(MasterDataService);

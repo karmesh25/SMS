@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { ReportService } from '../../../core/services/report.service';
 import { MasterDataService } from '../../../core/services/master-data.service';
@@ -30,48 +31,55 @@ interface BalanceSheetData {
 @Component({
   selector: 'app-balance-sheet',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, PageHeaderComponent, IndianCurrencyPipe, ReportExportButtonsComponent, ModuleSubnavComponent],
+  imports: [ReactiveFormsModule, RouterLink, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, PageHeaderComponent, IndianCurrencyPipe, ReportExportButtonsComponent, ModuleSubnavComponent],
   template: `
     <div class="report-container">
       <div class="no-print">
         <app-page-header title="Balance Sheet" subtitle="Ledger-wise Aavak and Javak totals" />
         <app-module-subnav [items]="reportNav" />
-        <form [formGroup]="form" class="filters">
-          <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Main Ledger</mat-label>
-            <mat-select formControlName="mainLedgerId">
-              <mat-option value="">All</mat-option>
-              @for (m of mainLedgers; track m.id) { <mat-option [value]="m.id">{{ m.ledgerName }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
-          <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
-          <app-report-export-buttons reportType="balance-sheet" [filters]="exportFilters()" [disabled]="!siteId" />
-        </form>
+        <section class="abr-panel">
+          <h2 class="abr-panel__title"><mat-icon>filter_alt</mat-icon>Filters</h2>
+          <form [formGroup]="form" class="filters">
+            <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Main Ledger</mat-label>
+              <mat-select formControlName="mainLedgerId">
+                <mat-option value="">All</mat-option>
+                @for (m of mainLedgers; track m.id) { <mat-option [value]="m.id">{{ m.ledgerName }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
+            <app-report-export-buttons reportType="balance-sheet" [filters]="exportFilters()" [disabled]="!siteId" />
+          </form>
+        </section>
       </div>
       @if (data) {
         <div class="print-only"><h2>{{ data.siteName }} — Balance Sheet</h2></div>
         <div class="split">
           <section>
             <h3 class="aavak-header">Aavak</h3>
-            <table class="mat-elevation-z1">
-              <tr><th>Ledger</th><th>Total</th></tr>
-              @for (item of data.aavakItems; track item.ledgerName) {
-                <tr><td>{{ item.ledgerName }}</td><td>{{ item.totalAmount | indianCurrency }}</td></tr>
-              }
-              <tr><th>Total</th><th>{{ data.totalAavak | indianCurrency }}</th></tr>
-            </table>
+            <div class="abr-table-card">
+              <table>
+                <tr><th>Ledger</th><th>Total</th></tr>
+                @for (item of data.aavakItems; track item.ledgerName) {
+                  <tr><td>{{ item.ledgerName }}</td><td>{{ item.totalAmount | indianCurrency }}</td></tr>
+                }
+                <tr><th>Total</th><th>{{ data.totalAavak | indianCurrency }}</th></tr>
+              </table>
+            </div>
           </section>
           <section>
             <h3 class="javak-header">Javak</h3>
-            <table class="mat-elevation-z1">
-              <tr><th>Ledger</th><th>Total</th></tr>
-              @for (item of data.javakItems; track item.ledgerName) {
-                <tr><td>{{ item.ledgerName }}</td><td>{{ item.totalAmount | indianCurrency }}</td></tr>
-              }
-              <tr><th>Total</th><th>{{ data.totalJavak | indianCurrency }}</th></tr>
-            </table>
+            <div class="abr-table-card">
+              <table>
+                <tr><th>Ledger</th><th>Total</th></tr>
+                @for (item of data.javakItems; track item.ledgerName) {
+                  <tr><td>{{ item.ledgerName }}</td><td>{{ item.totalAmount | indianCurrency }}</td></tr>
+                }
+                <tr><th>Total</th><th>{{ data.totalJavak | indianCurrency }}</th></tr>
+              </table>
+            </div>
           </section>
         </div>
         <p [class]="data.profit >= 0 ? 'profit-positive' : 'profit-negative'">

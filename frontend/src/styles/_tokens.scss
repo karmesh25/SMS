@@ -1,13 +1,36 @@
-// ABR design tokens — primary palette from scope estimate
-$abr-primary: #1f4e79;
-$abr-accent: #2e75b6;
-$abr-warn: #c0392b;
-$abr-success: #27ae60;
-$abr-bg: #f5f7fa;
+// ABR design tokens — SCSS layer.
+//
+// NOTE: Media queries and the Angular Material Sass theme cannot read CSS
+// custom properties, so those values live here as SCSS variables. Everything
+// that components consume at runtime (colors, spacing, radius, shadows, motion)
+// is emitted as CSS custom properties in styles.scss under :root /
+// [data-theme="dark"] — always prefer var(--abr-*) inside components.
+
+// ---------------------------------------------------------------------------
+// Responsive breakpoints (align with app shell overlay sidenav at 959px)
+// ---------------------------------------------------------------------------
+$bp-handset: 599px;
+$bp-tablet: 959px;
+$bp-desktop-min: 960px;
+
+// ---------------------------------------------------------------------------
+// Legacy SCSS scalar tokens.
+// Kept for components whose .scss @use these at compile time (media queries
+// and non-var contexts). New/updated components should use the runtime CSS
+// custom properties (var(--abr-*)) emitted in styles.scss instead. Values are
+// aligned to the emerald/teal palette so compile-time consumers stay on-brand.
+// (These are static and do NOT react to dark mode — migrate to var(--abr-*)
+//  when restyling the component.)
+// ---------------------------------------------------------------------------
+$abr-primary: #0f766e;
+$abr-accent: #059669;
+$abr-warn: #dc2626;
+$abr-success: #059669;
+$abr-bg: #eef2f7;
 $abr-surface: #ffffff;
-$abr-header-bg: #f0f4f8;
-$abr-text-muted: #888;
-$abr-border: #eef2f6;
+$abr-header-bg: #f7fafc;
+$abr-text-muted: #94a3b8;
+$abr-border: #e3e9f0;
 
 $abr-spacing-xs: 0.25rem;
 $abr-spacing-sm: 0.5rem;
@@ -15,12 +38,69 @@ $abr-spacing-md: 1rem;
 $abr-spacing-lg: 1.5rem;
 $abr-spacing-xl: 2rem;
 
-$abr-radius-sm: 4px;
-$abr-radius-md: 8px;
+$abr-radius-sm: 6px;
+$abr-radius-md: 10px;
 
-$abr-font-family: Roboto, 'Helvetica Neue', sans-serif;
+$abr-font-family: "'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', sans-serif";
 
-// Responsive breakpoints (align with app shell overlay sidenav at 959px)
-$bp-handset: 599px;
-$bp-tablet: 959px;
-$bp-desktop-min: 960px;
+// ---------------------------------------------------------------------------
+// Brand palettes — Emerald / Teal "finance" identity
+// Consumed only by the Material Sass theme (mat.define-palette).
+// ---------------------------------------------------------------------------
+$abr-teal-palette: (
+  50: #f0fdfa,
+  100: #ccfbf1,
+  200: #99f6e4,
+  300: #5eead4,
+  400: #2dd4bf,
+  500: #14b8a6,
+  600: #0d9488,
+  700: #0f766e,
+  800: #115e59,
+  900: #134e4a,
+  contrast: (
+    50: #0f172a,
+    100: #0f172a,
+    200: #0f172a,
+    300: #0f172a,
+    400: #0f172a,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+  ),
+);
+
+$abr-emerald-palette: (
+  50: #ecfdf5,
+  100: #d1fae5,
+  200: #a7f3d0,
+  300: #6ee7b7,
+  400: #34d399,
+  500: #10b981,
+  600: #059669,
+  700: #047857,
+  800: #065f46,
+  900: #064e3b,
+  A100: #d1fae5,
+  A200: #6ee7b7,
+  A400: #10b981,
+  A700: #047857,
+  contrast: (
+    50: #0f172a,
+    100: #0f172a,
+    200: #0f172a,
+    300: #0f172a,
+    400: #0f172a,
+    500: #ffffff,
+    600: #ffffff,
+    700: #ffffff,
+    800: #ffffff,
+    900: #ffffff,
+    A100: #0f172a,
+    A200: #0f172a,
+    A400: #ffffff,
+    A700: #ffffff,
+  ),
+);

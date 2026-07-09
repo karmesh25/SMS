@@ -1,20 +1,19 @@
-@use '../../../styles/tokens' as tokens;
-
 .vyaj-page {
   display: flex;
   flex-direction: column;
-  gap: tokens.$abr-spacing-md;
+  gap: var(--abr-space-md);
   min-height: calc(100vh - 120px);
 }
 
 .mobile-party-bar {
   display: flex;
   flex-direction: column;
-  gap: tokens.$abr-spacing-sm;
-  padding: tokens.$abr-spacing-md;
-  background: tokens.$abr-surface;
-  border-radius: tokens.$abr-radius-md;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  gap: var(--abr-space-sm);
+  padding: var(--abr-space-md);
+  background: var(--abr-surface);
+  border: 1px solid var(--abr-border);
+  border-radius: var(--abr-radius-md);
+  box-shadow: var(--abr-shadow-sm);
 }
 
 .party-select-field,
@@ -24,7 +23,7 @@
 
 .mobile-add-party {
   display: flex;
-  gap: tokens.$abr-spacing-sm;
+  gap: var(--abr-space-sm);
   align-items: flex-start;
 }
 
@@ -42,7 +41,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: tokens.$abr-spacing-md;
+  gap: var(--abr-space-md);
 }
 
 .vyaj-shell {
@@ -56,43 +55,43 @@
 
 .sidebar-col {
   min-height: 100%;
-  border-right: 1px solid tokens.$abr-border;
-  background: tokens.$abr-header-bg;
+  border-right: 1px solid var(--abr-border);
+  background: var(--abr-surface-2);
 }
 
 .main-col {
-  padding: tokens.$abr-spacing-lg;
+  padding: var(--abr-space-lg);
   overflow-y: auto;
-  background: tokens.$abr-surface;
+  background: var(--abr-surface);
 }
 
 .party-header {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: tokens.$abr-spacing-md;
-  margin-bottom: tokens.$abr-spacing-md;
-  padding-bottom: tokens.$abr-spacing-md;
-  border-bottom: 1px solid tokens.$abr-border;
+  gap: var(--abr-space-md);
+  margin-bottom: var(--abr-space-md);
+  padding-bottom: var(--abr-space-md);
+  border-bottom: 1px solid var(--abr-border);
 }
 
 .party-header h2 {
   margin: 0;
   font-size: 1.25rem;
-  font-weight: 500;
-  color: tokens.$abr-primary;
+  font-weight: 600;
+  color: var(--abr-primary-strong);
 }
 
 .notes {
-  margin: tokens.$abr-spacing-xs 0 0;
+  margin: var(--abr-space-xs) 0 0;
   font-size: 0.85rem;
-  color: tokens.$abr-text-muted;
+  color: var(--abr-text-muted);
 }
 
 .header-totals {
   display: flex;
   flex-wrap: wrap;
-  gap: tokens.$abr-spacing-lg;
+  gap: var(--abr-space-lg);
   margin-left: auto;
 }
 
@@ -106,24 +105,26 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: tokens.$abr-text-muted;
+  color: var(--abr-text-muted);
 }
 
 .total-value {
   font-size: 1rem;
   font-weight: 600;
+  color: var(--abr-text);
 }
 
 .total-block.due .total-value {
-  color: tokens.$abr-warn;
+  color: var(--abr-danger);
 }
 
 .total-value.settled {
-  color: tokens.$abr-success !important;
+  color: var(--abr-success) !important;
 }
 
 .mono {
-  font-family: 'Roboto Mono', monospace;
+  // Match the rest of the app's font; keep digits aligned in ledger columns.
+  font-variant-numeric: tabular-nums;
 }
 
 .empty-main,
@@ -132,9 +133,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: tokens.$abr-spacing-sm;
-  padding: 3rem tokens.$abr-spacing-md;
-  color: tokens.$abr-text-muted;
+  gap: var(--abr-space-sm);
+  padding: 3rem var(--abr-space-md);
+  color: var(--abr-text-muted);
   text-align: center;
 }
 
@@ -142,7 +143,7 @@
   font-size: 48px;
   width: 48px;
   height: 48px;
-  color: tokens.$abr-accent;
+  color: var(--abr-primary);
 }
 
 @media (max-width: 959px) {
@@ -155,7 +156,7 @@
   }
 
   .vyaj-shell--mobile .main-col {
-    padding: tokens.$abr-spacing-md;
+    padding: var(--abr-space-md);
   }
 
   .header-totals {

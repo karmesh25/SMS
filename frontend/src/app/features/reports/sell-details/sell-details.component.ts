@@ -38,28 +38,31 @@ interface SellRow {
       <div class="no-print">
         <app-page-header title="Sell Details" subtitle="Booked flats with payment summary" />
         <app-module-subnav [items]="reportNav" />
-        <form [formGroup]="form" class="filters">
-          <mat-form-field appearance="outline">
-            <mat-label>Wing</mat-label>
-            <mat-select formControlName="wingId">
-              <mat-option value="">All</mat-option>
-              @for (w of wings; track w.id) { <mat-option [value]="w.id">{{ w.wingName }}</mat-option> }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Status</mat-label>
-            <mat-select formControlName="status">
-              <mat-option value="active">Active</mat-option>
-              <mat-option value="cancelled">Cancelled</mat-option>
-              <mat-option value="">All</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
-          <app-report-export-buttons reportType="sell-details" [filters]="exportFilters()" [disabled]="!siteId" />
-        </form>
+        <section class="abr-panel">
+          <h2 class="abr-panel__title"><mat-icon>filter_alt</mat-icon>Filters</h2>
+          <form [formGroup]="form" class="filters">
+            <mat-form-field appearance="outline">
+              <mat-label>Wing</mat-label>
+              <mat-select formControlName="wingId">
+                <mat-option value="">All</mat-option>
+                @for (w of wings; track w.id) { <mat-option [value]="w.id">{{ w.wingName }}</mat-option> }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option value="active">Active</mat-option>
+                <mat-option value="cancelled">Cancelled</mat-option>
+                <mat-option value="">All</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
+            <app-report-export-buttons reportType="sell-details" [filters]="exportFilters()" [disabled]="!siteId" />
+          </form>
+        </section>
       </div>
-      <div class="abr-scroll-x">
-      <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
+      <div class="abr-table-card">
+      <table mat-table [dataSource]="rows" class="abr-table sticky-header">
         <ng-container matColumnDef="flatNo"><th mat-header-cell *matHeaderCellDef>Flat</th><td mat-cell *matCellDef="let r">{{ r.flatNo }}</td></ng-container>
         <ng-container matColumnDef="wingName"><th mat-header-cell *matHeaderCellDef>Wing</th><td mat-cell *matCellDef="let r">{{ r.wingName }}</td></ng-container>
         <ng-container matColumnDef="memberName"><th mat-header-cell *matHeaderCellDef>Customer</th><td mat-cell *matCellDef="let r">{{ r.memberName }}</td></ng-container>

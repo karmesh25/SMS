@@ -14,16 +14,17 @@ import { Component, Input } from '@angular/core';
   `,
   styles: [`
     .skeleton-card {
-      background: #fff;
-      border-radius: 8px;
+      background: var(--abr-surface);
+      border: 1px solid var(--abr-border);
+      border-radius: var(--abr-radius-lg);
       padding: 1.25rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--abr-shadow-sm);
     }
     .skeleton-line, .skeleton-bar {
-      background: linear-gradient(90deg, #eceff1 25%, #f5f7fa 50%, #eceff1 75%);
+      background: linear-gradient(90deg, var(--abr-surface-3) 25%, var(--abr-surface-2) 50%, var(--abr-surface-3) 75%);
       background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-      border-radius: 4px;
+      animation: shimmer 1.3s infinite;
+      border-radius: var(--abr-radius-sm);
     }
     .title { height: 14px; width: 60%; margin-bottom: 1rem; }
     .value { height: 28px; width: 45%; margin-bottom: 0.75rem; }

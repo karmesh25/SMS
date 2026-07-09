@@ -44,7 +44,9 @@ interface DastavejRow {
 
     <app-module-subnav [items]="accountingNav" />
 
-    <form [formGroup]="form" class="form-grid abr-form-grid" (ngSubmit)="save()">
+    <section class="abr-panel">
+      <h2 class="abr-panel__title"><mat-icon>article</mat-icon>Document Details</h2>
+      <form [formGroup]="form" class="form-grid abr-form-grid" (ngSubmit)="save()">
       <app-searchable-select
         label="Booking"
         formControlName="bookingId"
@@ -56,10 +58,11 @@ interface DastavejRow {
       <mat-form-field appearance="outline"><mat-label>Service Tax</mat-label><input matInput type="number" formControlName="serviceTax" appIndianAmount /></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Notes</mat-label><input matInput formControlName="notes" /></mat-form-field>
       <button mat-flat-button color="primary" type="submit" [disabled]="!form.value.bookingId">Save</button>
-    </form>
+      </form>
+    </section>
 
-    <div class="abr-scroll-x">
-    <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
+    <div class="abr-table-card">
+    <table mat-table [dataSource]="rows" class="abr-table sticky-header">
       <ng-container matColumnDef="flatNo"><th mat-header-cell *matHeaderCellDef>Flat</th><td mat-cell *matCellDef="let row">{{ row.flatNo }}</td></ng-container>
       <ng-container matColumnDef="memberName"><th mat-header-cell *matHeaderCellDef>Member</th><td mat-cell *matCellDef="let row">{{ row.memberName }}</td></ng-container>
       <ng-container matColumnDef="dastavejDate"><th mat-header-cell *matHeaderCellDef>Dastavej</th><td mat-cell *matCellDef="let row">{{ row.dastavejDate ? (row.dastavejDate | appDate) : '-' }}</td></ng-container>

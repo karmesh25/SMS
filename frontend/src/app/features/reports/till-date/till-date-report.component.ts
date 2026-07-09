@@ -49,20 +49,23 @@ interface TillDateRow {
       <div class="no-print">
         <app-page-header title="Till Date Report" subtitle="Member payment status as of date" />
         <app-module-subnav [items]="reportNav" />
-        <form [formGroup]="form" class="filters">
-          <mat-form-field appearance="outline"><mat-label>As of Date</mat-label><input matInput type="date" formControlName="asOfDate" /></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Days From Last Payment</mat-label><input matInput type="number" formControlName="daysFromLastPayment" /></mat-form-field>
-          <mat-radio-group formControlName="movementType">
-            <mat-radio-button value="all">All</mat-radio-button>
-            <mat-radio-button value="no-movement">No Movement</mat-radio-button>
-          </mat-radio-group>
-          <mat-checkbox formControlName="extraReturnOnly">Extra Return Only</mat-checkbox>
-          <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
-          <app-report-export-buttons reportType="till-date" [filters]="exportFilters()" [disabled]="!siteId" />
-        </form>
+        <section class="abr-panel">
+          <h2 class="abr-panel__title"><mat-icon>filter_alt</mat-icon>Filters</h2>
+          <form [formGroup]="form" class="filters">
+            <mat-form-field appearance="outline"><mat-label>As of Date</mat-label><input matInput type="date" formControlName="asOfDate" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Days From Last Payment</mat-label><input matInput type="number" formControlName="daysFromLastPayment" /></mat-form-field>
+            <mat-radio-group formControlName="movementType">
+              <mat-radio-button value="all">All</mat-radio-button>
+              <mat-radio-button value="no-movement">No Movement</mat-radio-button>
+            </mat-radio-group>
+            <mat-checkbox formControlName="extraReturnOnly">Extra Return Only</mat-checkbox>
+            <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
+            <app-report-export-buttons reportType="till-date" [filters]="exportFilters()" [disabled]="!siteId" />
+          </form>
+        </section>
       </div>
-      <div class="abr-scroll-x">
-        <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
+      <div class="abr-table-card">
+        <table mat-table [dataSource]="rows" class="abr-table sticky-header">
           <ng-container matColumnDef="flatNo"><th mat-header-cell *matHeaderCellDef>Flat</th><td mat-cell *matCellDef="let r">{{ r.flatNo }}</td></ng-container>
           <ng-container matColumnDef="memberName"><th mat-header-cell *matHeaderCellDef>Member</th><td mat-cell *matCellDef="let r">{{ r.memberName }}</td></ng-container>
           <ng-container matColumnDef="brokerName"><th mat-header-cell *matHeaderCellDef>Broker</th><td mat-cell *matCellDef="let r">{{ r.brokerName ?? '-' }}</td></ng-container>

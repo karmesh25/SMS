@@ -48,41 +48,57 @@ interface Condition { id: string; conditionName: string; conditionType: string; 
 
     <app-page-header title="Payment Conditions" subtitle="Installment milestones"></app-page-header>
 
+    <section class="abr-panel">
+
+      <h2 class="abr-panel__title"><mat-icon>add_circle</mat-icon>Add Condition</h2>
+
+      <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="save()">
+
+        <mat-form-field appearance="outline"><mat-label>Condition Name</mat-label><input matInput formControlName="conditionName" /></mat-form-field>
+
+        <mat-form-field appearance="outline">
+
+          <mat-label>Type</mat-label>
+
+          <mat-select formControlName="conditionType">
+
+            <mat-option value="manual">Manual</mat-option>
+
+            <mat-option value="auto">Auto</mat-option>
+
+          </mat-select>
+
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
+
+          <mat-icon>add</mat-icon>
+
+          Add Condition
+
+        </button>
+
+      </form>
+
+    </section>
 
 
-    <form [formGroup]="form" class="row" (ngSubmit)="save()">
 
-      <mat-form-field appearance="outline"><mat-label>Condition Name</mat-label><input matInput formControlName="conditionName" /></mat-form-field>
+    <div class="abr-table-card">
 
-      <mat-form-field appearance="outline">
-
-        <mat-label>Type</mat-label>
-
-        <mat-select formControlName="conditionType">
-
-          <mat-option value="manual">Manual</mat-option>
-
-          <mat-option value="auto">Auto</mat-option>
-
-        </mat-select>
-
-      </mat-form-field>
-
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add Condition</button>
-
-    </form>
-
-
-
-    <div class="abr-scroll-x">
-
-
-
-    <table mat-table [dataSource]="conditions" class="mat-elevation-z1 abr-table sticky-header">
+    <table mat-table [dataSource]="conditions" class="abr-table sticky-header">
 
       <ng-container matColumnDef="conditionName"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.conditionName }}</td></ng-container>
 
-      <ng-container matColumnDef="conditionType"><th mat-header-cell *matHeaderCellDef>Type</th><td mat-cell *matCellDef="let row">{{ row.conditionType }}</td></ng-container>
+      <ng-container matColumnDef="conditionType"><th mat-header-cell *matHeaderCellDef>Type</th>
+
+        <td mat-cell *matCellDef="let row">
+
+          <span class="abr-chip" [class.abr-chip--primary]="row.conditionType === 'auto'" [class.abr-chip--info]="row.conditionType !== 'auto'">{{ row.conditionType }}</span>
+
+        </td>
+
+      </ng-container>
 
       <ng-container matColumnDef="itemCount"><th mat-header-cell *matHeaderCellDef>Items</th><td mat-cell *matCellDef="let row">{{ row.itemCount }}</td></ng-container>
 
@@ -104,7 +120,7 @@ interface Condition { id: string; conditionName: string; conditionType: string; 
 
       <tr mat-row *matRowDef="let row; columns: cols"></tr>
 
-      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
+      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>receipt_long</mat-icon>No payment conditions yet.</td></tr>
 
     </table>
 
@@ -112,7 +128,7 @@ interface Condition { id: string; conditionName: string; conditionType: string; 
 
   `,
 
-  styles: [`.row { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; } table { width:100%; }`]
+  styles: [`.abr-form-grid button { min-width: 140px; }`]
 
 })
 

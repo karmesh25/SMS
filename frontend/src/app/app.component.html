@@ -7,8 +7,15 @@
       [opened]="sidenavOpened()"
       (closedStart)="mobileMenuOpen.set(false)"
       class="app-sidenav">
-      <div class="brand">ABR SMS</div>
-      <mat-nav-list>
+      <div class="brand">
+        <div class="brand-mark">ABR</div>
+        <div class="brand-text">
+          <span class="brand-name">ABR SMS</span>
+          <span class="brand-sub">Society &amp; Real Estate</span>
+        </div>
+      </div>
+
+      <mat-nav-list class="app-nav">
         <a
           mat-list-item
           [routerLink]="dashboardLink.route"
@@ -21,7 +28,6 @@
         </a>
 
         @for (section of visibleNavSections(); track section.title) {
-          <mat-divider class="nav-divider" />
           <div class="nav-section-label">{{ section.title }}</div>
           @for (item of section.items; track item.route) {
             <a
@@ -39,15 +45,16 @@
     </mat-sidenav>
 
     <mat-sidenav-content>
-      <mat-toolbar color="primary" class="app-toolbar">
+      <mat-toolbar class="app-toolbar">
         @if (isTabletDown()) {
           <button mat-icon-button (click)="toggleSidenav()" aria-label="Toggle navigation">
             <mat-icon>menu</mat-icon>
           </button>
         }
-        <span class="toolbar-title toolbar-title--full">ABR Society & Real Estate Management System</span>
+        <span class="toolbar-title toolbar-title--full">ABR Society &amp; Real Estate Management System</span>
         <span class="toolbar-title toolbar-title--short">ABR SMS</span>
         <span class="spacer"></span>
+
         @if (siteContext.sites().length > 0 && !isTabletDown()) {
           <mat-form-field appearance="outline" class="site-select site-select--toolbar">
             <mat-label>Site</mat-label>
@@ -58,13 +65,46 @@
             </mat-select>
           </mat-form-field>
         }
-        @if (currentUser(); as user) {
-          <span class="user-label">{{ user.username }} ({{ user.role }})</span>
-        }
-        <button mat-button class="logout-btn" (click)="logout()">
-          <mat-icon class="logout-icon">logout</mat-icon>
-          <span class="logout-text">Logout</span>
+
+        <button
+          mat-icon-button
+          class="toolbar-icon-btn"
+          type="button"
+          (click)="theme.toggle()"
+          [matTooltip]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+          aria-label="Toggle color theme">
+          <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
         </button>
+
+        @if (currentUser(); as user) {
+          <button type="button" class="user-chip" [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+            <span class="user-avatar">{{ userInitials() }}</span>
+            <span class="user-meta">
+              <span class="user-name">{{ user.username }}</span>
+              <span class="user-role">{{ user.role }}</span>
+            </span>
+            <mat-icon class="user-caret">expand_more</mat-icon>
+          </button>
+          <mat-menu #userMenu="matMenu" xPosition="before">
+            <div class="user-menu-head">
+              <span class="user-avatar user-avatar--lg">{{ userInitials() }}</span>
+              <div>
+                <div class="user-menu-name">{{ user.username }}</div>
+                <div class="user-menu-role">{{ user.role }}</div>
+              </div>
+            </div>
+            <mat-divider />
+            <button mat-menu-item (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              <span>Logout</span>
+            </button>
+          </mat-menu>
+        } @else {
+          <button mat-button class="logout-btn" (click)="logout()">
+            <mat-icon class="logout-icon">logout</mat-icon>
+            <span class="logout-text">Logout</span>
+          </button>
+        }
       </mat-toolbar>
 
       @if (siteContext.sites().length > 0 && isTabletDown()) {

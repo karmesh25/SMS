@@ -30,42 +30,47 @@ import { AppRole } from '../../../core/models/permission.model';
   template: `
     <app-page-header title="Users" subtitle="Create and manage system users"></app-page-header>
 
-    <form [formGroup]="form" class="form-grid" (ngSubmit)="createUser()">
-      <mat-form-field appearance="outline">
-        <mat-label>Username</mat-label>
-        <input matInput formControlName="username" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Email</mat-label>
-        <input matInput formControlName="email" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" formControlName="password" />
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Role</mat-label>
-        <mat-select formControlName="roleId">
-          @for (role of availableRoles; track role.id) {
-            <mat-option [value]="role.id">{{ role.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="sites-field">
-        <mat-label>Sites</mat-label>
-        <mat-select formControlName="siteIds" multiple>
-          @for (site of sites(); track site.id) {
-            <mat-option [value]="site.id">{{ site.siteName }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add User</button>
-    </form>
-    <p class="password-hint">Password must be 8+ characters with uppercase, number, and special character.</p>
+    <section class="abr-panel">
+      <h2 class="abr-panel__title"><mat-icon>person_add</mat-icon>Add User</h2>
+      <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="createUser()">
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="roleId">
+            @for (role of availableRoles; track role.id) {
+              <mat-option [value]="role.id">{{ role.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="sites-field">
+          <mat-label>Sites</mat-label>
+          <mat-select formControlName="siteIds" multiple>
+            @for (site of sites(); track site.id) {
+              <mat-option [value]="site.id">{{ site.siteName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
+          <mat-icon>add</mat-icon>
+          Add User
+        </button>
+      </form>
+      <p class="password-hint">Password must be 8+ characters with uppercase, number, and special character.</p>
+    </section>
 
-    <div class="abr-scroll-x">
-
-    <table mat-table [dataSource]="users" class="mat-elevation-z1 abr-table sticky-header">
+    <div class="abr-table-card">
+    <table mat-table [dataSource]="users" class="abr-table sticky-header">
       <ng-container matColumnDef="username">
         <th mat-header-cell *matHeaderCellDef>Username</th>
         <td mat-cell *matCellDef="let row">{{ row.username }}</td>
@@ -84,7 +89,11 @@ import { AppRole } from '../../../core/models/permission.model';
       </ng-container>
       <ng-container matColumnDef="isActive">
         <th mat-header-cell *matHeaderCellDef>Active</th>
-        <td mat-cell *matCellDef="let row">{{ row.isActive ? 'Yes' : 'No' }}</td>
+        <td mat-cell *matCellDef="let row">
+          <span class="abr-chip" [class.abr-chip--success]="row.isActive" [class.abr-chip--danger]="!row.isActive">
+            {{ row.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </td>
       </ng-container>
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Actions</th>
@@ -96,31 +105,21 @@ import { AppRole } from '../../../core/models/permission.model';
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
+      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length"><mat-icon>group_off</mat-icon>No users yet.</td></tr>
     </table>
     </div>
   `,
   styles: [`
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      align-items: center;
-    }
+    .abr-form-grid button { min-width: 140px; }
 
     .sites-field {
       min-width: 160px;
     }
 
     .password-hint {
-      margin: -0.5rem 0 1.25rem;
-      color: #666;
+      margin: 0.75rem 0 0;
+      color: var(--abr-text-secondary);
       font-size: 0.8rem;
-    }
-
-    table {
-      width: 100%;
     }
   `]
 })

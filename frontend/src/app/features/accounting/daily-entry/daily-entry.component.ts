@@ -61,7 +61,9 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
 
     <app-module-subnav [items]="accountingNav" />
 
-    <form [formGroup]="form" class="entry-form abr-form-grid" (ngSubmit)="submit()">
+    <section class="abr-panel">
+      <h2 class="abr-panel__title"><mat-icon>receipt_long</mat-icon>New Entry</h2>
+      <form [formGroup]="form" class="entry-form abr-form-grid" (ngSubmit)="submit()">
       <mat-button-toggle-group formControlName="entryType" class="type-toggle">
         <mat-button-toggle value="aavak">Aavak</mat-button-toggle>
         <mat-button-toggle value="javak">Javak</mat-button-toggle>
@@ -92,7 +94,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
         <mat-hint align="end">{{ form.controls.description.value?.length || 0 }}/200</mat-hint>
       </mat-form-field>
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Entry</button>
-    </form>
+      </form>
+    </section>
 
     @if (isTabletDown()) {
       <mat-button-toggle-group
@@ -111,8 +114,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
       [class.entries-view--javak]="isTabletDown() && activeTableView === 'javak'">
       <section class="aavak-section">
         <h3 class="aavak-title">Aavak (Receipts)</h3>
-        <div class="abr-scroll-x">
-        <table mat-table [dataSource]="aavakEntries" class="mat-elevation-z1 abr-table sticky-header">
+        <div class="abr-table-card">
+        <table mat-table [dataSource]="aavakEntries" class="abr-table sticky-header">
           <ng-container matColumnDef="entryDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.entryDate | appDate }}</td></ng-container>
           <ng-container matColumnDef="mainLedgerName"><th mat-header-cell *matHeaderCellDef>Ledger</th><td mat-cell *matCellDef="let row">{{ row.mainLedgerName }}</td></ng-container>
           <ng-container matColumnDef="subLedgerName"><th mat-header-cell *matHeaderCellDef>Sub</th><td mat-cell *matCellDef="let row">{{ row.subLedgerName }}</td></ng-container>
@@ -129,8 +132,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
       </section>
       <section class="javak-section">
         <h3 class="javak-title">Javak (Payments)</h3>
-        <div class="abr-scroll-x">
-        <table mat-table [dataSource]="javakEntries" class="mat-elevation-z1 abr-table sticky-header">
+        <div class="abr-table-card">
+        <table mat-table [dataSource]="javakEntries" class="abr-table sticky-header">
           <ng-container matColumnDef="entryDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.entryDate | appDate }}</td></ng-container>
           <ng-container matColumnDef="mainLedgerName"><th mat-header-cell *matHeaderCellDef>Ledger</th><td mat-cell *matCellDef="let row">{{ row.mainLedgerName }}</td></ng-container>
           <ng-container matColumnDef="subLedgerName"><th mat-header-cell *matHeaderCellDef>Sub</th><td mat-cell *matCellDef="let row">{{ row.subLedgerName }}</td></ng-container>
@@ -151,9 +154,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
     .header-actions { display: flex; align-items: center; gap: 0.5rem; padding-top: 0.5rem; flex-wrap: wrap; }
     .file-input { display: none; }
-    .profit { font-weight: 700; color: #27ae60; font-size: 1.1rem; }
-    .profit.negative { color: #e74c3c; }
-    .entry-form { margin-bottom: 1.5rem; }
+    .profit { font-weight: 700; color: var(--abr-success); font-size: 1.1rem; }
+    .profit.negative { color: var(--abr-danger); }
     .type-toggle { grid-column: 1 / -1; width: 100%; }
     .entry-table-tabs {
       display: flex;
@@ -170,8 +172,8 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
     .entries-view--javak .aavak-section { display: none; }
     .entries-view--aavak .aavak-section h3,
     .entries-view--javak .javak-section h3 { display: none; }
-    .aavak-title { color: #27ae60; }
-    .javak-title { color: #2980b9; }
+    .aavak-title { color: var(--abr-success); }
+    .javak-title { color: var(--abr-danger); }
     table { width: 100%; min-width: 520px; }
     @media (max-width: 599px) {
       .header-actions { width: 100%; }

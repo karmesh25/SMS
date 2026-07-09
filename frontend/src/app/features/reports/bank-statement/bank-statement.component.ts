@@ -29,26 +29,29 @@ interface StmtRow { entryDate: string; description?: string; debit: number; cred
       <div class="no-print">
         <app-page-header title="Bank Statement" subtitle="Running balance per bank account" />
         <app-module-subnav [items]="reportNav" />
-        <form [formGroup]="form" class="filters">
-          <mat-form-field appearance="outline">
-            <mat-label>Bank Account</mat-label>
-            <mat-select formControlName="bankAccountId">
-              @for (b of banks; track b.id) {
-                <mat-option [value]="b.id">{{ b.bankName }} - {{ b.accountNo }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
-          <button mat-flat-button color="primary" type="button" (click)="search()" [disabled]="!form.value.bankAccountId">Search</button>
-          <app-report-export-buttons reportType="bank-statement" [filters]="exportFilters()" [disabled]="!canExport" />
-        </form>
+        <section class="abr-panel">
+          <h2 class="abr-panel__title"><mat-icon>filter_alt</mat-icon>Filters</h2>
+          <form [formGroup]="form" class="filters">
+            <mat-form-field appearance="outline">
+              <mat-label>Bank Account</mat-label>
+              <mat-select formControlName="bankAccountId">
+                @for (b of banks; track b.id) {
+                  <mat-option [value]="b.id">{{ b.bankName }} - {{ b.accountNo }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
+            <button mat-flat-button color="primary" type="button" (click)="search()" [disabled]="!form.value.bankAccountId">Search</button>
+            <app-report-export-buttons reportType="bank-statement" [filters]="exportFilters()" [disabled]="!canExport" />
+          </form>
+        </section>
       </div>
       @if (openingBalance != null) {
         <p>Opening: Rs. {{ openingBalance | indianCurrency }} | Closing: Rs. {{ closingBalance | indianCurrency }}</p>
       }
-      <div class="abr-scroll-x">
-      <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
+      <div class="abr-table-card">
+      <table mat-table [dataSource]="rows" class="abr-table sticky-header">
         <ng-container matColumnDef="entryDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let r">{{ r.entryDate | appDate }}</td></ng-container>
         <ng-container matColumnDef="description"><th mat-header-cell *matHeaderCellDef>Description</th><td mat-cell *matCellDef="let r">{{ r.description ?? '-' }}</td></ng-container>
         <ng-container matColumnDef="debit"><th mat-header-cell *matHeaderCellDef>Debit</th><td mat-cell *matCellDef="let r">{{ r.debit ? (r.debit | indianCurrency) : '-' }}</td></ng-container>

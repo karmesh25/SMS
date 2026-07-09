@@ -41,12 +41,12 @@ export interface ModuleNavItem {
       gap: 1rem;
       margin-bottom: 1rem;
       flex-wrap: wrap;
-      border-bottom: 1px solid #eef2f6;
+      border-bottom: 1px solid var(--abr-border);
       padding-bottom: 0.5rem;
     }
 
     .module-subnav__link {
-      color: #1f4e79;
+      color: var(--abr-primary-strong);
       text-decoration: none;
       font-weight: 500;
       padding: 0.25rem 0;
@@ -55,8 +55,8 @@ export interface ModuleNavItem {
     }
 
     .module-subnav__link.active {
-      border-bottom-color: #2e75b6;
-      color: #2e75b6;
+      border-bottom-color: var(--abr-accent);
+      color: var(--abr-accent);
     }
 
     @media (max-width: 959px) {
@@ -75,7 +75,7 @@ export interface ModuleNavItem {
       }
 
       .module-subnav::-webkit-scrollbar-thumb {
-        background: rgba(31, 78, 121, 0.25);
+        background: var(--abr-border-strong);
         border-radius: 4px;
       }
 

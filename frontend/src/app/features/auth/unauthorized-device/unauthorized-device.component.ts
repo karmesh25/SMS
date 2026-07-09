@@ -27,7 +27,7 @@ import { DeviceService } from '../../../core/services/device.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #1f2937;
+      background: var(--abr-brand-gradient-vivid);
       color: #fff;
       padding: 1rem;
     }
@@ -42,7 +42,7 @@ import { DeviceService } from '../../../core/services/device.service';
       font-size: 48px;
       width: 48px;
       height: 48px;
-      color: #c0392b;
+      color: var(--abr-danger);
       margin-bottom: 1rem;
     }
 
@@ -55,15 +55,15 @@ import { DeviceService } from '../../../core/services/device.service';
       display: block;
       margin-top: 0.5rem;
       padding: 0.75rem;
-      background: #111827;
-      color: #93c5fd;
+      background: var(--abr-surface-3);
+      color: var(--abr-info);
       word-break: break-all;
       border-radius: 4px;
       font-size: 0.85rem;
     }
 
     .hint {
-      color: #666;
+      color: var(--abr-text-secondary);
       font-size: 0.875rem;
     }
   `]

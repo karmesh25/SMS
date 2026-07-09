@@ -33,7 +33,7 @@ export interface BalanceDialogData {
     </mat-dialog-actions>
   `,
   styles: [`
-    .cash-row { font-size: 1.1rem; margin-bottom: 1rem; color: #1f4e79; }
+    .cash-row { font-size: 1.1rem; margin-bottom: 1rem; color: var(--abr-primary-strong); }
     table { width: 100%; }
   `]
 })

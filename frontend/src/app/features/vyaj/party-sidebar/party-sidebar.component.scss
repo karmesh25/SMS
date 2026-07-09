@@ -1,5 +1,3 @@
-@use '../../../../styles/tokens' as tokens;
-
 .party-sidebar {
   display: flex;
   flex-direction: column;
@@ -10,25 +8,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: tokens.$abr-spacing-md tokens.$abr-spacing-md tokens.$abr-spacing-sm;
+  padding: var(--abr-space-md) var(--abr-space-md) var(--abr-space-sm);
 }
 
 .sidebar-header h2 {
   margin: 0;
   font-size: 1rem;
-  font-weight: 500;
-  color: tokens.$abr-primary;
+  font-weight: 600;
+  color: var(--abr-primary-strong);
 }
 
 .count {
   font-size: 0.75rem;
-  color: tokens.$abr-text-muted;
+  color: var(--abr-text-muted);
 }
 
 .party-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 tokens.$abr-spacing-sm;
+  padding: 0 var(--abr-space-sm);
 }
 
 .party-row {
@@ -40,51 +38,59 @@
   padding: 0.65rem 0.75rem;
   margin-bottom: 0.25rem;
   border: none;
-  border-radius: tokens.$abr-radius-sm;
+  border-radius: var(--abr-radius-md);
   background: transparent;
   cursor: pointer;
   text-align: left;
   color: inherit;
   font-family: inherit;
+  transition: background-color var(--abr-dur-fast) var(--abr-ease);
 }
 
 .party-row:hover {
-  background: tokens.$abr-border;
+  background: var(--abr-surface-3);
 }
 
 .party-row.active {
-  background: #e8eef4;
-  box-shadow: inset 3px 0 0 tokens.$abr-primary;
+  background: var(--abr-primary-soft);
+  box-shadow: inset 3px 0 0 var(--abr-primary);
 }
 
 .party-name {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9rem;
+  color: var(--abr-text);
 }
 
 .party-due {
-  font-family: 'Roboto Mono', monospace;
+  font-variant-numeric: tabular-nums;
   font-size: 0.8rem;
-  color: tokens.$abr-warn;
+  color: var(--abr-danger);
 }
 
 .party-due.settled {
-  color: tokens.$abr-success;
+  color: var(--abr-success);
 }
 
 .empty-hint {
-  padding: tokens.$abr-spacing-md;
+  padding: var(--abr-space-md);
   margin: 0;
   font-size: 0.85rem;
-  color: tokens.$abr-text-muted;
+  color: var(--abr-text-muted);
 }
 
 .add-party {
-  padding: tokens.$abr-spacing-sm tokens.$abr-spacing-md tokens.$abr-spacing-md;
-  border-top: 1px solid tokens.$abr-border;
+  padding: var(--abr-space-sm) var(--abr-space-md) var(--abr-space-md);
+  border-top: 1px solid var(--abr-border);
   display: flex;
   flex-direction: column;
-  gap: tokens.$abr-spacing-sm;
+  gap: var(--abr-space-sm);
+}
+
+// This is a stacked (column) form — keep the Add button full-width, overriding
+// the global inline-action alignment rule.
+.add-party > button {
+  align-self: stretch;
 }
 
 .dense {

@@ -31,20 +31,33 @@ import { MatButtonModule } from '@angular/material/button';
     }
 
     .breadcrumb {
-      color: #666;
-      font-size: 0.875rem;
-      margin-bottom: 0.25rem;
+      color: var(--abr-text-muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
     }
 
     h1 {
       margin: 0;
-      font-size: 1.75rem;
-      color: #1f4e79;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--abr-text);
+      letter-spacing: -0.01em;
     }
 
     p {
-      margin: 0.25rem 0 0;
-      color: #666;
+      margin: 0.3rem 0 0;
+      color: var(--abr-text-muted);
+      font-size: 0.92rem;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     @media (max-width: 959px) {
@@ -52,12 +65,6 @@ import { MatButtonModule } from '@angular/material/button';
         flex-direction: column;
         align-items: stretch;
         margin-bottom: 1rem;
-      }
-
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
       }
     }
 

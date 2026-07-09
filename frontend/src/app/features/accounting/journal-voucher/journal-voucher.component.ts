@@ -52,7 +52,9 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
 
     <app-module-subnav [items]="accountingNav" />
 
-    <form [formGroup]="form" class="voucher-form" (ngSubmit)="save()">
+    <section class="abr-panel">
+      <h2 class="abr-panel__title"><mat-icon>article</mat-icon>Voucher Details</h2>
+      <form [formGroup]="form" class="voucher-form" (ngSubmit)="save()">
       <div class="form-head abr-form-grid">
         <mat-form-field appearance="outline">
           <mat-label>Voucher Date</mat-label>
@@ -113,8 +115,8 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
       </div>
 
       <div class="totals">
-        <span>Total Debit: {{ totalDebit() | indianCurrency }}</span>
-        <span>Total Credit: {{ totalCredit() | indianCurrency }}</span>
+        <span class="abr-chip abr-chip--danger">Total Debit: {{ totalDebit() | indianCurrency }}</span>
+        <span class="abr-chip abr-chip--success">Total Credit: {{ totalCredit() | indianCurrency }}</span>
       </div>
       @if (!totalsMatch()) {
         <p class="error">Debit and Credit totals must match before saving.</p>
@@ -124,12 +126,13 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
         <button mat-flat-button color="primary" type="submit" [disabled]="!canSave()">Save</button>
         <button mat-button type="button" (click)="resetForm()">Clear</button>
       </div>
-    </form>
+      </form>
+    </section>
 
     <section class="recent-list">
       <h3>Recent Vouchers</h3>
-      <div class="abr-scroll-x">
-        <table mat-table [dataSource]="vouchers()" class="mat-elevation-z1">
+      <div class="abr-table-card">
+        <table mat-table [dataSource]="vouchers()" class="abr-table sticky-header">
           <ng-container matColumnDef="voucherNo"><th mat-header-cell *matHeaderCellDef>Voucher No</th><td mat-cell *matCellDef="let row">{{ row.voucherNo }}</td></ng-container>
           <ng-container matColumnDef="voucherDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.voucherDate | appDate }}</td></ng-container>
           <ng-container matColumnDef="narration"><th mat-header-cell *matHeaderCellDef>Narration</th><td mat-cell *matCellDef="let row">{{ row.narration }}</td></ng-container>
@@ -144,6 +147,7 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="listColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: listColumns"></tr>
+          <tr class="empty-row" *matNoDataRow><td [attr.colspan]="listColumns.length"><mat-icon>receipt_long</mat-icon>No journal vouchers yet.</td></tr>
         </table>
       </div>
     </section>
@@ -157,7 +161,7 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
     .line-table table { width: 100%; min-width: 700px; }
     .line-actions { margin-top: 0.5rem; }
     .totals { display: flex; gap: 1.5rem; font-weight: 600; margin-top: 1rem; }
-    .error { color: #d32f2f; margin: 0.5rem 0 0; }
+    .error { color: var(--abr-danger); margin: 0.5rem 0 0; }
     .form-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
     .recent-list { margin-top: 1.5rem; }
     .recent-list table { width: 100%; min-width: 760px; }

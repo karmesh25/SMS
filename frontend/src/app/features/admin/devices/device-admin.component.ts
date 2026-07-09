@@ -34,21 +34,24 @@ interface DeviceLicenseRow {
   template: `
     <app-page-header title="Device Licenses" subtitle="Authorize hardware devices"></app-page-header>
 
-    <form [formGroup]="form" class="form-row" (ngSubmit)="authorize()">
-      <mat-form-field appearance="outline">
-        <mat-label>Device Name</mat-label>
-        <input matInput formControlName="deviceName" />
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="fingerprint-field">
-        <mat-label>Fingerprint Hash</mat-label>
-        <input matInput formControlName="fingerprintHash" />
-      </mat-form-field>
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Authorize</button>
-    </form>
+    <section class="abr-panel">
+      <h2 class="abr-panel__title"><mat-icon>add_circle</mat-icon>Authorize Device</h2>
+      <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="authorize()">
+        <mat-form-field appearance="outline">
+          <mat-label>Device Name</mat-label>
+          <input matInput formControlName="deviceName" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="fingerprint-field">
+          <mat-label>Fingerprint Hash</mat-label>
+          <input matInput formControlName="fingerprintHash" />
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid"><mat-icon>add</mat-icon> Authorize</button>
+      </form>
+    </section>
 
-    <div class="abr-scroll-x">
+    <div class="abr-table-card">
 
-    <table mat-table [dataSource]="devices" class="mat-elevation-z1 abr-table sticky-header">
+    <table mat-table [dataSource]="devices" class="abr-table sticky-header">
       <ng-container matColumnDef="deviceName">
         <th mat-header-cell *matHeaderCellDef>Device</th>
         <td mat-cell *matCellDef="let row">{{ row.deviceName }}</td>
@@ -58,8 +61,12 @@ interface DeviceLicenseRow {
         <td mat-cell *matCellDef="let row">{{ row.fingerprintHash }}</td>
       </ng-container>
       <ng-container matColumnDef="isActive">
-        <th mat-header-cell *matHeaderCellDef>Active</th>
-        <td mat-cell *matCellDef="let row">{{ row.isActive ? 'Yes' : 'No' }}</td>
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="abr-chip" [class.abr-chip--success]="row.isActive" [class.abr-chip--danger]="!row.isActive">
+            {{ row.isActive ? 'Authorized' : 'Revoked' }}
+          </span>
+        </td>
       </ng-container>
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Actions</th>
@@ -70,26 +77,15 @@ interface DeviceLicenseRow {
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
+      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="displayedColumns.length"><mat-icon>devices</mat-icon>No devices authorized yet.</td></tr>
     </table>
     </div>
   `,
   styles: [`
-    .form-row {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-    }
+    .abr-form-grid button { min-width: 140px; }
 
     .fingerprint-field {
-      flex: 1;
       min-width: 280px;
-    }
-
-    table {
-      width: 100%;
     }
   `]
 })

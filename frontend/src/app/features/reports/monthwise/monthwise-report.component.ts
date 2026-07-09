@@ -30,15 +30,18 @@ interface MonthwiseRow {
       <div class="no-print">
         <app-page-header title="Monthwise Totals" subtitle="Aavak and Javak by month" />
         <app-module-subnav [items]="reportNav" />
-        <form [formGroup]="form" class="filters">
-          <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
-          <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
-          <app-report-export-buttons reportType="monthwise" [filters]="exportFilters()" [disabled]="!siteId" />
-        </form>
+        <section class="abr-panel">
+          <h2 class="abr-panel__title"><mat-icon>filter_alt</mat-icon>Filters</h2>
+          <form [formGroup]="form" class="filters">
+            <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
+            <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
+            <app-report-export-buttons reportType="monthwise" [filters]="exportFilters()" [disabled]="!siteId" />
+          </form>
+        </section>
       </div>
-      <div class="abr-scroll-x">
-      <table mat-table [dataSource]="rows" class="mat-elevation-z1 abr-table sticky-header">
+      <div class="abr-table-card">
+      <table mat-table [dataSource]="rows" class="abr-table sticky-header">
         <ng-container matColumnDef="monthLabel"><th mat-header-cell *matHeaderCellDef>Month</th><td mat-cell *matCellDef="let r">{{ r.monthLabel }}</td></ng-container>
         <ng-container matColumnDef="aavakTotal"><th mat-header-cell *matHeaderCellDef>Aavak</th><td mat-cell *matCellDef="let r">{{ r.aavakTotal | indianCurrency }}</td></ng-container>
         <ng-container matColumnDef="javakTotal"><th mat-header-cell *matHeaderCellDef>Javak</th><td mat-cell *matCellDef="let r">{{ r.javakTotal | indianCurrency }}</td></ng-container>

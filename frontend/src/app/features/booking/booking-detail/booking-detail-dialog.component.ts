@@ -92,10 +92,10 @@ export interface BookingDetailDialogData {
       mat-dialog-actions { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       mat-dialog-actions button { width: 100%; margin: 0 !important; }
     }
-    .status-paid { color: #27ae60; font-weight: 600; }
-    .status-partial { color: #2980b9; font-weight: 600; }
-    .status-pending { color: #7f8c8d; }
-    .status-overdue { color: #e74c3c; font-weight: 600; }
+    .status-paid { color: var(--abr-success); font-weight: 600; }
+    .status-partial { color: var(--abr-info); font-weight: 600; }
+    .status-pending { color: var(--abr-text-muted); }
+    .status-overdue { color: var(--abr-danger); font-weight: 600; }
   `]
 })
 export class BookingDetailDialogComponent implements OnInit {

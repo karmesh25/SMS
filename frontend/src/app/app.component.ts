@@ -11,11 +11,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
 import { LoaderComponent } from './shared/components/loader/loader.component';
 import { BreadcrumbComponent } from './shared/components/breadcrumb/breadcrumb.component';
 import { HasPermissionDirective } from './shared/directives/has-permission.directive';
 import { AuthService } from './core/services/auth.service';
 import { SiteContextService } from './core/services/site-context.service';
+import { ThemeService } from './core/services/theme.service';
 
 export interface NavLink {
   label: string;
@@ -45,6 +48,8 @@ export interface NavSection {
     MatFormFieldModule,
     MatSelectModule,
     MatDividerModule,
+    MatTooltipModule,
+    MatMenuModule,
     LoaderComponent,
     BreadcrumbComponent,
     HasPermissionDirective
@@ -58,6 +63,7 @@ export class AppComponent {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   readonly siteContext = inject(SiteContextService);
+  readonly theme = inject(ThemeService);
   readonly currentUser = this.authService.currentUser;
   readonly mobileMenuOpen = signal(false);
 
@@ -139,6 +145,14 @@ export class AppComponent {
     moduleKey: 'dashboard',
     exact: true
   };
+
+  readonly userInitials = computed(() => {
+    const name = this.authService.currentUser()?.username ?? '';
+    const parts = name.trim().split(/[\s._-]+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  });
 
   readonly visibleNavSections = computed(() => {
     this.authService.currentUser();

@@ -58,27 +58,33 @@ interface BrokerRow {
 
 
 
-    <form [formGroup]="form" class="grid" (ngSubmit)="save()">
+    <section class="abr-panel">
 
-      <mat-form-field appearance="outline"><mat-label>Name</mat-label><input matInput formControlName="name" /></mat-form-field>
+      <h2 class="abr-panel__title"><mat-icon>person_add</mat-icon>Add Broker</h2>
 
-      <mat-form-field appearance="outline"><mat-label>Contact</mat-label><input matInput formControlName="contactNo" /></mat-form-field>
+      <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="save()">
 
-      <mat-form-field appearance="outline"><mat-label>Contact 2</mat-label><input matInput formControlName="contactNo2" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Name</mat-label><input matInput formControlName="name" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Address</mat-label><input matInput formControlName="address" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Contact</mat-label><input matInput formControlName="contactNo" /></mat-form-field>
 
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add Broker</button>
+        <mat-form-field appearance="outline"><mat-label>Contact 2</mat-label><input matInput formControlName="contactNo2" /></mat-form-field>
 
-    </form>
+        <mat-form-field appearance="outline"><mat-label>Address</mat-label><input matInput formControlName="address" /></mat-form-field>
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid"><mat-icon>add</mat-icon> Add Broker</button>
+
+      </form>
+
+    </section>
 
 
 
-    <div class="abr-scroll-x">
+    <div class="abr-table-card">
 
 
 
-    <table mat-table [dataSource]="brokers" class="mat-elevation-z1 abr-table sticky-header">
+    <table mat-table [dataSource]="brokers" class="abr-table sticky-header">
 
       <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Name</th><td mat-cell *matCellDef="let row">{{ row.name }}</td></ng-container>
 
@@ -102,7 +108,7 @@ interface BrokerRow {
 
       <tr mat-row *matRowDef="let row; columns: cols"></tr>
 
-      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>info_outline</mat-icon>No records found.</td></tr>
+      <tr class="empty-row" *matNoDataRow><td [attr.colspan]="cols.length"><mat-icon>badge</mat-icon>No brokers yet.</td></tr>
 
     </table>
 
@@ -110,7 +116,7 @@ interface BrokerRow {
 
   `,
 
-  styles: [`.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.5rem; align-items:center; } table { width:100%; }`]
+  styles: [`.abr-form-grid button { min-width: 140px; }`]
 
 })
 

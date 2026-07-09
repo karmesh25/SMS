@@ -13,7 +13,7 @@ import { REPORT_NAV_ITEMS } from '../../shared/nav/module-nav-items';
     <p class="hint">Select a report from the navigation above.</p>
   `,
   styles: [`
-    .hint { color: #888; margin-top: 0.5rem; }
+    .hint { color: var(--abr-text-muted); margin-top: 0.5rem; }
   `]
 })
 export class ReportsShellComponent {

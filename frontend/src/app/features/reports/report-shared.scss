@@ -32,8 +32,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
   gap: 1rem;
-  margin-bottom: 1rem;
   align-items: start;
+}
+
+// Filters now live inside an .abr-panel which supplies its own padding,
+// so the panel-wrapped form should not add extra bottom margin.
+.abr-panel .filters {
+  margin-bottom: 0;
 }
 
 table {
@@ -41,28 +46,28 @@ table {
 }
 
 .aavak-header {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--abr-success-soft);
+  color: var(--abr-success);
 }
 
 .javak-header {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--abr-danger-soft);
+  color: var(--abr-danger);
 }
 
 .profit-positive {
-  color: #2e7d32;
-  font-weight: 500;
+  color: var(--abr-success);
+  font-weight: 600;
 }
 
 .profit-negative {
-  color: #c62828;
-  font-weight: 500;
+  color: var(--abr-danger);
+  font-weight: 600;
 }
 
-.pct-high { color: #2e7d32; }
-.pct-mid { color: #ef6c00; }
-.pct-low { color: #c62828; }
+.pct-high { color: var(--abr-success); }
+.pct-mid { color: var(--abr-warning); }
+.pct-low { color: var(--abr-danger); }
 
 .scroll-table,
 .abr-scroll-x {

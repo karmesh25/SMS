@@ -28,7 +28,7 @@ import { MatIconModule } from '@angular/material/icon';
       align-items: center;
       justify-content: center;
       padding: 2rem;
-      background: #f5f7fa;
+      background: var(--abr-surface-2);
     }
     mat-card-content {
       text-align: center;
@@ -38,15 +38,15 @@ import { MatIconModule } from '@angular/material/icon';
       font-size: 64px;
       width: 64px;
       height: 64px;
-      color: #1f4e79;
+      color: var(--abr-primary-strong);
       margin-bottom: 1rem;
     }
     h1 {
       font-size: 4rem;
       margin: 0;
-      color: #1f4e79;
+      color: var(--abr-primary-strong);
     }
-    p { margin: 0.5rem 0; color: #555; }
+    p { margin: 0.5rem 0; color: var(--abr-text-secondary); }
     .message { margin-bottom: 1.5rem; }
   `]
 })

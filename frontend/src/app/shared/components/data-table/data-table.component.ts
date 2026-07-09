@@ -30,12 +30,12 @@ import { TableSkeletonComponent } from '../table-skeleton/table-skeleton.compone
     .empty-state {
       text-align: center;
       padding: 2rem 1rem;
-      color: #888;
+      color: var(--abr-text-muted);
     }
     .empty-state mat-icon {
       display: block;
       margin: 0 auto 0.5rem;
-      color: #b0bec5;
+      color: var(--abr-text-muted);
       font-size: 40px;
       width: 40px;
       height: 40px;
