@@ -1,4 +1,5 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -164,6 +165,7 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
 })
 export class JournalVoucherComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly jvService = inject(JournalVoucherService);
   private readonly masterData = inject(MasterDataService);
   private readonly siteContext = inject(SiteContextService);
@@ -180,6 +182,7 @@ export class JournalVoucherComponent {
   readonly subLedgers = signal<SubLedger[]>([]);
   readonly selectedId = signal<string | null>(null);
   readonly selectedVoucherNo = signal<string>('Auto');
+  readonly formVersion = signal(0);
 
   siteId: string | null = null;
 
@@ -197,13 +200,15 @@ export class JournalVoucherComponent {
   );
 
   readonly totalDebit = computed(() =>
-    this.lineControls()
+    (this.formVersion(),
+    this.lineControls())
       .filter((g) => g.controls.entryType.value === 'dr')
       .reduce((sum, g) => sum + Number(g.controls.amount.value ?? 0), 0)
   );
 
   readonly totalCredit = computed(() =>
-    this.lineControls()
+    (this.formVersion(),
+    this.lineControls())
       .filter((g) => g.controls.entryType.value === 'cr')
       .reduce((sum, g) => sum + Number(g.controls.amount.value ?? 0), 0)
   );
@@ -211,6 +216,10 @@ export class JournalVoucherComponent {
   readonly totalsMatch = computed(() => this.totalDebit() === this.totalCredit());
 
   constructor() {
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.bumpFormVersion());
+
     effect(() => {
       this.siteId = this.siteContext.activeSiteId();
       if (this.siteId) {
@@ -230,12 +239,14 @@ export class JournalVoucherComponent {
 
   addLine(): void {
     this.lines.push(this.createLineGroup(this.lines.length + 1));
+    this.bumpFormVersion();
   }
 
   removeLine(index: number): void {
     if (this.lines.length <= 2) return;
     this.lines.removeAt(index);
     this.reindexLines();
+    this.bumpFormVersion();
   }
 
   canSave(): boolean {
@@ -243,7 +254,15 @@ export class JournalVoucherComponent {
   }
 
   save(): void {
-    if (!this.siteId || !this.canSave()) return;
+    if (!this.siteId) return;
+    if (!this.form.valid) {
+      this.toast.error('Select account and amount in each CR/DR row.');
+      return;
+    }
+    if (!this.totalsMatch()) {
+      this.toast.error('Debit and Credit totals must match before saving.');
+      return;
+    }
 
     const payload = {
       siteId: this.siteId,
@@ -281,6 +300,7 @@ export class JournalVoucherComponent {
       .sort((a, b) => a.lineNo - b.lineNo)
       .forEach((line, idx) => this.lines.push(this.createLineGroup(idx + 1, line.entryType, line.subLedgerId, line.amount)));
     this.reindexLines();
+    this.bumpFormVersion();
   }
 
   removeVoucher(voucher: JournalVoucher): void {
@@ -313,6 +333,7 @@ export class JournalVoucherComponent {
     this.lines.clear();
     this.lines.push(this.createLineGroup(1));
     this.lines.push(this.createLineGroup(2));
+    this.bumpFormVersion();
   }
 
   exportExcel(): void {
@@ -396,5 +417,9 @@ export class JournalVoucherComponent {
 
   private reindexLines(): void {
     this.lineControls().forEach((group, index) => group.controls.lineNo.setValue(index + 1));
+  }
+
+  private bumpFormVersion(): void {
+    this.formVersion.update((value) => value + 1);
   }
 }

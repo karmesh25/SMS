@@ -42,7 +42,7 @@ public sealed class SiteService : ISiteService
             .ToListAsync(cancellationToken);
 
         return await QuerySiteDtos()
-            .Where(s => allowedSiteIds.Contains(s.Id))
+            .Where(s => allowedSiteIds.Contains(s.Id) || s.IsSandbox)
             .ToListAsync(cancellationToken);
     }
 

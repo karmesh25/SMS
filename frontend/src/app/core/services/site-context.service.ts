@@ -22,6 +22,8 @@ export interface Site {
 
   isActive: boolean;
 
+  isSandbox?: boolean;
+
 }
 
 
@@ -59,16 +61,17 @@ export class SiteContextService {
           const activeId = this.activeSiteIdSignal();
 
           const current = response.data.find((s) => s.id === activeId);
+          const defaultSite = response.data.find((s) => s.isSandbox && s.isActive)
+            ?? response.data.find((s) => s.isActive)
+            ?? response.data[0];
 
           if (!current || !current.isActive) {
 
-            const firstActive = response.data.find((s) => s.isActive);
-
-            this.activeSiteIdSignal.set(firstActive?.id ?? response.data[0].id);
+            this.activeSiteIdSignal.set(defaultSite.id);
 
           } else if (!activeId) {
 
-            this.activeSiteIdSignal.set(response.data[0].id);
+            this.activeSiteIdSignal.set(defaultSite.id);
 
           }
 
