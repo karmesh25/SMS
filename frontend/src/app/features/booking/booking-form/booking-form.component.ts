@@ -116,9 +116,9 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
       <mat-form-field appearance="outline"><mat-label>SQFT</mat-label><input matInput type="number" formControlName="sqft" (input)="onSqftChange()" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Rate / SQFT</mat-label><input matInput type="number" formControlName="rate" appIndianAmount (input)="onRateChange()" /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Rate / SQFT</mat-label><input matInput formControlName="rate" appIndianAmount (input)="onRateChange()" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Total Price</mat-label><input matInput type="number" formControlName="totalPrice" appIndianAmount (input)="onTotalChange()" /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Total Price</mat-label><input matInput formControlName="totalPrice" appIndianAmount (input)="onTotalChange()" /></mat-form-field>
 
       <p class="pricing-hint">Enter Rate or Total — the other is calculated automatically from SQFT.</p>
 
@@ -142,7 +142,7 @@ interface SubLedgerOption { id: string; ledgerName: string; }
 
       <mat-form-field appearance="outline"><mat-label>Brokerage %</mat-label><input matInput type="number" formControlName="brokeragePct" (input)="onBrokeragePctChange()" /></mat-form-field>
 
-      <mat-form-field appearance="outline"><mat-label>Brokerage Amount</mat-label><input matInput type="number" formControlName="brokerageAmount" appIndianAmount (input)="onBrokerageAmountChange()" /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Brokerage Amount</mat-label><input matInput formControlName="brokerageAmount" appIndianAmount (input)="onBrokerageAmountChange()" /></mat-form-field>
 
       <p class="pricing-hint">Enter Brokerage % or Amount — the other is calculated from Total Price.</p>
 

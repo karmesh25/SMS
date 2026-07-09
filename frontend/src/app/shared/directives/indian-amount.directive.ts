@@ -16,6 +16,11 @@ export class IndianAmountDirective implements OnInit {
   private editing = false;
 
   ngOnInit(): void {
+    // Formatted amounts use commas; number inputs reject them and appear empty on blur.
+    this.el.nativeElement.type = 'text';
+    this.el.nativeElement.inputMode = 'decimal';
+    this.el.nativeElement.autocomplete = 'off';
+
     this.formatDisplay();
     const ctrl = this.control?.control;
     if (ctrl) {
@@ -57,7 +62,8 @@ export class IndianAmountDirective implements OnInit {
 
   private formatDisplay(value?: number | null): void {
     const num = value ?? this.control?.value;
-    if (num === null || num === undefined || num === '' || isNaN(Number(num))) {
+    if (num === null || num === undefined || num === '' || isNaN(Number(num)) || Number(num) === 0) {
+      this.el.nativeElement.value = '';
       return;
     }
     this.el.nativeElement.value = this.currencyPipe.transform(Number(num));
