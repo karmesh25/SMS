@@ -61,7 +61,7 @@ export class SiteContextService {
           const activeId = this.activeSiteIdSignal();
 
           const current = response.data.find((s) => s.id === activeId);
-          const defaultSite = response.data.find((s) => s.isSandbox && s.isActive)
+          const defaultSite = response.data.find((s) => s.isActive && !s.isSandbox)
             ?? response.data.find((s) => s.isActive)
             ?? response.data[0];
 

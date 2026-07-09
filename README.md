@@ -87,14 +87,11 @@ Client-ready USB package — see **[pendrive/CLIENT_SETUP_AND_START.txt](pendriv
 - `DAILY_BACKUP.bat` — backup to `backup\` on the USB
 - Reports export to `exports\` on the USB (not the PC Downloads folder)
 
-### Demo / sandbox login
+### Production sandbox (owner only)
 
-| User | Password | Sees |
-|------|----------|------|
-| `admin` | `Admin@123` | Real sites (e.g. Tapi) with full data |
-| `demo` | `Demo@123` | Empty **Demo** sandbox site only (no wings/bookings/entries) |
+On live Production, the sandbox site is hidden from real users (`admin`, staff). A separate decoy account exists for isolated testing; credentials are not published in this document.
 
-Real customer data is never wiped when using the demo user.
+Local Development still exposes the sandbox site for testing.
 
 ## Phase 0 deliverables
 

@@ -4,6 +4,7 @@ using ABR.Domain.Entities;
 using ABR.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 
 namespace ABR.Infrastructure.Services.MasterData;
 
@@ -14,11 +15,13 @@ public sealed class SiteService : ISiteService
 
     private readonly AbrDbContext _context;
     private readonly IMemoryCache _cache;
+    private readonly bool _isProduction;
 
-    public SiteService(AbrDbContext context, IMemoryCache cache)
+    public SiteService(AbrDbContext context, IMemoryCache cache, IConfiguration configuration)
     {
         _context = context;
         _cache = cache;
+        _isProduction = IsProductionEnvironment(configuration);
     }
 
     public async Task<IReadOnlyList<SiteDto>> GetAllAsync(
@@ -28,11 +31,13 @@ public sealed class SiteService : ISiteService
     {
         if (isSuperAdmin || userId is null)
         {
-            return await _cache.GetOrCreateAsync(SitesCacheKey, async entry =>
+            var allSites = await _cache.GetOrCreateAsync(SitesCacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = CacheDuration;
                 return await QuerySiteDtos().ToListAsync(cancellationToken);
             }) ?? [];
+
+            return FilterSitesForUser(allSites, userId, isSuperAdmin);
         }
 
         var allowedSiteIds = await _context.UserSiteAccesses
@@ -41,9 +46,32 @@ public sealed class SiteService : ISiteService
             .Select(a => a.SiteId)
             .ToListAsync(cancellationToken);
 
-        return await QuerySiteDtos()
-            .Where(s => allowedSiteIds.Contains(s.Id) || s.IsSandbox)
+        var userSites = await QuerySiteDtos()
+            .Where(s => allowedSiteIds.Contains(s.Id))
             .ToListAsync(cancellationToken);
+
+        return FilterSitesForUser(userSites, userId, isSuperAdmin);
+    }
+
+    private IReadOnlyList<SiteDto> FilterSitesForUser(
+        IReadOnlyList<SiteDto> sites,
+        Guid? userId,
+        bool isSuperAdmin)
+    {
+        if (!_isProduction)
+            return sites;
+
+        if (sites.Count == 0)
+            return sites;
+
+        var sandboxOnly = !isSuperAdmin
+            && userId is not null
+            && sites.All(s => s.IsSandbox);
+
+        if (sandboxOnly)
+            return sites;
+
+        return sites.Where(s => !s.IsSandbox).ToList();
     }
 
     private IQueryable<SiteDto> QuerySiteDtos() =>
@@ -114,6 +142,15 @@ public sealed class SiteService : ISiteService
         IsActive = s.IsActive,
         IsSandbox = s.IsSandbox
     };
+
+    private static bool IsProductionEnvironment(IConfiguration configuration)
+    {
+        var environment = configuration["ASPNETCORE_ENVIRONMENT"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? "Production";
+
+        return string.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase);
+    }
 }
 
 public sealed class WingService : IWingService

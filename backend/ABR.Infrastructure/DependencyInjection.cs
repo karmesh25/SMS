@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddSingleton<IDeviceFingerprintService, DeviceFingerprintService>();
 
         services.AddScoped<ISiteService, SiteService>();
+        services.AddScoped<ISandboxAccessService, SandboxAccessService>();
         services.AddScoped<IWingService, WingService>();
         services.AddScoped<IFlatService, FlatService>();
         services.AddScoped<IMainLedgerService, MainLedgerService>();
@@ -179,73 +180,99 @@ public static class DbInitializer
 
     public static async Task EnsureDemoSandboxAsync(AbrDbContext context, ILogger logger)
     {
-        var demoSite = await context.Sites.FirstOrDefaultAsync(s => s.SiteName == "Demo");
-        if (demoSite is null)
+        var sandboxSite = await context.Sites.FirstOrDefaultAsync(s => s.IsSandbox)
+            ?? await context.Sites.FirstOrDefaultAsync(s => s.SiteName == "Demo");
+
+        if (sandboxSite is null)
         {
-            demoSite = new Site
+            sandboxSite = new Site
             {
-                SiteName = "Demo",
+                SiteName = "Navrang",
                 StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
-                Address = "Empty sandbox for demo user",
+                Address = "Project site",
                 IsActive = true,
                 IsSandbox = true
             };
-            context.Sites.Add(demoSite);
+            context.Sites.Add(sandboxSite);
             await context.SaveChangesAsync();
-            logger.LogInformation("Created empty Demo sandbox site.");
+            logger.LogInformation("Created empty Navrang sandbox site.");
         }
-        else if (!demoSite.IsSandbox)
+        else
         {
-            demoSite.IsSandbox = true;
-            await context.SaveChangesAsync();
-        }
-
-        var officeRole = await context.AppRoles.FirstOrDefaultAsync(r => r.Name == SystemRoleNames.OfficeStaff)
-            ?? await context.AppRoles.FirstAsync(r => r.Name == SystemRoleNames.ViewOnly);
-
-        var demoUser = await context.Users
-            .Include(u => u.SiteAccesses)
-            .FirstOrDefaultAsync(u => u.Username == "demo");
-
-        if (demoUser is null)
-        {
-            demoUser = new User
+            if (!sandboxSite.IsSandbox)
             {
-                Username = "demo",
-                Email = "demo@abr.local",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Demo@123", workFactor: 12),
-                RoleId = officeRole.Id,
-                Role = officeRole.Name,
+                sandboxSite.IsSandbox = true;
+            }
+
+            if (!string.Equals(sandboxSite.SiteName, "Navrang", StringComparison.Ordinal))
+            {
+                sandboxSite.SiteName = "Navrang";
+                sandboxSite.Address = "Project site";
+            }
+
+            await context.SaveChangesAsync();
+        }
+
+        var adminRole = await context.AppRoles.FirstOrDefaultAsync(r => r.Name == SystemRoleNames.Admin)
+            ?? await context.AppRoles.FirstAsync();
+
+        var supervisorUser = await context.Users
+            .Include(u => u.SiteAccesses)
+            .FirstOrDefaultAsync(u => u.Username == "supervisor");
+
+        if (supervisorUser is null)
+        {
+            supervisorUser = new User
+            {
+                Username = "supervisor",
+                Email = "supervisor@abr.local",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Supervisor@123", workFactor: 12),
+                RoleId = adminRole.Id,
+                Role = adminRole.Name,
                 IsActive = true
             };
-            context.Users.Add(demoUser);
+            context.Users.Add(supervisorUser);
             await context.SaveChangesAsync();
 
             context.UserSiteAccesses.Add(new UserSiteAccess
             {
-                UserId = demoUser.Id,
-                SiteId = demoSite.Id,
+                UserId = supervisorUser.Id,
+                SiteId = sandboxSite.Id,
                 CanRead = true,
                 CanWrite = true,
-                CanDelete = false
+                CanDelete = true
             });
             await context.SaveChangesAsync();
-            logger.LogInformation("Created demo user: demo / Demo@123 (Demo site only).");
-            return;
+            logger.LogInformation("Created decoy supervisor user (Navrang sandbox only).");
+        }
+        else
+        {
+            supervisorUser.IsActive = true;
+            supervisorUser.RoleId = adminRole.Id;
+            supervisorUser.Role = adminRole.Name;
+
+            var hasSandboxAccess = supervisorUser.SiteAccesses.Any(a => a.SiteId == sandboxSite.Id);
+            if (!hasSandboxAccess)
+            {
+                context.UserSiteAccesses.Add(new UserSiteAccess
+                {
+                    UserId = supervisorUser.Id,
+                    SiteId = sandboxSite.Id,
+                    CanRead = true,
+                    CanWrite = true,
+                    CanDelete = true
+                });
+            }
+
+            await context.SaveChangesAsync();
         }
 
-        var hasDemoAccess = demoUser.SiteAccesses.Any(a => a.SiteId == demoSite.Id);
-        if (!hasDemoAccess)
+        var legacyDemoUser = await context.Users.FirstOrDefaultAsync(u => u.Username == "demo");
+        if (legacyDemoUser is not null && legacyDemoUser.IsActive)
         {
-            context.UserSiteAccesses.Add(new UserSiteAccess
-            {
-                UserId = demoUser.Id,
-                SiteId = demoSite.Id,
-                CanRead = true,
-                CanWrite = true,
-                CanDelete = false
-            });
+            legacyDemoUser.IsActive = false;
             await context.SaveChangesAsync();
+            logger.LogInformation("Deactivated legacy demo user.");
         }
     }
 }
