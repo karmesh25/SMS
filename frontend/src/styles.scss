@@ -344,6 +344,26 @@ a {
 }
 
 // ---------------------------------------------------------------------------
+// Button-toggle groups — clean, tab-like, aligned with form fields
+// ---------------------------------------------------------------------------
+.mat-button-toggle-group:not(.mat-button-toggle-vertical) {
+  border-radius: var(--abr-radius-md);
+  overflow: hidden;
+}
+
+.mat-button-toggle-group:not(.mat-button-toggle-vertical) .mat-button-toggle-label-content {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.mat-button-toggle-checked {
+  background: var(--abr-primary-soft);
+  color: var(--abr-primary-strong);
+  font-weight: 600;
+}
+
+// ---------------------------------------------------------------------------
 // Shared table styling
 // ---------------------------------------------------------------------------
 .abr-table {

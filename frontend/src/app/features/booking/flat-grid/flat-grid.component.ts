@@ -65,7 +65,7 @@ interface FloorGroup {
         <mat-button-toggle value="plot">Plot</mat-button-toggle>
       </mat-button-toggle-group>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ viewMode === 'wing' ? 'Wing' : 'Plot Scheme' }}</mat-label>
         <mat-select [(value)]="selectedAssetId" (selectionChange)="loadGrid()">
           @for (asset of assets; track asset.id) {
@@ -108,10 +108,11 @@ interface FloorGroup {
     .toolbar {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
+      align-items: flex-start;
       gap: 1rem;
       margin-bottom: 0.5rem;
     }
+    .toolbar mat-button-toggle-group { height: 48px; }
     .legend { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
     .chip { padding: 0.25rem 0.75rem; border-radius: 4px; color: #fff; font-size: 0.875rem; }
     .chip.available { background: #16a34a; }

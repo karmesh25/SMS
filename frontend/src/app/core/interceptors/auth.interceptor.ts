@@ -83,9 +83,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
 
       if (error.status !== 401 || req.url.includes('/auth/login') || req.url.includes('/auth/refresh')) {
-        if (error.status === 500 && !req.url.includes('/auth/')) {
-          void router.navigate(['/server-error']);
-        }
+        // Don't hijack the whole page for a failed request — the global error
+        // handler surfaces a toast. (The /server-error route stays available for
+        // direct navigation / genuine fatal cases.)
         return throwError(() => error);
       }
 
