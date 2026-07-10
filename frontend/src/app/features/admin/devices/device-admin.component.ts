@@ -34,6 +34,21 @@ interface DeviceLicenseRow {
   template: `
     <app-page-header title="Device Licenses" subtitle="Authorize hardware devices"></app-page-header>
 
+    <section class="abr-panel this-device">
+      <h2 class="abr-panel__title"><mat-icon>fingerprint</mat-icon>This Computer's Device Hash</h2>
+      @if (currentHash) {
+        <div class="hash-row">
+          <code class="hash">{{ currentHash }}</code>
+          <div class="hash-actions">
+            <button mat-stroked-button type="button" (click)="copyHash()"><mat-icon>content_copy</mat-icon> Copy</button>
+            <button mat-flat-button color="primary" type="button" (click)="useThisPc()"><mat-icon>add_task</mat-icon> Use to authorize</button>
+          </div>
+        </div>
+      } @else {
+        <p class="hash-empty">Reading this device's hardware fingerprint…</p>
+      }
+    </section>
+
     <section class="abr-panel">
       <h2 class="abr-panel__title"><mat-icon>add_circle</mat-icon>Authorize Device</h2>
       <form [formGroup]="form" class="abr-form-grid" (ngSubmit)="authorize()">
@@ -87,6 +102,28 @@ interface DeviceLicenseRow {
     .fingerprint-field {
       min-width: 280px;
     }
+
+    .hash-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .hash {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      color: var(--abr-primary-strong);
+      background: var(--abr-surface-2);
+      border: 1px solid var(--abr-border);
+      border-radius: var(--abr-radius-sm);
+      padding: 0.5rem 0.75rem;
+      flex: 1;
+      min-width: 240px;
+    }
+    .hash-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .hash-empty { color: var(--abr-text-muted); margin: 0; }
   `]
 })
 export class DeviceAdminComponent implements OnInit {
@@ -96,6 +133,7 @@ export class DeviceAdminComponent implements OnInit {
 
   devices: DeviceLicenseRow[] = [];
   displayedColumns = ['deviceName', 'fingerprintHash', 'isActive', 'actions'];
+  currentHash = '';
 
   readonly form = this.fb.nonNullable.group({
     deviceName: ['', Validators.required],
@@ -104,6 +142,30 @@ export class DeviceAdminComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDevices();
+    void this.deviceService.verifyDevice().then(() => {
+      this.currentHash = this.deviceService.fingerprintHash();
+    });
+  }
+
+  copyHash(): void {
+    if (!this.currentHash) {
+      return;
+    }
+    navigator.clipboard?.writeText(this.currentHash).then(
+      () => this.toast.success('Device hash copied to clipboard'),
+      () => this.toast.error('Could not copy to clipboard')
+    );
+  }
+
+  useThisPc(): void {
+    if (!this.currentHash) {
+      return;
+    }
+    this.form.patchValue({
+      fingerprintHash: this.currentHash,
+      deviceName: this.form.getRawValue().deviceName || 'This PC'
+    });
+    this.toast.success("Filled this PC's hash — set a name, then click Authorize");
   }
 
   loadDevices(): void {

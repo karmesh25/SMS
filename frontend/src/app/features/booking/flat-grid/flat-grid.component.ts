@@ -114,9 +114,9 @@ interface FloorGroup {
     }
     .legend { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
     .chip { padding: 0.25rem 0.75rem; border-radius: 4px; color: #fff; font-size: 0.875rem; }
-    .chip.available { background: var(--abr-success); }
-    .chip.booked { background: var(--abr-primary); }
-    .chip.cancelled { background: var(--abr-danger); }
+    .chip.available { background: #16a34a; }
+    .chip.booked { background: #dc2626; }
+    .chip.cancelled { background: #64748b; }
     .floor-section {
       margin-bottom: 1.75rem;
       padding: 1rem;
@@ -154,26 +154,29 @@ interface FloorGroup {
     }
     .flat-card {
       border: none;
-      border-radius: 4px;
+      border-radius: var(--abr-radius-sm);
       min-height: 52px;
       padding: 0.5rem 0.35rem;
       color: #fff;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
+      box-shadow: var(--abr-shadow-sm);
+      transition: transform var(--abr-dur-fast) var(--abr-ease),
+        box-shadow var(--abr-dur) var(--abr-ease), filter var(--abr-dur-fast) var(--abr-ease);
     }
     .flat-label {
       font-size: 0.72rem;
       line-height: 1.2;
       word-break: break-all;
     }
-    .flat-card.available { background: var(--abr-success); }
-    .flat-card.booked { background: var(--abr-primary); }
-    .flat-card.cancelled { background: var(--abr-danger); }
-    .flat-card:hover { filter: brightness(1.08); }
+    .flat-card.available { background: #16a34a; }
+    .flat-card.booked { background: #dc2626; }
+    .flat-card.cancelled { background: #64748b; }
+    .flat-card:hover { transform: translateY(-2px); box-shadow: var(--abr-shadow-md); filter: brightness(1.06); }
   `]
 })
 export class FlatGridComponent implements OnInit {
