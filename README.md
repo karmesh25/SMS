@@ -75,16 +75,19 @@ Client-ready USB package — see **[pendrive/CLIENT_SETUP_AND_START.txt](pendriv
 
 ### Security (pendrive)
 
-- **Master password** — required at each `START.bat` and `DAILY_BACKUP.bat`; unlocks `config/secrets.enc`
+- **Master password** — required at each `START.bat` and `DAILY_BACKUP.bat`; unlocks `config/secrets.enc`. Passed to tools via the `ABR_MASTER_PASSWORD` environment variable (never on the command line)
 - **No secrets in appsettings** — connection string, JWT key, and license secret are encrypted on USB
-- **PostgreSQL** — strong random password; `scram-sha-256` auth (no trust mode after setup)
-- **Not protected** — copying `db/data/` offline can still expose data files; exports/backups remain plain text
+- **Authenticated encryption** — `secrets.enc`, `device.lic`, and database backups use AES‑256‑GCM with a random per‑file PBKDF2 salt (tamper‑evident). Legacy AES‑CBC files remain readable
+- **Encrypted backups** — `DAILY_BACKUP.bat` writes `backup\*.sql.enc`; restore with `RESTORE_BACKUP.bat`. No plaintext dump is left on the USB
+- **PostgreSQL** — strong random password; `scram-sha-256` auth enforced after setup (whitespace‑robust `pg_hba.conf` rewrite; no trust mode)
+- **Not protected** — copying `db/data/` offline can still expose raw data files; report exports in `exports\` remain plain files
 - **Old USB** — run `UPGRADE_SECURITY.bat` to migrate to encrypted secrets
 
 ### Daily operation
 
 - `START.bat` / `STOP.bat` — always stop before removing USB
-- `DAILY_BACKUP.bat` — backup to `backup\` on the USB
+- `DAILY_BACKUP.bat` — encrypted backup to `backup\` on the USB (`*.sql.enc`)
+- `RESTORE_BACKUP.bat` — decrypt and restore the latest (or a chosen) backup
 - Reports export to `exports\` on the USB (not the PC Downloads folder)
 
 ### Production sandbox (owner only)

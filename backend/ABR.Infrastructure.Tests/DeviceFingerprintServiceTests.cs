@@ -37,14 +37,51 @@ public class DeviceFingerprintServiceTests
         Assert.Matches("^[0-9a-f]{64}$", first);
     }
 
-    private static DeviceFingerprintService CreateService(bool enforceDeviceLock)
+    [Fact]
+    public async Task VerifyLicense_ReturnsValid_ForStoredCurrentDeviceFingerprint()
+    {
+        var licensePath = Path.Combine(Path.GetTempPath(), $"abr-test-{Guid.NewGuid():N}.lic");
+        var service = CreateService(enforceDeviceLock: true, licensePath);
+        try
+        {
+            var fingerprint = service.GetCurrentFingerprint();
+            await service.StoreLicenseAsync(new[] { fingerprint });
+
+            // Regression guard: the encrypted license file must actually validate
+            // the authorized device (previously it never matched — Parts were empty).
+            Assert.Equal(DeviceVerifyResult.Valid, service.VerifyLicense());
+        }
+        finally
+        {
+            if (File.Exists(licensePath)) File.Delete(licensePath);
+        }
+    }
+
+    [Fact]
+    public async Task VerifyLicense_ReturnsInvalidDevice_ForUnknownFingerprint()
+    {
+        var licensePath = Path.Combine(Path.GetTempPath(), $"abr-test-{Guid.NewGuid():N}.lic");
+        var service = CreateService(enforceDeviceLock: true, licensePath);
+        try
+        {
+            await service.StoreLicenseAsync(new[] { new string('a', 64) });
+            Assert.Equal(DeviceVerifyResult.InvalidDevice, service.VerifyLicense());
+        }
+        finally
+        {
+            if (File.Exists(licensePath)) File.Delete(licensePath);
+        }
+    }
+
+    private static DeviceFingerprintService CreateService(bool enforceDeviceLock, string? licenseFilePath = null)
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Security:EnforceDeviceLock"] = enforceDeviceLock.ToString(),
                 ["Security:LicenseSecret"] = "test-license-secret-value",
-                ["Security:LicenseFilePath"] = Path.Combine(Path.GetTempPath(), $"abr-test-{Guid.NewGuid():N}.lic")
+                ["Security:LicenseFilePath"] = licenseFilePath
+                    ?? Path.Combine(Path.GetTempPath(), $"abr-test-{Guid.NewGuid():N}.lic")
             })
             .Build();
 

@@ -91,7 +91,8 @@ if errorlevel 1 (
 )
 
 echo [5/8] Generating encrypted secrets and database password...
-"%TOOLS%\ABR.Secrets.exe" generate --master-password "!MASTER_PASSWORD!" --output "%SECRETS%" --setup-password-file "%SETUP_PWD%"
+set "ABR_MASTER_PASSWORD=!MASTER_PASSWORD!"
+"%TOOLS%\ABR.Secrets.exe" generate --output "%SECRETS%" --setup-password-file "%SETUP_PWD%"
 if errorlevel 1 (
     echo ERROR: Failed to generate secrets.enc
     if exist "%SETUP_PWD%" del /f /q "%SETUP_PWD%"
@@ -118,11 +119,13 @@ if errorlevel 1 (
 )
 
 echo [7/8] Enforcing scram-sha-256 authentication...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$path = '%PGDATA%\pg_hba.conf';" ^
-  "$content = Get-Content $path;" ^
-  "$content = $content | ForEach-Object { $_ -replace '\ttrust$', \"`tscram-sha-256\" };" ^
-  "Set-Content -Path $path -Value $content"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%harden_pg_hba.ps1" -PgData "%PGDATA%"
+if errorlevel 1 (
+    echo ERROR: Failed to enforce scram-sha-256 in pg_hba.conf.
+    if exist "%SETUP_PWD%" del /f /q "%SETUP_PWD%"
+    pause
+    exit /b 1
+)
 "%PGBIN%\pg_ctl.exe" -D "%PGDATA%" reload
 
 set "PGPASSWORD=!DB_PASSWORD!"
@@ -134,6 +137,7 @@ if errorlevel 1 (
 set "PGPASSWORD="
 if exist "%SETUP_PWD%" del /f /q "%SETUP_PWD%"
 set "MASTER_PASSWORD="
+set "ABR_MASTER_PASSWORD="
 
 echo.
 echo Setup complete.

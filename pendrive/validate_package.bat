@@ -29,6 +29,8 @@ call :check_file "%PACKAGE_ROOT%STOP.bat" "STOP.bat"
 call :check_file "%PACKAGE_ROOT%SETUP_FIRST_RUN.bat" "SETUP_FIRST_RUN.bat"
 call :check_file "%PACKAGE_ROOT%REGISTER_THIS_PC.bat" "REGISTER_THIS_PC.bat"
 call :check_file "%PACKAGE_ROOT%DAILY_BACKUP.bat" "DAILY_BACKUP.bat"
+call :check_file "%PACKAGE_ROOT%RESTORE_BACKUP.bat" "RESTORE_BACKUP.bat"
+call :check_file "%PACKAGE_ROOT%harden_pg_hba.ps1" "pg_hba hardening script"
 call :check_file "%PACKAGE_ROOT%CLIENT_SETUP_AND_START.txt" "Client setup guide"
 call :check_file "%PACKAGE_ROOT%tools\ABR.Secrets.exe" "Secrets tool"
 

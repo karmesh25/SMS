@@ -61,9 +61,19 @@ public sealed class DeviceFingerprintService : IDeviceFingerprintService
 
             var current = GetCurrentHardwareParts();
             var currentParts = current.ToArray();
+            var currentFingerprint = ComputeCombinedHash(currentParts);
 
             foreach (var device in payload.AllowedDevices)
             {
+                // Primary check: exact match on the stored combined fingerprint hash
+                // (this is what AuthorizeAsync persists — same value GetCurrentFingerprint
+                // produces on the authorized machine).
+                if (!string.IsNullOrWhiteSpace(device.FingerprintHash) &&
+                    string.Equals(device.FingerprintHash, currentFingerprint, StringComparison.OrdinalIgnoreCase))
+                    return DeviceVerifyResult.Valid;
+
+                // Fallback: fuzzy per-part match, when raw hardware parts were stored
+                // (tolerates a single changed component). No-op when Parts is empty.
                 if (FuzzyMatch(currentParts, device.Parts))
                     return DeviceVerifyResult.Valid;
             }
@@ -191,32 +201,85 @@ public sealed class DeviceFingerprintService : IDeviceFingerprintService
         return string.Empty;
     }
 
+    // Authenticated format (v2): MAGIC(4) | salt(16) | nonce(12) | tag(16) | ciphertext
+    // (AES-256-GCM, random per-file salt). Legacy AES-CBC files are still readable.
+    private static readonly byte[] MagicV2 = "ABR2"u8.ToArray();
+    private static readonly byte[] LegacyDeviceSalt = Encoding.UTF8.GetBytes("ABR-Device-License-Salt-v1");
+    private const int SaltSize = 16;
+    private const int NonceSize = 12;
+    private const int TagSize = 16;
+    private const int KdfIterations = 100_000;
+
+    private string GetLicenseSecret() =>
+        _configuration["Security:LicenseSecret"]
+        ?? throw new InvalidOperationException("Security:LicenseSecret is not configured.");
+
     private byte[] Encrypt(string plainText)
     {
-        var secret = _configuration["Security:LicenseSecret"]
-            ?? throw new InvalidOperationException("Security:LicenseSecret is not configured.");
-        var salt = Encoding.UTF8.GetBytes("ABR-Device-License-Salt-v1");
-        using var derive = new Rfc2898DeriveBytes(secret, salt, 100_000, HashAlgorithmName.SHA256);
-        var key = derive.GetBytes(32);
-        var iv = RandomNumberGenerator.GetBytes(16);
+        var salt = RandomNumberGenerator.GetBytes(SaltSize);
+        var key = DeriveKey(GetLicenseSecret(), salt);
+        var nonce = RandomNumberGenerator.GetBytes(NonceSize);
 
-        using var aes = Aes.Create();
-        aes.Key = key;
-        aes.IV = iv;
-        using var encryptor = aes.CreateEncryptor();
         var plainBytes = Encoding.UTF8.GetBytes(plainText);
-        var cipherBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
-        return iv.Concat(cipherBytes).ToArray();
+        var cipherBytes = new byte[plainBytes.Length];
+        var tag = new byte[TagSize];
+        using (var aes = new AesGcm(key, TagSize))
+        {
+            aes.Encrypt(nonce, plainBytes, cipherBytes, tag);
+        }
+
+        var result = new byte[MagicV2.Length + SaltSize + NonceSize + TagSize + cipherBytes.Length];
+        var offset = 0;
+        MagicV2.CopyTo(result, offset); offset += MagicV2.Length;
+        salt.CopyTo(result, offset); offset += SaltSize;
+        nonce.CopyTo(result, offset); offset += NonceSize;
+        tag.CopyTo(result, offset); offset += TagSize;
+        cipherBytes.CopyTo(result, offset);
+        return result;
     }
 
-    private string Decrypt(byte[] cipherWithIv)
+    private string Decrypt(byte[] cipher)
     {
-        var secret = _configuration["Security:LicenseSecret"]
-            ?? throw new InvalidOperationException("Security:LicenseSecret is not configured.");
-        var salt = Encoding.UTF8.GetBytes("ABR-Device-License-Salt-v1");
-        using var derive = new Rfc2898DeriveBytes(secret, salt, 100_000, HashAlgorithmName.SHA256);
-        var key = derive.GetBytes(32);
+        if (HasMagic(cipher))
+            return DecryptV2(cipher);
 
+        return DecryptLegacyCbc(cipher);
+    }
+
+    private static bool HasMagic(byte[] data)
+    {
+        if (data.Length < MagicV2.Length)
+            return false;
+        for (var i = 0; i < MagicV2.Length; i++)
+        {
+            if (data[i] != MagicV2[i])
+                return false;
+        }
+        return true;
+    }
+
+    private string DecryptV2(byte[] cipher)
+    {
+        var headerSize = MagicV2.Length + SaltSize + NonceSize + TagSize;
+        if (cipher.Length < headerSize)
+            throw new CryptographicException("Invalid or corrupted license file.");
+
+        var offset = MagicV2.Length;
+        var salt = cipher.AsSpan(offset, SaltSize).ToArray(); offset += SaltSize;
+        var nonce = cipher.AsSpan(offset, NonceSize).ToArray(); offset += NonceSize;
+        var tag = cipher.AsSpan(offset, TagSize).ToArray(); offset += TagSize;
+        var cipherBytes = cipher.AsSpan(offset).ToArray();
+
+        var key = DeriveKey(GetLicenseSecret(), salt);
+        var plainBytes = new byte[cipherBytes.Length];
+        using var aes = new AesGcm(key, TagSize);
+        aes.Decrypt(nonce, cipherBytes, tag, plainBytes);
+        return Encoding.UTF8.GetString(plainBytes);
+    }
+
+    private string DecryptLegacyCbc(byte[] cipherWithIv)
+    {
+        var key = DeriveKey(GetLicenseSecret(), LegacyDeviceSalt);
         var iv = cipherWithIv.Take(16).ToArray();
         var cipherBytes = cipherWithIv.Skip(16).ToArray();
 
@@ -226,6 +289,12 @@ public sealed class DeviceFingerprintService : IDeviceFingerprintService
         using var decryptor = aes.CreateDecryptor();
         var plainBytes = decryptor.TransformFinalBlock(cipherBytes, 0, cipherBytes.Length);
         return Encoding.UTF8.GetString(plainBytes);
+    }
+
+    private static byte[] DeriveKey(string secret, byte[] salt)
+    {
+        using var derive = new Rfc2898DeriveBytes(secret, salt, KdfIterations, HashAlgorithmName.SHA256);
+        return derive.GetBytes(32);
     }
 
     private sealed class LicensePayload

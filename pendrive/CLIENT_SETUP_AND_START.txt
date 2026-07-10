@@ -17,7 +17,8 @@ USB FOLDER LAYOUT
   SETUP_FIRST_RUN.bat        - Run once on first use (creates encrypted secrets)
   REGISTER_THIS_PC.bat       - Run once to authorize this computer
   UPGRADE_SECURITY.bat       - Upgrade old USB without encrypted secrets
-  DAILY_BACKUP.bat           - Backup database to backup\ folder
+  DAILY_BACKUP.bat           - Encrypted database backup to backup\ folder
+  RESTORE_BACKUP.bat         - Restore an encrypted backup
   CLIENT_SETUP_AND_START.txt - This file
 
   api\           - Application (ABR.Api.exe + wwwroot UI)
@@ -108,6 +109,9 @@ PART 3 - CLIENT: Daily use
   START the app     -> Double-click START.bat (enter master password)
   STOP the app      -> Double-click STOP.bat (always before removing USB)
   Backup database   -> Double-click DAILY_BACKUP.bat (enter master password)
+                       Creates an ENCRYPTED backup: backup\abr_backup_*.sql.enc
+  Restore database  -> Double-click RESTORE_BACKUP.bat (enter master password)
+                       Restores the latest encrypted backup (overwrites current data)
   Export reports    -> Use Export buttons in the app; files save to exports\
 
   Application URL: http://localhost:5050

@@ -45,7 +45,7 @@ if exist "%SECRETS%" (
     )
     call "%SCRIPT_DIR%load_master_password.bat"
     if errorlevel 1 exit /b 1
-    "%TOOLS%\ABR.Secrets.exe" verify --master-password "!ABR_MASTER_PASSWORD!" --secrets "%SECRETS%"
+    "%TOOLS%\ABR.Secrets.exe" verify --secrets "%SECRETS%"
     if errorlevel 1 (
         echo ERROR: Invalid master password.
         set "ABR_MASTER_PASSWORD="
