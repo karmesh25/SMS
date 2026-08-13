@@ -50,6 +50,16 @@ public class BalanceSheetLedgerItemDto
     public decimal TotalAmount { get; set; }
 }
 
+public class BalanceSheetVyajItemDto
+{
+    public string PartyName { get; set; } = string.Empty;
+    public string? MainLedgerName { get; set; }
+    public string? SubLedgerName { get; set; }
+    public decimal PrincipalDue { get; set; }
+    public decimal VyajDue { get; set; }
+    public decimal TotalPending { get; set; }
+}
+
 public class BalanceSheetReportDto
 {
     public string SiteName { get; set; } = string.Empty;
@@ -60,6 +70,9 @@ public class BalanceSheetReportDto
     public IReadOnlyList<BalanceSheetLedgerItemDto> JavakItems { get; set; } = Array.Empty<BalanceSheetLedgerItemDto>();
     public decimal TotalJavak { get; set; }
     public decimal Profit { get; set; }
+    public IReadOnlyList<BalanceSheetVyajItemDto> VyajItems { get; set; } = Array.Empty<BalanceSheetVyajItemDto>();
+    public decimal TotalVyajDue { get; set; }
+    public decimal TotalVyajPrincipalDue { get; set; }
 }
 
 public class TillDateReportFilterDto

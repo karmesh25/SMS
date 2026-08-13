@@ -20,6 +20,13 @@ export interface RecentEntry {
   amount: number;
 }
 
+export interface DashboardVyajParty {
+  id: string;
+  name: string;
+  vyajDue: number;
+  principalDue: number;
+}
+
 export interface DashboardSummary {
   totalFlats: number;
   bookedFlats: number;
@@ -30,8 +37,11 @@ export interface DashboardSummary {
   totalJavak: number;
   netProfit: number;
   totalOutstanding: number;
+  totalVyajDue: number;
+  totalVyajPrincipalDue: number;
   wingSummary: WingSummary[];
   recentEntries: RecentEntry[];
+  vyajParties: DashboardVyajParty[];
 }
 
 @Injectable({ providedIn: 'root' })

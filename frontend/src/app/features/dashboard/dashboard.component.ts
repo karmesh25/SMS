@@ -103,6 +103,18 @@ import { AppDatePipe } from '../../shared/pipes/app-date.pipe';
             </div>
           </mat-card-content>
         </mat-card>
+
+        <mat-card class="kpi-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="kpi-icon outstanding">menu_book</mat-icon>
+            <mat-card-title>Vyaj Pending</mat-card-title>
+            <mat-card-subtitle>Interest due as of today</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="kpi-value">Rs. {{ s.totalVyajDue | indianCurrency }}</div>
+            <div class="kpi-meta">Principal due: Rs. {{ s.totalVyajPrincipalDue | indianCurrency }}</div>
+          </mat-card-content>
+        </mat-card>
       </div>
 
       <div class="tables-grid">
@@ -179,6 +191,36 @@ import { AppDatePipe } from '../../shared/pipes/app-date.pipe';
                 <td [attr.colspan]="entryCols.length">
                   <mat-icon>receipt_long</mat-icon>
                   No daily entries recorded yet.
+                </td>
+              </tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Vyaj Pending Parties</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="table-wrap">
+            <table mat-table [dataSource]="s.vyajParties" class="abr-table sticky-header">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Party</th>
+                <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="vyajDue">
+                <th mat-header-cell *matHeaderCellDef>Vyaj Due</th>
+                <td mat-cell *matCellDef="let row">Rs. {{ row.vyajDue | indianCurrency }}</td>
+              </ng-container>
+              <ng-container matColumnDef="principalDue">
+                <th mat-header-cell *matHeaderCellDef>Principal Due</th>
+                <td mat-cell *matCellDef="let row">Rs. {{ row.principalDue | indianCurrency }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="vyajCols"></tr>
+              <tr mat-row *matRowDef="let row; columns: vyajCols"></tr>
+              <tr class="empty-row" *matNoDataRow>
+                <td [attr.colspan]="vyajCols.length">
+                  <mat-icon>menu_book</mat-icon>
+                  No pending vyaj as of today.
                 </td>
               </tr>
             </table>
@@ -272,6 +314,7 @@ export class DashboardComponent {
   readonly summary = signal<DashboardSummary | null>(null);
   readonly wingCols = ['wingName', 'total', 'booked', 'available', 'pct'];
   readonly entryCols = ['entryDate', 'entryType', 'ledger', 'amount'];
+  readonly vyajCols = ['name', 'vyajDue', 'principalDue'];
 
   constructor() {
     toObservable(this.siteContext.activeSiteId)

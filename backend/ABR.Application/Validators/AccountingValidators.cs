@@ -35,6 +35,9 @@ public class CreateJournalVoucherDtoValidator : AbstractValidator<CreateJournalV
     public CreateJournalVoucherDtoValidator()
     {
         RuleFor(x => x.SiteId).NotEmpty();
+        RuleFor(x => x.Narration).MaximumLength(500);
+        RuleFor(x => x.DebitNarration).MaximumLength(500);
+        RuleFor(x => x.CreditNarration).MaximumLength(500);
         RuleFor(x => x.Lines).NotNull().Must(lines => lines.Count >= 2).WithMessage("At least 2 lines are required.");
         RuleForEach(x => x.Lines).SetValidator(new JournalVoucherLineUpsertDtoValidator());
         RuleFor(x => x).Must(AccountingValidatorRules.HaveMatchingDebitCreditTotals)
@@ -46,6 +49,9 @@ public class UpdateJournalVoucherDtoValidator : AbstractValidator<UpdateJournalV
 {
     public UpdateJournalVoucherDtoValidator()
     {
+        RuleFor(x => x.Narration).MaximumLength(500);
+        RuleFor(x => x.DebitNarration).MaximumLength(500);
+        RuleFor(x => x.CreditNarration).MaximumLength(500);
         RuleFor(x => x.Lines).NotNull().Must(lines => lines.Count >= 2).WithMessage("At least 2 lines are required.");
         RuleForEach(x => x.Lines).SetValidator(new JournalVoucherLineUpsertDtoValidator());
         RuleFor(x => x).Must(AccountingValidatorRules.HaveMatchingDebitCreditTotals)

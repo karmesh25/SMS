@@ -135,6 +135,34 @@ internal static class ReportExportExcelBuilder
         ws.Cell(row, 1).Style.Font.Bold = true;
         ws.Cell(row, 2).Value = ReportExportHelpers.FormatIndianAmount(Math.Abs(data.Profit));
         ws.Cell(row, 2).Style.Font.Bold = true;
+        row += 2;
+
+        ws.Cell(row, 1).Value = "Vyaj Khata";
+        ws.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+        WriteHeaderRow(ws, ref row, new[] { "Party", "Main Ledger", "Sub Ledger", "Principal Due", "Vyaj Due", "Total Pending" });
+        idx = 0;
+        foreach (var item in data.VyajItems)
+        {
+            ws.Cell(row, 1).Value = item.PartyName;
+            ws.Cell(row, 2).Value = item.MainLedgerName ?? string.Empty;
+            ws.Cell(row, 3).Value = item.SubLedgerName ?? string.Empty;
+            ws.Cell(row, 4).Value = ReportExportHelpers.FormatIndianAmount(item.PrincipalDue);
+            ws.Cell(row, 5).Value = ReportExportHelpers.FormatIndianAmount(item.VyajDue);
+            ws.Cell(row, 6).Value = ReportExportHelpers.FormatIndianAmount(item.TotalPending);
+            ReportExportHelpers.ApplyAlternatingRow(ws.Range(row, 1, row, 6), idx++);
+            row++;
+        }
+
+        ws.Cell(row, 1).Value = "Total Vyaj Due";
+        ws.Cell(row, 1).Style.Font.Bold = true;
+        ws.Cell(row, 5).Value = ReportExportHelpers.FormatIndianAmount(data.TotalVyajDue);
+        ws.Cell(row, 5).Style.Font.Bold = true;
+        row++;
+        ws.Cell(row, 1).Value = "Total Principal Due";
+        ws.Cell(row, 1).Style.Font.Bold = true;
+        ws.Cell(row, 4).Value = ReportExportHelpers.FormatIndianAmount(data.TotalVyajPrincipalDue);
+        ws.Cell(row, 4).Style.Font.Bold = true;
         row++;
     }
 

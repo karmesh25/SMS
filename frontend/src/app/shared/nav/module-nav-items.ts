@@ -14,5 +14,6 @@ export const REPORT_NAV_ITEMS: ModuleNavItem[] = [
 export const ACCOUNTING_NAV_ITEMS: ModuleNavItem[] = [
   { label: 'Daily Entry', route: '/accounting', exact: true },
   { label: 'Dastavej', route: '/accounting/dastavej' },
-  { label: 'Journal Voucher', route: '/accounting/journal-voucher' }
+  { label: 'Journal Voucher', route: '/accounting/journal-voucher' },
+  { label: 'Vyaj Khata', route: '/vyaj' }
 ];

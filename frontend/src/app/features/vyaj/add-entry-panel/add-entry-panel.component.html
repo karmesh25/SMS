@@ -14,13 +14,18 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
+        <mat-label>EMI</mat-label>
+        <input matInput formControlName="emiAmount" appIndianAmount />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
         <mat-label>Rate %</mat-label>
         <input matInput type="number" step="0.01" formControlName="ratePercent" />
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Rate basis</mat-label>
-        <mat-select formControlName="rateBasis">
+        <mat-select formControlName="rateBasisUi">
           @for (opt of rateBasisOptions; track opt.value) {
             <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
           }

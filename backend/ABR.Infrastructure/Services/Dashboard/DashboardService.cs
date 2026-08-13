@@ -9,11 +9,13 @@ public sealed class DashboardService : IDashboardService
 {
     private readonly AbrDbContext _context;
     private readonly IDailyEntryService _dailyEntryService;
+    private readonly IVyajService _vyajService;
 
-    public DashboardService(AbrDbContext context, IDailyEntryService dailyEntryService)
+    public DashboardService(AbrDbContext context, IDailyEntryService dailyEntryService, IVyajService vyajService)
     {
         _context = context;
         _dailyEntryService = dailyEntryService;
+        _vyajService = vyajService;
     }
 
     public async Task<DashboardSummaryDto> GetSummaryAsync(Guid siteId, CancellationToken cancellationToken = default)
@@ -105,6 +107,21 @@ public sealed class DashboardService : IDashboardService
             })
             .ToListAsync(cancellationToken);
 
+        var vyajParties = await _vyajService.GetPartiesAsync(siteId, cancellationToken);
+        var pendingVyaj = vyajParties
+            .Where(p => p.VyajDue > 0 || p.PrincipalDue > 0)
+            .OrderByDescending(p => p.VyajDue)
+            .ThenByDescending(p => p.PrincipalDue)
+            .Take(10)
+            .Select(p => new DashboardVyajPartyDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                VyajDue = p.VyajDue,
+                PrincipalDue = p.PrincipalDue
+            })
+            .ToList();
+
         return new DashboardSummaryDto
         {
             TotalFlats = totalFlats,
@@ -116,8 +133,11 @@ public sealed class DashboardService : IDashboardService
             TotalJavak = profit.TotalJavak,
             NetProfit = profit.Profit,
             TotalOutstanding = totalOutstanding,
+            TotalVyajDue = vyajParties.Sum(p => p.VyajDue),
+            TotalVyajPrincipalDue = vyajParties.Sum(p => p.PrincipalDue),
             WingSummary = wingSummary,
-            RecentEntries = recentEntries
+            RecentEntries = recentEntries,
+            VyajParties = pendingVyaj
         };
     }
 }

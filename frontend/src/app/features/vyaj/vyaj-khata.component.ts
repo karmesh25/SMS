@@ -14,14 +14,20 @@ import { catchError, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
+import { SelectOption } from '../../shared/components/searchable-select/searchable-select.component';
 import { AuthService } from '../../core/services/auth.service';
+import { DailyEntryService, ProfitSummary } from '../../core/services/daily-entry.service';
+import { MasterDataService } from '../../core/services/master-data.service';
 import { SiteContextService } from '../../core/services/site-context.service';
 import { ToastService } from '../../core/services/toast.service';
 import { VyajService } from '../../core/services/vyaj.service';
 import { VyajAddEntryPanelComponent } from './add-entry-panel/add-entry-panel.component';
 import { VyajEntryRowComponent } from './entry-row/entry-row.component';
-import { VyajPartySidebarComponent } from './party-sidebar/party-sidebar.component';
+import { NewVyajPartyPayload, VyajPartySidebarComponent } from './party-sidebar/party-sidebar.component';
 import { RateBasis, VyajPartyDetail, VyajPartySummary } from './models/vyaj.models';
+
+interface MainLedger { id: string; ledgerName: string; }
+interface SubLedger { id: string; ledgerName: string; flatNo?: string; }
 
 @Component({
   selector: 'app-vyaj-khata',
@@ -47,6 +53,8 @@ import { RateBasis, VyajPartyDetail, VyajPartySummary } from './models/vyaj.mode
 })
 export class VyajKhataComponent {
   private readonly vyajService = inject(VyajService);
+  private readonly dailyEntryService = inject(DailyEntryService);
+  private readonly masterData = inject(MasterDataService);
   private readonly siteContext = inject(SiteContextService);
   private readonly toast = inject(ToastService);
   private readonly authService = inject(AuthService);
@@ -59,21 +67,42 @@ export class VyajKhataComponent {
 
   readonly loading = signal(false);
   newPartyName = '';
+  newMainLedgerId = '';
+  newSubLedgerId = '';
   readonly saving = signal(false);
   readonly parties = signal<VyajPartySummary[]>([]);
   readonly selectedPartyId = signal<string | null>(null);
   readonly partyDetail = signal<VyajPartyDetail | null>(null);
   readonly addEntryOpen = signal(false);
+  readonly profit = signal<ProfitSummary | null>(null);
+  readonly mainLedgers = signal<MainLedger[]>([]);
+  readonly subLedgers = signal<SubLedger[]>([]);
 
   readonly readOnly = computed(() => !this.authService.hasPermission('vyaj', 'manage'));
+
+  readonly siteVyajDue = computed(() => this.parties().reduce((sum, p) => sum + (p.vyajDue || 0), 0));
+  readonly sitePrincipalDue = computed(() => this.parties().reduce((sum, p) => sum + (p.principalDue || 0), 0));
+
+  readonly mainLedgerOptions = computed<SelectOption<string>[]>(() =>
+    this.mainLedgers().map((m) => ({ value: m.id, label: m.ledgerName }))
+  );
+
+  readonly subLedgerOptions = computed<SelectOption<string>[]>(() =>
+    this.subLedgers().map((s) => ({
+      value: s.id,
+      label: s.flatNo ? `${s.flatNo} - ${s.ledgerName}` : s.ledgerName
+    }))
+  );
 
   constructor() {
     toObservable(this.siteContext.activeSiteId)
       .pipe(
         filter((id): id is string => !!id),
-        tap(() => {
+        tap((siteId) => {
           this.selectedPartyId.set(null);
           this.partyDetail.set(null);
+          this.loadMasterData(siteId);
+          this.loadProfit(siteId);
         }),
         switchMap((siteId) => this.loadParties$(siteId)),
         takeUntilDestroyed()
@@ -124,9 +153,41 @@ export class VyajKhataComponent {
     );
   }
 
+  private loadProfit(siteId: string): void {
+    this.dailyEntryService.getProfit(siteId).subscribe({
+      next: (res) => {
+        if (res.success) this.profit.set(res.data);
+      }
+    });
+  }
+
+  private loadMasterData(siteId: string): void {
+    this.masterData.getMainLedgers(siteId).subscribe({
+      next: (r) => {
+        if (r.success) this.mainLedgers.set(r.data as MainLedger[]);
+      }
+    });
+    this.subLedgers.set([]);
+  }
+
+  onMainLedgerChanged(mainLedgerId: string): void {
+    this.newMainLedgerId = mainLedgerId;
+    this.newSubLedgerId = '';
+    if (!mainLedgerId) {
+      this.subLedgers.set([]);
+      return;
+    }
+    this.masterData.getSubLedgers(mainLedgerId).subscribe({
+      next: (r) => {
+        if (r.success) this.subLedgers.set(r.data as SubLedger[]);
+      }
+    });
+  }
+
   refresh(): void {
     const siteId = this.siteContext.activeSiteId();
     if (!siteId) return;
+    this.loadProfit(siteId);
     this.loadParties$(siteId).subscribe();
     const partyId = this.selectedPartyId();
     if (partyId) this.loadPartyDetail$(partyId).subscribe();
@@ -140,16 +201,31 @@ export class VyajKhataComponent {
   submitNewParty(): void {
     const name = this.newPartyName.trim();
     if (!name) return;
-    this.addParty(name);
+    this.addParty({
+      name,
+      mainLedgerId: this.newMainLedgerId || null,
+      subLedgerId: this.newSubLedgerId || null
+    });
     this.newPartyName = '';
+    this.newMainLedgerId = '';
+    this.newSubLedgerId = '';
   }
 
-  addParty(name: string): void {
+  addParty(payload: string | NewVyajPartyPayload): void {
     const siteId = this.siteContext.activeSiteId();
     if (!siteId) return;
 
+    const body = typeof payload === 'string'
+      ? { siteId, name: payload }
+      : {
+          siteId,
+          name: payload.name,
+          mainLedgerId: payload.mainLedgerId,
+          subLedgerId: payload.subLedgerId
+        };
+
     this.saving.set(true);
-    this.vyajService.createParty({ siteId, name }).pipe(
+    this.vyajService.createParty(body).pipe(
       finalize(() => this.saving.set(false))
     ).subscribe({
       next: (res) => {
@@ -163,7 +239,14 @@ export class VyajKhataComponent {
     });
   }
 
-  saveEntry(payload: { principal: number; ratePercent: number; rateBasis: string; startDate: string }): void {
+  saveEntry(payload: {
+    principal: number;
+    ratePercent: number;
+    rateBasis: string;
+    ratePeriodMonths?: number | null;
+    emiAmount?: number | null;
+    startDate: string;
+  }): void {
     const partyId = this.selectedPartyId();
     if (!partyId) return;
 
@@ -173,6 +256,8 @@ export class VyajKhataComponent {
       principal: payload.principal,
       ratePercent: payload.ratePercent,
       rateBasis: payload.rateBasis as RateBasis,
+      ratePeriodMonths: payload.ratePeriodMonths ?? null,
+      emiAmount: payload.emiAmount ?? null,
       startDate: payload.startDate
     }).pipe(finalize(() => this.saving.set(false))).subscribe({
       next: (res) => {

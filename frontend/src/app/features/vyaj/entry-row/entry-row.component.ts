@@ -54,12 +54,15 @@ export class VyajEntryRowComponent {
     paymentDate: [new Date().toISOString().slice(0, 10), Validators.required]
   });
 
-  basisLabel(basis: string): string {
+  basisLabel(basis: string, ratePeriodMonths?: number | null): string {
+    if (basis === 'month' && (ratePeriodMonths === 3 || ratePeriodMonths === 6 || ratePeriodMonths === 9)) {
+      return `${ratePeriodMonths} months`;
+    }
     const map: Record<string, string> = {
       flat: 'flat',
       month: 'month',
       year: 'year',
-      day: 'day'
+      day: 'date-wise'
     };
     return map[basis] ?? basis;
   }

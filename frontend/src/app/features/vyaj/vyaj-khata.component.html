@@ -7,6 +7,16 @@
     </button>
   </div>
 
+  <div class="summary-bar">
+    @if (profit(); as p) {
+      <div class="summary-chip aavak">Total Aavak: Rs. {{ p.totalAavak | indianCurrency }}</div>
+      <div class="summary-chip javak">Total Javak: Rs. {{ p.totalJavak | indianCurrency }}</div>
+      <div class="summary-chip profit" [class.negative]="p.profit < 0">Profit: Rs. {{ p.profit | indianCurrency }}</div>
+    }
+    <div class="summary-chip due">Vyaj Due: Rs. {{ siteVyajDue() | indianCurrency }}</div>
+    <div class="summary-chip due">Principal Due: Rs. {{ sitePrincipalDue() | indianCurrency }}</div>
+  </div>
+
   @if (loading()) {
     <mat-progress-bar mode="indeterminate" />
   }
@@ -31,6 +41,24 @@
           <mat-label>New party name</mat-label>
           <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitNewParty()" />
         </mat-form-field>
+        <mat-form-field appearance="outline" class="party-name-field">
+          <mat-label>Main Ledger</mat-label>
+          <mat-select [(ngModel)]="newMainLedgerId" (selectionChange)="onMainLedgerChanged($event.value)">
+            <mat-option value="">None</mat-option>
+            @for (opt of mainLedgerOptions(); track opt.value) {
+              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="party-name-field">
+          <mat-label>Sub Ledger</mat-label>
+          <mat-select [(ngModel)]="newSubLedgerId" [disabled]="!newMainLedgerId">
+            <mat-option value="">None</mat-option>
+            @for (opt of subLedgerOptions(); track opt.value) {
+              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
         <button mat-flat-button color="primary" [disabled]="!newPartyName.trim() || saving()" (click)="submitNewParty()">
           <mat-icon>person_add</mat-icon>
           Add
@@ -45,8 +73,11 @@
         class="sidebar-col"
         [parties]="parties()"
         [selectedPartyId]="selectedPartyId()"
+        [mainLedgerOptions]="mainLedgerOptions()"
+        [subLedgerOptions]="subLedgerOptions()"
         (partySelected)="selectParty($event)"
-        (addParty)="addParty($event)" />
+        (addParty)="addParty($event)"
+        (mainLedgerChanged)="onMainLedgerChanged($event)" />
     }
 
     <main class="main-col">
@@ -56,6 +87,15 @@
             <h2>{{ detail.name }}</h2>
             @if (detail.notes) {
               <p class="notes">{{ detail.notes }}</p>
+            }
+            @if (detail.mainLedgerName || detail.subLedgerName) {
+              <p class="notes">
+                Ledger:
+                {{ detail.mainLedgerName || '—' }}
+                @if (detail.subLedgerName) {
+                  / {{ detail.subLedgerName }}
+                }
+              </p>
             }
           </div>
           <div class="header-totals">

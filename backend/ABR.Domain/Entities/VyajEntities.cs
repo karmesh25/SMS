@@ -7,8 +7,12 @@ public class VyajParty : SoftDeleteEntity
     public Guid SiteId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public Guid? MainLedgerId { get; set; }
+    public Guid? SubLedgerId { get; set; }
 
     public Site Site { get; set; } = null!;
+    public MainLedger? MainLedger { get; set; }
+    public SubLedger? SubLedger { get; set; }
     public ICollection<VyajEntry> Entries { get; set; } = new List<VyajEntry>();
 }
 
@@ -18,6 +22,8 @@ public class VyajEntry : SoftDeleteEntity
     public decimal Principal { get; set; }
     public decimal RatePercent { get; set; }
     public string RateBasis { get; set; } = "month";
+    public int? RatePeriodMonths { get; set; }
+    public decimal? EmiAmount { get; set; }
     public DateOnly StartDate { get; set; }
     public bool IsClosed { get; set; }
 

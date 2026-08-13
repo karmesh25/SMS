@@ -13,6 +13,8 @@ public class CreateJournalVoucherDto
     public Guid SiteId { get; set; }
     public DateOnly VoucherDate { get; set; }
     public string? Narration { get; set; }
+    public string? DebitNarration { get; set; }
+    public string? CreditNarration { get; set; }
     public IReadOnlyList<JournalVoucherLineUpsertDto> Lines { get; set; } = Array.Empty<JournalVoucherLineUpsertDto>();
 }
 
@@ -20,6 +22,8 @@ public class UpdateJournalVoucherDto
 {
     public DateOnly VoucherDate { get; set; }
     public string? Narration { get; set; }
+    public string? DebitNarration { get; set; }
+    public string? CreditNarration { get; set; }
     public IReadOnlyList<JournalVoucherLineUpsertDto> Lines { get; set; } = Array.Empty<JournalVoucherLineUpsertDto>();
 }
 
@@ -32,6 +36,7 @@ public class JournalVoucherLineDto
     public int LineNo { get; set; }
     public string SubLedgerName { get; set; } = string.Empty;
     public string MainLedgerName { get; set; } = string.Empty;
+    public Guid? MainLedgerId { get; set; }
 }
 
 public class JournalVoucherDto
@@ -41,6 +46,8 @@ public class JournalVoucherDto
     public string VoucherNo { get; set; } = string.Empty;
     public DateOnly VoucherDate { get; set; }
     public string? Narration { get; set; }
+    public string? DebitNarration { get; set; }
+    public string? CreditNarration { get; set; }
     public decimal TotalDebit { get; set; }
     public decimal TotalCredit { get; set; }
     public IReadOnlyList<JournalVoucherLineDto> Lines { get; set; } = Array.Empty<JournalVoucherLineDto>();

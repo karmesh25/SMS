@@ -26,6 +26,24 @@
       <mat-label>Party name</mat-label>
       <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitParty()" />
     </mat-form-field>
+    <mat-form-field appearance="outline" class="dense">
+      <mat-label>Main Ledger</mat-label>
+      <mat-select [(ngModel)]="newMainLedgerId" (selectionChange)="onMainChange()">
+        <mat-option value="">None</mat-option>
+        @for (opt of mainLedgerOptions(); track opt.value) {
+          <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="dense">
+      <mat-label>Sub Ledger</mat-label>
+      <mat-select [(ngModel)]="newSubLedgerId" [disabled]="!newMainLedgerId">
+        <mat-option value="">None</mat-option>
+        @for (opt of subLedgerOptions(); track opt.value) {
+          <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
     <button mat-flat-button color="primary" [disabled]="!newPartyName.trim()" (click)="submitParty()">
       <mat-icon>person_add</mat-icon>
       Add party

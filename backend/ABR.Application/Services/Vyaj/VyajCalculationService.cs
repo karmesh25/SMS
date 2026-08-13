@@ -7,7 +7,8 @@ public static class VyajCalculationService
         decimal ratePercent,
         string rateBasis,
         DateOnly startDate,
-        DateOnly asOfDate)
+        DateOnly asOfDate,
+        int? ratePeriodMonths = null)
     {
         if (principal <= 0 || ratePercent <= 0)
             return 0;
@@ -17,10 +18,10 @@ public static class VyajCalculationService
         return rateBasis switch
         {
             "flat" => RoundMoney(principal * rate),
-            "month" => RoundMoney(principal * rate * MonthsBetween(startDate, asOfDate)),
+            "month" => RoundMoney(principal * rate * ResolveMonthFactor(startDate, asOfDate, ratePeriodMonths)),
             "year" => RoundMoney(principal * rate * DaysBetween(startDate, asOfDate) / 365m),
             "day" => RoundMoney(principal * rate * DaysBetween(startDate, asOfDate)),
-            _ => RoundMoney(principal * rate * MonthsBetween(startDate, asOfDate))
+            _ => RoundMoney(principal * rate * ResolveMonthFactor(startDate, asOfDate, ratePeriodMonths))
         };
     }
 
@@ -30,10 +31,11 @@ public static class VyajCalculationService
         string rateBasis,
         DateOnly startDate,
         IEnumerable<(decimal Amount, string PaymentType)> payments,
-        DateOnly? asOfDate = null)
+        DateOnly? asOfDate = null,
+        int? ratePeriodMonths = null)
     {
         var asOf = asOfDate ?? DateOnly.FromDateTime(DateTime.Now);
-        var grossVyaj = CalculateGrossVyaj(principal, ratePercent, rateBasis, startDate, asOf);
+        var grossVyaj = CalculateGrossVyaj(principal, ratePercent, rateBasis, startDate, asOf, ratePeriodMonths);
 
         decimal interestPaid = 0;
         decimal principalPaid = 0;
@@ -74,6 +76,14 @@ public static class VyajCalculationService
         var anchor = start.AddMonths(months);
         var remDays = end.DayNumber - anchor.DayNumber;
         return Math.Max(0, months) + remDays / 30m;
+    }
+
+    public static decimal ResolveMonthFactor(DateOnly startDate, DateOnly asOfDate, int? ratePeriodMonths)
+    {
+        var elapsed = MonthsBetween(startDate, asOfDate);
+        if (ratePeriodMonths is 3 or 6 or 9)
+            return Math.Min(elapsed, ratePeriodMonths.Value);
+        return elapsed;
     }
 
     public static decimal RoundMoney(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);

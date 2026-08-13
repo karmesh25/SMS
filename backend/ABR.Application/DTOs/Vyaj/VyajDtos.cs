@@ -6,6 +6,10 @@ public sealed class VyajPartySummaryDto
     public Guid SiteId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string? Notes { get; init; }
+    public Guid? MainLedgerId { get; init; }
+    public Guid? SubLedgerId { get; init; }
+    public string? MainLedgerName { get; init; }
+    public string? SubLedgerName { get; init; }
     public decimal VyajDue { get; init; }
     public decimal PrincipalDue { get; init; }
     public int OpenEntryCount { get; init; }
@@ -17,6 +21,10 @@ public sealed class VyajPartyDetailDto
     public Guid SiteId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string? Notes { get; init; }
+    public Guid? MainLedgerId { get; init; }
+    public Guid? SubLedgerId { get; init; }
+    public string? MainLedgerName { get; init; }
+    public string? SubLedgerName { get; init; }
     public decimal TotalVyajDue { get; init; }
     public decimal TotalGrossVyaj { get; init; }
     public decimal TotalVyajPaid { get; init; }
@@ -31,6 +39,8 @@ public sealed class VyajEntryDto
     public decimal Principal { get; init; }
     public decimal RatePercent { get; init; }
     public string RateBasis { get; init; } = "month";
+    public int? RatePeriodMonths { get; init; }
+    public decimal? EmiAmount { get; init; }
     public DateOnly StartDate { get; init; }
     public bool IsClosed { get; init; }
     public decimal GrossVyaj { get; init; }
@@ -55,12 +65,16 @@ public sealed class CreateVyajPartyDto
     public Guid SiteId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public Guid? MainLedgerId { get; set; }
+    public Guid? SubLedgerId { get; set; }
 }
 
 public sealed class UpdateVyajPartyDto
 {
     public string Name { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public Guid? MainLedgerId { get; set; }
+    public Guid? SubLedgerId { get; set; }
 }
 
 public sealed class CreateVyajEntryDto
@@ -69,6 +83,8 @@ public sealed class CreateVyajEntryDto
     public decimal Principal { get; set; }
     public decimal RatePercent { get; set; }
     public string RateBasis { get; set; } = "month";
+    public int? RatePeriodMonths { get; set; }
+    public decimal? EmiAmount { get; set; }
     public DateOnly StartDate { get; set; }
 }
 

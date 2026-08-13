@@ -57,7 +57,11 @@ public sealed class JournalVoucherService : IJournalVoucherService
             SiteId = dto.SiteId,
             VoucherNo = voucherNo,
             VoucherDate = dto.VoucherDate,
-            Narration = dto.Narration,
+            DebitNarration = ResolveDebitNarration(dto.DebitNarration, dto.Narration),
+            CreditNarration = ResolveCreditNarration(dto.CreditNarration, dto.Narration),
+            Narration = CombineNarration(
+                ResolveDebitNarration(dto.DebitNarration, dto.Narration),
+                ResolveCreditNarration(dto.CreditNarration, dto.Narration)),
             TotalDebit = totalDebit,
             TotalCredit = totalCredit,
             Lines = dto.Lines
@@ -90,6 +94,8 @@ public sealed class JournalVoucherService : IJournalVoucherService
         {
             entity.VoucherDate,
             entity.Narration,
+            entity.DebitNarration,
+            entity.CreditNarration,
             entity.TotalDebit,
             entity.TotalCredit,
             Lines = entity.Lines.Select(l => new { l.SubLedgerId, l.EntryType, l.Amount, l.LineNo })
@@ -98,7 +104,9 @@ public sealed class JournalVoucherService : IJournalVoucherService
         var (totalDebit, totalCredit) = ValidateAndComputeTotals(dto.Lines);
 
         entity.VoucherDate = dto.VoucherDate;
-        entity.Narration = dto.Narration;
+        entity.DebitNarration = ResolveDebitNarration(dto.DebitNarration, dto.Narration);
+        entity.CreditNarration = ResolveCreditNarration(dto.CreditNarration, dto.Narration);
+        entity.Narration = CombineNarration(entity.DebitNarration, entity.CreditNarration);
         entity.TotalDebit = totalDebit;
         entity.TotalCredit = totalCredit;
 
@@ -131,8 +139,9 @@ public sealed class JournalVoucherService : IJournalVoucherService
 
     public async Task<DailyEntryExcelFileDto> ExportLedgerExcelAsync(JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken = default)
     {
+        var siteName = await _context.Sites.Where(s => s.Id == request.SiteId).Select(s => s.SiteName).FirstAsync(cancellationToken);
         var rows = await QueryExportRows(request, cancellationToken);
-        var content = JournalVoucherExportBuilder.BuildExcel(rows);
+        var content = JournalVoucherExportBuilder.BuildExcel(rows, siteName, request.DateFrom, request.DateTo);
         return new DailyEntryExcelFileDto
         {
             Content = content,
@@ -144,7 +153,7 @@ public sealed class JournalVoucherService : IJournalVoucherService
     {
         var siteName = await _context.Sites.Where(s => s.Id == request.SiteId).Select(s => s.SiteName).FirstAsync(cancellationToken);
         var rows = await QueryExportRows(request, cancellationToken);
-        var content = JournalVoucherExportBuilder.BuildPdf(rows, siteName);
+        var content = JournalVoucherExportBuilder.BuildPdf(rows, siteName, request.DateFrom, request.DateTo);
         return new DailyEntryExcelFileDto
         {
             Content = content,
@@ -166,6 +175,8 @@ public sealed class JournalVoucherService : IJournalVoucherService
         VoucherNo = voucher.VoucherNo,
         VoucherDate = voucher.VoucherDate,
         Narration = voucher.Narration,
+        DebitNarration = voucher.DebitNarration ?? voucher.Narration,
+        CreditNarration = voucher.CreditNarration ?? voucher.Narration,
         TotalDebit = voucher.TotalDebit,
         TotalCredit = voucher.TotalCredit,
         Lines = voucher.Lines.OrderBy(l => l.LineNo).Select(l => new JournalVoucherLineDto
@@ -176,9 +187,29 @@ public sealed class JournalVoucherService : IJournalVoucherService
             Amount = l.Amount,
             LineNo = l.LineNo,
             SubLedgerName = l.SubLedger.LedgerName,
-            MainLedgerName = l.SubLedger.MainLedger.LedgerName
+            MainLedgerName = l.SubLedger.MainLedger.LedgerName,
+            MainLedgerId = l.SubLedger.MainLedgerId
         }).ToList()
     };
+
+    private static string? ResolveDebitNarration(string? debitNarration, string? legacyNarration) =>
+        string.IsNullOrWhiteSpace(debitNarration) ? legacyNarration : debitNarration;
+
+    private static string? ResolveCreditNarration(string? creditNarration, string? legacyNarration) =>
+        string.IsNullOrWhiteSpace(creditNarration) ? legacyNarration : creditNarration;
+
+    private static string? CombineNarration(string? debit, string? credit)
+    {
+        if (string.IsNullOrWhiteSpace(debit) && string.IsNullOrWhiteSpace(credit))
+            return null;
+        if (string.IsNullOrWhiteSpace(debit))
+            return credit;
+        if (string.IsNullOrWhiteSpace(credit))
+            return debit;
+        if (string.Equals(debit, credit, StringComparison.Ordinal))
+            return debit;
+        return $"{debit} | {credit}";
+    }
 
     private static (decimal TotalDebit, decimal TotalCredit) ValidateAndComputeTotals(IReadOnlyList<JournalVoucherLineUpsertDto> lines)
     {
@@ -227,6 +258,8 @@ public sealed class JournalVoucherService : IJournalVoucherService
             VoucherDate = v.VoucherDate,
             VoucherNo = v.VoucherNo,
             Narration = v.Narration,
+            DebitNarration = v.DebitNarration ?? v.Narration,
+            CreditNarration = v.CreditNarration ?? v.Narration,
             LineNo = l.LineNo,
             EntryType = l.EntryType,
             Amount = l.Amount,

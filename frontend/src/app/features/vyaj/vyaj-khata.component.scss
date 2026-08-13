@@ -44,6 +44,26 @@
   gap: var(--abr-space-md);
 }
 
+.summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.summary-chip {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: var(--abr-surface);
+  border: 1px solid var(--abr-border);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.summary-chip.aavak { color: var(--abr-success, #1b7f4a); }
+.summary-chip.javak { color: var(--abr-danger, #b42318); }
+.summary-chip.profit.negative { color: var(--abr-danger, #b42318); }
+.summary-chip.due { color: var(--abr-primary, #1d4ed8); }
+
 .vyaj-shell {
   display: grid;
   grid-template-columns: 260px 1fr;

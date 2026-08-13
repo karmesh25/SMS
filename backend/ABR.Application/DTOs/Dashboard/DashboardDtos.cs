@@ -11,8 +11,19 @@ public class DashboardSummaryDto
     public decimal TotalJavak { get; set; }
     public decimal NetProfit { get; set; }
     public decimal TotalOutstanding { get; set; }
+    public decimal TotalVyajDue { get; set; }
+    public decimal TotalVyajPrincipalDue { get; set; }
     public IReadOnlyList<WingSummaryDto> WingSummary { get; set; } = Array.Empty<WingSummaryDto>();
     public IReadOnlyList<RecentEntryDto> RecentEntries { get; set; } = Array.Empty<RecentEntryDto>();
+    public IReadOnlyList<DashboardVyajPartyDto> VyajParties { get; set; } = Array.Empty<DashboardVyajPartyDto>();
+}
+
+public class DashboardVyajPartyDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal VyajDue { get; set; }
+    public decimal PrincipalDue { get; set; }
 }
 
 public class WingSummaryDto

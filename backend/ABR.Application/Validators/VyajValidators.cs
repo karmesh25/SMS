@@ -25,6 +25,7 @@ public class UpdateVyajPartyDtoValidator : AbstractValidator<UpdateVyajPartyDto>
 public class CreateVyajEntryDtoValidator : AbstractValidator<CreateVyajEntryDto>
 {
   private static readonly string[] AllowedBases = ["flat", "month", "year", "day"];
+  private static readonly int[] AllowedPeriods = [3, 6, 9];
 
   public CreateVyajEntryDtoValidator()
   {
@@ -33,6 +34,10 @@ public class CreateVyajEntryDtoValidator : AbstractValidator<CreateVyajEntryDto>
     RuleFor(x => x.RatePercent).GreaterThan(0);
     RuleFor(x => x.RateBasis).Must(b => AllowedBases.Contains(b, StringComparer.OrdinalIgnoreCase))
       .WithMessage("Rate basis must be flat, month, year, or day.");
+    RuleFor(x => x.RatePeriodMonths)
+      .Must(p => p is null || AllowedPeriods.Contains(p.Value))
+      .WithMessage("Rate period must be 3, 6, or 9 months.");
+    RuleFor(x => x.EmiAmount).GreaterThan(0).When(x => x.EmiAmount.HasValue);
     RuleFor(x => x.StartDate).NotEmpty();
   }
 }

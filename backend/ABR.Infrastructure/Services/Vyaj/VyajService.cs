@@ -15,11 +15,8 @@ public sealed class VyajService : IVyajService
 
     public async Task<IReadOnlyList<VyajPartySummaryDto>> GetPartiesAsync(Guid siteId, CancellationToken cancellationToken = default)
     {
-        var parties = await _context.VyajParties
-            .AsNoTracking()
+        var parties = await PartyQuery()
             .Where(p => p.SiteId == siteId && !p.IsDeleted)
-            .Include(p => p.Entries.Where(e => !e.IsDeleted))
-            .ThenInclude(e => e.Payments.Where(pay => !pay.IsDeleted))
             .OrderBy(p => p.Name)
             .ToListAsync(cancellationToken);
 
@@ -28,11 +25,8 @@ public sealed class VyajService : IVyajService
 
     public async Task<VyajPartyDetailDto> GetPartyDetailAsync(Guid partyId, CancellationToken cancellationToken = default)
     {
-        var party = await _context.VyajParties
-            .AsNoTracking()
+        var party = await PartyQuery()
             .Where(p => p.Id == partyId && !p.IsDeleted)
-            .Include(p => p.Entries.Where(e => !e.IsDeleted))
-            .ThenInclude(e => e.Payments.Where(pay => !pay.IsDeleted))
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new KeyNotFoundException("Vyaj party not found.");
 
@@ -50,6 +44,10 @@ public sealed class VyajService : IVyajService
             SiteId = party.SiteId,
             Name = party.Name,
             Notes = party.Notes,
+            MainLedgerId = party.MainLedgerId,
+            SubLedgerId = party.SubLedgerId,
+            MainLedgerName = party.MainLedger?.LedgerName,
+            SubLedgerName = party.SubLedger?.LedgerName,
             TotalVyajDue = openEntries.Sum(e => e.VyajDue),
             TotalGrossVyaj = openEntries.Sum(e => e.GrossVyaj),
             TotalVyajPaid = openEntries.Sum(e => e.InterestPaid),
@@ -61,18 +59,21 @@ public sealed class VyajService : IVyajService
     public async Task<VyajPartySummaryDto> CreatePartyAsync(CreateVyajPartyDto dto, CancellationToken cancellationToken = default)
     {
         await EnsureSiteExistsAsync(dto.SiteId, cancellationToken);
+        await EnsureLedgersValidAsync(dto.SiteId, dto.MainLedgerId, dto.SubLedgerId, cancellationToken);
 
         var party = new VyajParty
         {
             SiteId = dto.SiteId,
             Name = dto.Name.Trim(),
-            Notes = dto.Notes?.Trim()
+            Notes = dto.Notes?.Trim(),
+            MainLedgerId = dto.MainLedgerId,
+            SubLedgerId = dto.SubLedgerId
         };
 
         _context.VyajParties.Add(party);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return MapPartySummary(party);
+        return (await GetPartiesAsync(dto.SiteId, cancellationToken)).First(p => p.Id == party.Id);
     }
 
     public async Task<VyajPartySummaryDto> UpdatePartyAsync(Guid partyId, UpdateVyajPartyDto dto, CancellationToken cancellationToken = default)
@@ -80,11 +81,17 @@ public sealed class VyajService : IVyajService
         var party = await _context.VyajParties
             .Include(p => p.Entries.Where(e => !e.IsDeleted))
             .ThenInclude(e => e.Payments.Where(pay => !pay.IsDeleted))
+            .Include(p => p.MainLedger)
+            .Include(p => p.SubLedger)
             .FirstOrDefaultAsync(p => p.Id == partyId && !p.IsDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Vyaj party not found.");
 
+        await EnsureLedgersValidAsync(party.SiteId, dto.MainLedgerId, dto.SubLedgerId, cancellationToken);
+
         party.Name = dto.Name.Trim();
         party.Notes = dto.Notes?.Trim();
+        party.MainLedgerId = dto.MainLedgerId;
+        party.SubLedgerId = dto.SubLedgerId;
 
         await _context.SaveChangesAsync(cancellationToken);
         return MapPartySummary(party);
@@ -104,16 +111,21 @@ public sealed class VyajService : IVyajService
 
     public async Task<VyajEntryDto> CreateEntryAsync(CreateVyajEntryDto dto, CancellationToken cancellationToken = default)
     {
-        var party = await _context.VyajParties
+        _ = await _context.VyajParties
             .FirstOrDefaultAsync(p => p.Id == dto.PartyId && !p.IsDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Vyaj party not found.");
+
+        var rateBasis = dto.RateBasis.ToLowerInvariant();
+        var period = rateBasis == "month" ? dto.RatePeriodMonths : null;
 
         var entry = new VyajEntry
         {
             PartyId = dto.PartyId,
             Principal = dto.Principal,
             RatePercent = dto.RatePercent,
-            RateBasis = dto.RateBasis.ToLowerInvariant(),
+            RateBasis = rateBasis,
+            RatePeriodMonths = period,
+            EmiAmount = dto.EmiAmount,
             StartDate = dto.StartDate,
             IsClosed = false
         };
@@ -141,7 +153,7 @@ public sealed class VyajService : IVyajService
 
     public async Task<VyajPaymentDto> CreatePaymentAsync(CreateVyajPaymentDto dto, CancellationToken cancellationToken = default)
     {
-        var entry = await LoadEntryAsync(dto.EntryId, cancellationToken);
+        _ = await LoadEntryAsync(dto.EntryId, cancellationToken);
 
         var payment = new VyajPayment
         {
@@ -168,6 +180,14 @@ public sealed class VyajService : IVyajService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    private IQueryable<VyajParty> PartyQuery() =>
+        _context.VyajParties
+            .AsNoTracking()
+            .Include(p => p.MainLedger)
+            .Include(p => p.SubLedger)
+            .Include(p => p.Entries.Where(e => !e.IsDeleted))
+            .ThenInclude(e => e.Payments.Where(pay => !pay.IsDeleted));
+
     private async Task<VyajEntry> LoadEntryAsync(Guid entryId, CancellationToken cancellationToken)
     {
         return await _context.VyajEntries
@@ -181,6 +201,28 @@ public sealed class VyajService : IVyajService
         var exists = await _context.Sites.AnyAsync(s => s.Id == siteId && s.IsActive, cancellationToken);
         if (!exists)
             throw new KeyNotFoundException("Site not found.");
+    }
+
+    private async Task EnsureLedgersValidAsync(Guid siteId, Guid? mainLedgerId, Guid? subLedgerId, CancellationToken cancellationToken)
+    {
+        if (mainLedgerId.HasValue)
+        {
+            var mainOk = await _context.MainLedgers.AnyAsync(
+                m => m.Id == mainLedgerId.Value && m.SiteId == siteId,
+                cancellationToken);
+            if (!mainOk)
+                throw new InvalidOperationException("Main ledger not found for this site.");
+        }
+
+        if (subLedgerId.HasValue)
+        {
+            var subOk = await _context.SubLedgers.AnyAsync(
+                s => s.Id == subLedgerId.Value && s.MainLedger.SiteId == siteId
+                    && (!mainLedgerId.HasValue || s.MainLedgerId == mainLedgerId.Value),
+                cancellationToken);
+            if (!subOk)
+                throw new InvalidOperationException("Sub ledger not found for this main ledger/site.");
+        }
     }
 
     private static void SoftDeleteParty(VyajParty party)
@@ -223,6 +265,10 @@ public sealed class VyajService : IVyajService
             SiteId = party.SiteId,
             Name = party.Name,
             Notes = party.Notes,
+            MainLedgerId = party.MainLedgerId,
+            SubLedgerId = party.SubLedgerId,
+            MainLedgerName = party.MainLedger?.LedgerName,
+            SubLedgerName = party.SubLedger?.LedgerName,
             VyajDue = vyajDue,
             PrincipalDue = principalDue,
             OpenEntryCount = openEntries.Count
@@ -246,6 +292,8 @@ public sealed class VyajService : IVyajService
             Principal = entry.Principal,
             RatePercent = entry.RatePercent,
             RateBasis = entry.RateBasis,
+            RatePeriodMonths = entry.RatePeriodMonths,
+            EmiAmount = entry.EmiAmount,
             StartDate = entry.StartDate,
             IsClosed = entry.IsClosed,
             GrossVyaj = totals.GrossVyaj,
@@ -277,6 +325,7 @@ public sealed class VyajService : IVyajService
             entry.RatePercent,
             entry.RateBasis,
             entry.StartDate,
-            payments);
+            payments,
+            ratePeriodMonths: entry.RatePeriodMonths);
     }
 }

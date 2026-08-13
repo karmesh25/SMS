@@ -408,6 +408,8 @@ public class AbrDbContext : DbContext
         voucher.Property(e => e.VoucherNo).HasColumnName("voucher_no").HasMaxLength(30).IsRequired();
         voucher.Property(e => e.VoucherDate).HasColumnName("voucher_date");
         voucher.Property(e => e.Narration).HasColumnName("narration").HasMaxLength(500);
+        voucher.Property(e => e.DebitNarration).HasColumnName("debit_narration").HasMaxLength(500);
+        voucher.Property(e => e.CreditNarration).HasColumnName("credit_narration").HasMaxLength(500);
         voucher.Property(e => e.TotalDebit).HasColumnName("total_debit").HasColumnType("decimal(15,2)");
         voucher.Property(e => e.TotalCredit).HasColumnName("total_credit").HasColumnType("decimal(15,2)");
         voucher.Property(e => e.IsDeleted).HasColumnName("is_deleted");
@@ -443,11 +445,15 @@ public class AbrDbContext : DbContext
         party.Property(e => e.SiteId).HasColumnName("site_id");
         party.Property(e => e.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
         party.Property(e => e.Notes).HasColumnName("notes");
+        party.Property(e => e.MainLedgerId).HasColumnName("main_ledger_id");
+        party.Property(e => e.SubLedgerId).HasColumnName("sub_ledger_id");
         party.Property(e => e.IsDeleted).HasColumnName("is_deleted");
         party.Property(e => e.DeletedAt).HasColumnName("deleted_at");
         party.Property(e => e.CreatedAt).HasColumnName("created_at");
         party.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         party.HasOne(e => e.Site).WithMany(s => s.VyajParties).HasForeignKey(e => e.SiteId).OnDelete(DeleteBehavior.Cascade);
+        party.HasOne(e => e.MainLedger).WithMany().HasForeignKey(e => e.MainLedgerId).OnDelete(DeleteBehavior.SetNull);
+        party.HasOne(e => e.SubLedger).WithMany().HasForeignKey(e => e.SubLedgerId).OnDelete(DeleteBehavior.SetNull);
         party.HasIndex(e => new { e.SiteId, e.IsDeleted });
 
         var entry = modelBuilder.Entity<VyajEntry>();
@@ -458,6 +464,8 @@ public class AbrDbContext : DbContext
         entry.Property(e => e.Principal).HasColumnName("principal").HasColumnType("decimal(15,2)");
         entry.Property(e => e.RatePercent).HasColumnName("rate_percent").HasColumnType("decimal(8,4)");
         entry.Property(e => e.RateBasis).HasColumnName("rate_basis").HasMaxLength(10);
+        entry.Property(e => e.RatePeriodMonths).HasColumnName("rate_period_months");
+        entry.Property(e => e.EmiAmount).HasColumnName("emi_amount").HasColumnType("decimal(15,2)");
         entry.Property(e => e.StartDate).HasColumnName("start_date");
         entry.Property(e => e.IsClosed).HasColumnName("is_closed");
         entry.Property(e => e.IsDeleted).HasColumnName("is_deleted");

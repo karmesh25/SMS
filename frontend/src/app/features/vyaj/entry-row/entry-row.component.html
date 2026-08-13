@@ -5,8 +5,18 @@
       <span class="mono">Rs. {{ entry().principal | indianCurrency }}</span>
     </div>
     <div class="cell">
+      <span class="label">EMI</span>
+      <span class="mono">
+        @if (entry().emiAmount) {
+          Rs. {{ entry().emiAmount! | indianCurrency }}
+        } @else {
+          —
+        }
+      </span>
+    </div>
+    <div class="cell">
       <span class="label">Rate</span>
-      <span>{{ entry().ratePercent }}% / {{ basisLabel(entry().rateBasis) }}</span>
+      <span>{{ entry().ratePercent }}% / {{ basisLabel(entry().rateBasis, entry().ratePeriodMonths) }}</span>
     </div>
     <div class="cell">
       <span class="label">Since</span>

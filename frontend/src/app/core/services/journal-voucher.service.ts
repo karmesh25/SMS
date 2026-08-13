@@ -7,6 +7,7 @@ export interface JournalVoucherLine {
   subLedgerId: string;
   subLedgerName?: string;
   mainLedgerName?: string;
+  mainLedgerId?: string;
   entryType: 'dr' | 'cr';
   amount: number;
   lineNo: number;
@@ -18,6 +19,8 @@ export interface JournalVoucher {
   voucherNo: string;
   voucherDate: string;
   narration?: string;
+  debitNarration?: string;
+  creditNarration?: string;
   totalDebit: number;
   totalCredit: number;
   lines: JournalVoucherLine[];

@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { IndianAmountDirective } from '../../../shared/directives/indian-amount.directive';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
 import { calculateGrossVyaj } from '../../../shared/utils/vyaj-calc';
-import { RATE_BASIS_OPTIONS } from '../models/vyaj.models';
+import { parseRateBasisUi, RATE_BASIS_OPTIONS } from '../models/vyaj.models';
 
 @Component({
   selector: 'app-vyaj-add-entry-panel',
@@ -36,6 +36,8 @@ export class VyajAddEntryPanelComponent {
     principal: number;
     ratePercent: number;
     rateBasis: string;
+    ratePeriodMonths?: number | null;
+    emiAmount?: number | null;
     startDate: string;
   }>();
   readonly closed = output<void>();
@@ -45,7 +47,8 @@ export class VyajAddEntryPanelComponent {
   readonly form = this.fb.nonNullable.group({
     principal: ['', [Validators.required, Validators.min(0.01)]],
     ratePercent: [2, [Validators.required, Validators.min(0.01)]],
-    rateBasis: ['month' as const, Validators.required],
+    rateBasisUi: ['month-3', Validators.required],
+    emiAmount: [''],
     startDate: [new Date().toISOString().slice(0, 10), Validators.required]
   });
 
@@ -55,13 +58,15 @@ export class VyajAddEntryPanelComponent {
     const v = this.formValues();
     const principal = parseFloat(String(v.principal).replace(/,/g, '')) || 0;
     const ratePercent = Number(v.ratePercent) || 0;
-    return calculateGrossVyaj(principal, ratePercent, v.rateBasis, v.startDate);
+    const parsed = parseRateBasisUi(v.rateBasisUi);
+    return calculateGrossVyaj(principal, ratePercent, parsed.rateBasis, v.startDate, new Date(), parsed.ratePeriodMonths);
   });
 
   constructor() {
     effect((onCleanup) => {
       const sub = this.form.valueChanges.subscribe(() => {
         this.formValues.set(this.form.getRawValue());
+        this.maybeSuggestEmi();
       });
       onCleanup(() => sub.unsubscribe());
     });
@@ -71,11 +76,27 @@ export class VyajAddEntryPanelComponent {
     if (this.form.invalid) return;
     const v = this.form.getRawValue();
     const principal = parseFloat(String(v.principal).replace(/,/g, ''));
+    const emiRaw = String(v.emiAmount ?? '').replace(/,/g, '');
+    const emiAmount = emiRaw ? parseFloat(emiRaw) : null;
+    const parsed = parseRateBasisUi(v.rateBasisUi);
     this.saved.emit({
       principal,
       ratePercent: Number(v.ratePercent),
-      rateBasis: v.rateBasis,
+      rateBasis: parsed.rateBasis,
+      ratePeriodMonths: parsed.ratePeriodMonths ?? null,
+      emiAmount: emiAmount && emiAmount > 0 ? emiAmount : null,
       startDate: v.startDate
     });
+  }
+
+  private maybeSuggestEmi(): void {
+    const v = this.form.getRawValue();
+    const parsed = parseRateBasisUi(v.rateBasisUi);
+    const principal = parseFloat(String(v.principal).replace(/,/g, '')) || 0;
+    const currentEmi = String(v.emiAmount ?? '').trim();
+    if (!parsed.ratePeriodMonths || principal <= 0) return;
+    if (currentEmi) return;
+    const suggested = Math.round((principal / parsed.ratePeriodMonths) * 100) / 100;
+    this.form.controls.emiAmount.setValue(String(suggested), { emitEvent: false });
   }
 }

@@ -232,6 +232,8 @@ public class JournalVoucher : SoftDeleteEntity
     public string VoucherNo { get; set; } = string.Empty;
     public DateOnly VoucherDate { get; set; }
     public string? Narration { get; set; }
+    public string? DebitNarration { get; set; }
+    public string? CreditNarration { get; set; }
     public decimal TotalDebit { get; set; }
     public decimal TotalCredit { get; set; }
 

@@ -80,6 +80,12 @@ After a successful deploy:
    - **Default site:** Tapi
 3. Change the admin password after first login (Admin → Users)
 
+### Feature notes (Vyaj / JV)
+
+- Journal Voucher supports separate **Debit Narration** and **Credit Narration**, main+sub ledger pickers, and PDF/Excel export with date range.
+- Vyaj Khata parties can link **Main/Sub Ledger**; entries support EMI and rate periods **3 / 6 / 9 months** plus date-wise (per day).
+- Dashboard and Reports → Balance Sheet include Vyaj pending totals (exported in PDF/Excel).
+
 ## 4. Verify deployment
 
 ```text

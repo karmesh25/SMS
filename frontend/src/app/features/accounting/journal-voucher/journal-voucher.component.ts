@@ -45,6 +45,14 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
     <div class="header-row">
       <app-page-header title="Journal Voucher" subtitle="Balanced debit/credit voucher entries"></app-page-header>
       <div class="header-actions">
+        <mat-form-field appearance="outline" class="export-date">
+          <mat-label>From</mat-label>
+          <input matInput type="date" [formControl]="exportFrom" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="export-date">
+          <mat-label>To</mat-label>
+          <input matInput type="date" [formControl]="exportTo" />
+        </mat-form-field>
         <button mat-stroked-button (click)="exportExcel()" [disabled]="!siteId">Excel</button>
         <button mat-stroked-button (click)="exportPdf()" [disabled]="!siteId">PDF</button>
       </div>
@@ -65,8 +73,12 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
           <input matInput [value]="selectedVoucherNo()" readonly />
         </mat-form-field>
         <mat-form-field appearance="outline" class="narration">
-          <mat-label>Narration</mat-label>
-          <input matInput formControlName="narration" maxlength="500" />
+          <mat-label>Debit Narration</mat-label>
+          <input matInput formControlName="debitNarration" maxlength="500" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="narration">
+          <mat-label>Credit Narration</mat-label>
+          <input matInput formControlName="creditNarration" maxlength="500" />
         </mat-form-field>
       </div>
 
@@ -74,7 +86,7 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
         <table mat-table [dataSource]="lineControls()">
           <ng-container matColumnDef="entryType">
             <th mat-header-cell *matHeaderCellDef>Type</th>
-            <td mat-cell *matCellDef="let group; let i = index">
+            <td mat-cell *matCellDef="let group">
               <mat-form-field appearance="outline">
                 <mat-select [formControl]="group.controls.entryType">
                   <mat-option value="dr">DR</mat-option>
@@ -83,10 +95,23 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
               </mat-form-field>
             </td>
           </ng-container>
+          <ng-container matColumnDef="mainLedgerId">
+            <th mat-header-cell *matHeaderCellDef>Main Ledger</th>
+            <td mat-cell *matCellDef="let group; let i = index">
+              <app-searchable-select
+                [options]="mainLedgerOptions()"
+                [formControl]="group.controls.mainLedgerId"
+                label="Main Ledger"
+                (selectionChange)="onLineMainChange(i)" />
+            </td>
+          </ng-container>
           <ng-container matColumnDef="subLedgerId">
-            <th mat-header-cell *matHeaderCellDef>Account</th>
-            <td mat-cell *matCellDef="let group">
-              <app-searchable-select [options]="subLedgerOptions()" [formControl]="group.controls.subLedgerId" label="Sub Ledger" />
+            <th mat-header-cell *matHeaderCellDef>Sub Ledger</th>
+            <td mat-cell *matCellDef="let group; let i = index">
+              <app-searchable-select
+                [options]="subLedgerOptionsForLine(i)"
+                [formControl]="group.controls.subLedgerId"
+                label="Sub Ledger" />
             </td>
           </ng-container>
           <ng-container matColumnDef="amount">
@@ -135,7 +160,8 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
         <table mat-table [dataSource]="vouchers()" class="abr-table sticky-header">
           <ng-container matColumnDef="voucherNo"><th mat-header-cell *matHeaderCellDef>Voucher No</th><td mat-cell *matCellDef="let row">{{ row.voucherNo }}</td></ng-container>
           <ng-container matColumnDef="voucherDate"><th mat-header-cell *matHeaderCellDef>Date</th><td mat-cell *matCellDef="let row">{{ row.voucherDate | appDate }}</td></ng-container>
-          <ng-container matColumnDef="narration"><th mat-header-cell *matHeaderCellDef>Narration</th><td mat-cell *matCellDef="let row">{{ row.narration }}</td></ng-container>
+          <ng-container matColumnDef="debitNarration"><th mat-header-cell *matHeaderCellDef>Debit Narration</th><td mat-cell *matCellDef="let row">{{ row.debitNarration || row.narration }}</td></ng-container>
+          <ng-container matColumnDef="creditNarration"><th mat-header-cell *matHeaderCellDef>Credit Narration</th><td mat-cell *matCellDef="let row">{{ row.creditNarration || row.narration }}</td></ng-container>
           <ng-container matColumnDef="totalDebit"><th mat-header-cell *matHeaderCellDef>Debit</th><td mat-cell *matCellDef="let row">{{ row.totalDebit | indianCurrency }}</td></ng-container>
           <ng-container matColumnDef="totalCredit"><th mat-header-cell *matHeaderCellDef>Credit</th><td mat-cell *matCellDef="let row">{{ row.totalCredit | indianCurrency }}</td></ng-container>
           <ng-container matColumnDef="actions">
@@ -154,17 +180,18 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
   `,
   styles: [`
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-    .header-actions { display: flex; gap: 0.5rem; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .export-date { width: 150px; }
     .voucher-form { margin-top: 1rem; }
     .form-head { margin-bottom: 1rem; }
     .narration { grid-column: span 2; }
-    .line-table table { width: 100%; min-width: 700px; }
+    .line-table table { width: 100%; min-width: 900px; }
     .line-actions { margin-top: 0.5rem; }
     .totals { display: flex; gap: 1.5rem; font-weight: 600; margin-top: 1rem; }
     .error { color: var(--abr-danger); margin: 0.5rem 0 0; }
     .form-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
     .recent-list { margin-top: 1.5rem; }
-    .recent-list table { width: 100%; min-width: 760px; }
+    .recent-list table { width: 100%; min-width: 960px; }
   `]
 })
 export class JournalVoucherComponent {
@@ -178,8 +205,8 @@ export class JournalVoucherComponent {
   private readonly fileDownloads = inject(FileDownloadService);
 
   readonly accountingNav = ACCOUNTING_NAV_ITEMS;
-  readonly lineColumns = ['entryType', 'subLedgerId', 'amount', 'remove'];
-  readonly listColumns = ['voucherNo', 'voucherDate', 'narration', 'totalDebit', 'totalCredit', 'actions'];
+  readonly lineColumns = ['entryType', 'mainLedgerId', 'subLedgerId', 'amount', 'remove'];
+  readonly listColumns = ['voucherNo', 'voucherDate', 'debitNarration', 'creditNarration', 'totalDebit', 'totalCredit', 'actions'];
 
   readonly vouchers = signal<JournalVoucher[]>([]);
   readonly mainLedgers = signal<MainLedger[]>([]);
@@ -190,17 +217,18 @@ export class JournalVoucherComponent {
 
   siteId: string | null = null;
 
+  readonly exportFrom = this.fb.control<string>('');
+  readonly exportTo = this.fb.control<string>('');
+
   readonly form = this.fb.nonNullable.group({
     voucherDate: [new Date().toISOString().slice(0, 10), Validators.required],
-    narration: ['', Validators.maxLength(500)],
+    debitNarration: ['', Validators.maxLength(500)],
+    creditNarration: ['', Validators.maxLength(500)],
     lines: this.fb.array([this.createLineGroup(1), this.createLineGroup(2)])
   });
 
-  readonly subLedgerOptions = computed<SelectOption<string>[]>(() =>
-    this.subLedgers().map((s) => ({
-      value: s.id,
-      label: `${s.mainLedgerName ?? ''} / ${s.ledgerName}${s.flatNo ? ` (${s.flatNo})` : ''}`
-    }))
+  readonly mainLedgerOptions = computed<SelectOption<string>[]>(() =>
+    this.mainLedgers().map((m) => ({ value: m.id, label: m.ledgerName }))
   );
 
   readonly totalDebit = computed(() =>
@@ -241,6 +269,23 @@ export class JournalVoucherComponent {
     return this.lines.controls as ReturnType<typeof this.createLineGroup>[];
   }
 
+  subLedgerOptionsForLine(index: number): SelectOption<string>[] {
+    const mainId = this.lineControls()[index]?.controls.mainLedgerId.value;
+    return this.subLedgers()
+      .filter((s) => !mainId || s.mainLedgerId === mainId)
+      .map((s) => ({
+        value: s.id,
+        label: `${s.ledgerName}${s.flatNo ? ` (${s.flatNo})` : ''}`
+      }));
+  }
+
+  onLineMainChange(index: number): void {
+    const group = this.lineControls()[index];
+    if (!group) return;
+    group.controls.subLedgerId.setValue('');
+    this.bumpFormVersion();
+  }
+
   addLine(): void {
     this.lines.push(this.createLineGroup(this.lines.length + 1));
     this.bumpFormVersion();
@@ -260,7 +305,7 @@ export class JournalVoucherComponent {
   save(): void {
     if (!this.siteId) return;
     if (!this.form.valid) {
-      this.toast.error('Select account and amount in each CR/DR row.');
+      this.toast.error('Select main ledger, sub ledger and amount in each CR/DR row.');
       return;
     }
     if (!this.totalsMatch()) {
@@ -271,7 +316,8 @@ export class JournalVoucherComponent {
     const payload = {
       siteId: this.siteId,
       voucherDate: this.form.controls.voucherDate.value,
-      narration: this.form.controls.narration.value || null,
+      debitNarration: this.form.controls.debitNarration.value || null,
+      creditNarration: this.form.controls.creditNarration.value || null,
       lines: this.lineControls().map((g, idx) => ({
         subLedgerId: g.controls.subLedgerId.value,
         entryType: g.controls.entryType.value,
@@ -297,12 +343,18 @@ export class JournalVoucherComponent {
     this.selectedVoucherNo.set(voucher.voucherNo);
     this.form.patchValue({
       voucherDate: voucher.voucherDate,
-      narration: voucher.narration ?? ''
+      debitNarration: voucher.debitNarration ?? voucher.narration ?? '',
+      creditNarration: voucher.creditNarration ?? voucher.narration ?? ''
     });
     this.lines.clear();
     voucher.lines
       .sort((a, b) => a.lineNo - b.lineNo)
-      .forEach((line, idx) => this.lines.push(this.createLineGroup(idx + 1, line.entryType, line.subLedgerId, line.amount)));
+      .forEach((line, idx) => {
+        const mainId = line.mainLedgerId
+          ?? this.subLedgers().find((s) => s.id === line.subLedgerId)?.mainLedgerId
+          ?? '';
+        this.lines.push(this.createLineGroup(idx + 1, line.entryType, mainId, line.subLedgerId, line.amount));
+      });
     this.reindexLines();
     this.bumpFormVersion();
   }
@@ -332,7 +384,8 @@ export class JournalVoucherComponent {
     this.selectedVoucherNo.set('Auto');
     this.form.reset({
       voucherDate: new Date().toISOString().slice(0, 10),
-      narration: ''
+      debitNarration: '',
+      creditNarration: ''
     });
     this.lines.clear();
     this.lines.push(this.createLineGroup(1));
@@ -342,16 +395,23 @@ export class JournalVoucherComponent {
 
   exportExcel(): void {
     if (!this.siteId) return;
-    this.jvService.exportLedgerExcel(this.siteId).subscribe({
+    this.jvService.exportLedgerExcel(this.siteId, this.exportParams()).subscribe({
       next: (outcome) => this.handleDownload(outcome, `journal-voucher-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`)
     });
   }
 
   exportPdf(): void {
     if (!this.siteId) return;
-    this.jvService.exportLedgerPdf(this.siteId).subscribe({
+    this.jvService.exportLedgerPdf(this.siteId, this.exportParams()).subscribe({
       next: (outcome) => this.handleDownload(outcome, `journal-voucher-ledger-${new Date().toISOString().slice(0, 10)}.pdf`)
     });
+  }
+
+  private exportParams(): { dateFrom?: string; dateTo?: string } {
+    return {
+      dateFrom: this.exportFrom.value || undefined,
+      dateTo: this.exportTo.value || undefined
+    };
   }
 
   private handleDownload(outcome: FileDownloadOutcome, fallbackFilename: string): void {
@@ -369,13 +429,9 @@ export class JournalVoucherComponent {
     if (!this.siteId) return;
     this.masterData.getMainLedgers(this.siteId).subscribe({
       next: (r) => {
-        if (r.success) this.mainLedgers.set(r.data as MainLedger[]);
-      }
-    });
-    this.masterData.getMainLedgers(this.siteId).subscribe({
-      next: (r) => {
         if (!r.success) return;
         const mains = r.data as MainLedger[];
+        this.mainLedgers.set(mains);
         const allSubs: SubLedger[] = [];
         let pending = mains.length;
         if (pending === 0) {
@@ -387,7 +443,11 @@ export class JournalVoucherComponent {
             next: (subRes) => {
               pending--;
               if (subRes.success) {
-                allSubs.push(...(subRes.data as SubLedger[]).map((s) => ({ ...s, mainLedgerName: main.ledgerName, mainLedgerId: main.id })));
+                allSubs.push(...(subRes.data as SubLedger[]).map((s) => ({
+                  ...s,
+                  mainLedgerName: main.ledgerName,
+                  mainLedgerId: main.id
+                })));
               }
               if (pending === 0) this.subLedgers.set(allSubs);
             },
@@ -410,10 +470,17 @@ export class JournalVoucherComponent {
     });
   }
 
-  private createLineGroup(lineNo: number, entryType: 'dr' | 'cr' = 'dr', subLedgerId = '', amount = 0) {
+  private createLineGroup(
+    lineNo: number,
+    entryType: 'dr' | 'cr' = 'dr',
+    mainLedgerId = '',
+    subLedgerId = '',
+    amount = 0
+  ) {
     return this.fb.nonNullable.group({
       lineNo: [lineNo],
       entryType: [entryType, Validators.required],
+      mainLedgerId: [mainLedgerId, Validators.required],
       subLedgerId: [subLedgerId, Validators.required],
       amount: [amount, [Validators.required, Validators.min(0.01)]]
     });

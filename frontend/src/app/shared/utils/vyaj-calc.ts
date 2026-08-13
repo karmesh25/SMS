@@ -44,12 +44,25 @@ export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+export function resolveMonthFactor(
+  startDate: string | Date,
+  asOfDate: string | Date,
+  ratePeriodMonths?: number | null
+): number {
+  const elapsed = monthsBetween(startDate, asOfDate);
+  if (ratePeriodMonths === 3 || ratePeriodMonths === 6 || ratePeriodMonths === 9) {
+    return Math.min(elapsed, ratePeriodMonths);
+  }
+  return elapsed;
+}
+
 export function calculateGrossVyaj(
   principal: number,
   ratePercent: number,
   rateBasis: RateBasis,
   startDate: string | Date,
-  asOfDate: string | Date = new Date()
+  asOfDate: string | Date = new Date(),
+  ratePeriodMonths?: number | null
 ): number {
   if (principal <= 0 || ratePercent <= 0) return 0;
 
@@ -59,13 +72,13 @@ export function calculateGrossVyaj(
     case 'flat':
       return roundMoney(principal * rate);
     case 'month':
-      return roundMoney(principal * rate * monthsBetween(startDate, asOfDate));
+      return roundMoney(principal * rate * resolveMonthFactor(startDate, asOfDate, ratePeriodMonths));
     case 'year':
       return roundMoney(principal * rate * (daysBetween(startDate, asOfDate) / 365));
     case 'day':
       return roundMoney(principal * rate * daysBetween(startDate, asOfDate));
     default:
-      return roundMoney(principal * rate * monthsBetween(startDate, asOfDate));
+      return roundMoney(principal * rate * resolveMonthFactor(startDate, asOfDate, ratePeriodMonths));
   }
 }
 
@@ -75,9 +88,10 @@ export function calculateEntryTotals(
   rateBasis: RateBasis,
   startDate: string | Date,
   payments: VyajPaymentInput[] = [],
-  asOfDate: string | Date = new Date()
+  asOfDate: string | Date = new Date(),
+  ratePeriodMonths?: number | null
 ): VyajEntryTotals {
-  const grossVyaj = calculateGrossVyaj(principal, ratePercent, rateBasis, startDate, asOfDate);
+  const grossVyaj = calculateGrossVyaj(principal, ratePercent, rateBasis, startDate, asOfDate, ratePeriodMonths);
 
   let interestPaid = 0;
   let principalPaid = 0;
