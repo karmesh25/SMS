@@ -1,6 +1,7 @@
 import {
   calculateEntryTotals,
   calculateGrossVyaj,
+  calculateReducingGrossVyaj,
   daysBetween,
   monthsBetween
 } from './vyaj-calc';
@@ -30,22 +31,32 @@ describe('vyaj-calc', () => {
     expect(calculateGrossVyaj(10_000, 1, 'day', '2024-01-01', '2024-01-31')).toBe(3_000);
   });
 
-  it('entry totals subtract payments', () => {
+  it('entry totals subtract interest payments', () => {
     const totals = calculateEntryTotals(
       100_000,
       2,
       'month',
       '2024-01-01',
-      [
-        { amount: 500, paymentType: 'interest' },
-        { amount: 200, paymentType: 'principal' }
-      ],
+      [{ amount: 500, paymentType: 'interest', paymentDate: '2024-02-01' }],
       '2024-04-01'
     );
 
     expect(totals.grossVyaj).toBe(6_000);
     expect(totals.vyajDue).toBe(5_500);
-    expect(totals.principalDue).toBe(99_800);
+    expect(totals.principalDue).toBe(100_000);
+  });
+
+  it('reducing balance first EMI accrues on remaining principal', () => {
+    const gross = calculateReducingGrossVyaj(
+      5_000_000,
+      2,
+      'month',
+      '2024-01-01',
+      '2024-04-01',
+      [{ amount: 500_000, paymentDate: '2024-01-01' }],
+      3
+    );
+    expect(gross).toBe(270_000);
   });
 
   it('monthsBetween handles partial month', () => {

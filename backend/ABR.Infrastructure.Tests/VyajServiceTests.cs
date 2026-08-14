@@ -143,4 +143,74 @@ public class VyajServiceTests
         var detail = await service.GetPartyDetailAsync(partyId);
         Assert.Equal(700, detail.TotalVyajDue);
     }
+
+    [Fact]
+    public async Task CreateEntryAsync_AppliesFirstEmiAsPrincipalPayment()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var siteId = Guid.NewGuid();
+        var partyId = Guid.NewGuid();
+        context.Sites.Add(new Site { Id = siteId, SiteName = "Tapi", IsActive = true });
+        context.VyajParties.Add(new VyajParty { Id = partyId, SiteId = siteId, Name = "Borrower" });
+        await context.SaveChangesAsync();
+
+        var service = new VyajService(context);
+        var entry = await service.CreateEntryAsync(new CreateVyajEntryDto
+        {
+            PartyId = partyId,
+            Principal = 5_000_000,
+            RatePercent = 2,
+            RateBasis = "month",
+            RatePeriodMonths = 3,
+            EmiAmount = 500_000,
+            StartDate = new DateOnly(2024, 1, 1)
+        });
+
+        Assert.Equal(500_000, entry.EmiAmount);
+        Assert.Equal(4_500_000, entry.PrincipalDue);
+        Assert.Single(entry.Payments);
+        Assert.Equal("principal", entry.Payments[0].PaymentType);
+        Assert.Equal(500_000, entry.Payments[0].Amount);
+    }
+
+    [Fact]
+    public async Task ExportExcelAsync_ReturnsFile()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var siteId = Guid.NewGuid();
+        var partyId = Guid.NewGuid();
+        context.Sites.Add(new Site { Id = siteId, SiteName = "Tapi", IsActive = true });
+        context.VyajParties.Add(new VyajParty { Id = partyId, SiteId = siteId, Name = "Borrower" });
+        await context.SaveChangesAsync();
+
+        var service = new VyajService(context);
+        await service.CreateEntryAsync(new CreateVyajEntryDto
+        {
+            PartyId = partyId,
+            Principal = 100_000,
+            RatePercent = 2,
+            RateBasis = "month",
+            RatePeriodMonths = 3,
+            EmiAmount = 10_000,
+            StartDate = new DateOnly(2024, 1, 1)
+        });
+
+        var file = await service.ExportExcelAsync(siteId);
+        Assert.NotEmpty(file.Content);
+        Assert.EndsWith(".xlsx", file.FileName);
+    }
+
+    [Fact]
+    public async Task ExportPdfAsync_ReturnsFile()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var siteId = Guid.NewGuid();
+        context.Sites.Add(new Site { Id = siteId, SiteName = "Tapi", IsActive = true });
+        await context.SaveChangesAsync();
+
+        var service = new VyajService(context);
+        var file = await service.ExportPdfAsync(siteId);
+        Assert.NotEmpty(file.Content);
+        Assert.Equal("application/pdf", file.ContentType);
+    }
 }

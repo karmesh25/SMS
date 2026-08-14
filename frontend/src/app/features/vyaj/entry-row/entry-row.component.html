@@ -5,7 +5,7 @@
       <span class="mono">Rs. {{ entry().principal | indianCurrency }}</span>
     </div>
     <div class="cell">
-      <span class="label">EMI</span>
+      <span class="label">First EMI</span>
       <span class="mono">
         @if (entry().emiAmount) {
           Rs. {{ entry().emiAmount! | indianCurrency }}
@@ -65,6 +65,9 @@
 
   <div class="subtotals">
     <span>Principal due: Rs. {{ entry().principalDue | indianCurrency }}</span>
+    @if (entry().emiAmount) {
+      <span>First EMI applied: Rs. {{ entry().emiAmount! | indianCurrency }}</span>
+    }
   </div>
 
   @if (showPayment() && !readOnly()) {
@@ -81,10 +84,7 @@
         <mat-label>Amount</mat-label>
         <input matInput formControlName="amount" appIndianAmount />
       </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Date</mat-label>
-        <input matInput type="date" formControlName="paymentDate" />
-      </mat-form-field>
+      <app-date-field label="Date" formControlName="paymentDate" />
       <button mat-flat-button color="primary" type="submit" [disabled]="paymentForm.invalid || savingPayment()">
         Save payment
       </button>

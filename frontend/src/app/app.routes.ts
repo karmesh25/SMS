@@ -79,9 +79,8 @@ export const routes: Routes = [
   },
   {
     path: 'vyaj',
-    canActivate: [authGuard, permissionGuard('vyaj', 'view')],
-    data: { breadcrumb: 'Vyaj Khata' },
-    loadChildren: () => import('./features/vyaj/vyaj.routes').then(m => m.VYAJ_ROUTES)
+    pathMatch: 'full',
+    redirectTo: 'accounting/vyaj'
   },
   {
     path: 'reports',

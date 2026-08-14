@@ -14,8 +14,9 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>EMI</mat-label>
-        <input matInput formControlName="emiAmount" appIndianAmount />
+        <mat-label>First EMI (principal installment)</mat-label>
+        <input matInput formControlName="emiAmount" appIndianAmount (input)="onEmiInput()" />
+        <mat-hint>Applied on start date; remaining earns vyaj</mat-hint>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
@@ -32,13 +33,15 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Start date</mat-label>
-        <input matInput type="date" formControlName="startDate" />
-      </mat-form-field>
+      <app-date-field label="Start date" formControlName="startDate" />
 
       <div class="preview">
-        <span class="preview-label">Vyaj accrued as of today</span>
+        <span class="preview-label">Remaining after first EMI</span>
+        <span class="preview-value">Rs. {{ remainingAfterFirstEmi() | indianCurrency }}</span>
+      </div>
+
+      <div class="preview">
+        <span class="preview-label">Vyaj accrued as of today (on remaining)</span>
         <span class="preview-value">Rs. {{ previewGrossVyaj() | indianCurrency }}</span>
       </div>
 

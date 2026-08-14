@@ -1,3 +1,4 @@
+using ABR.Application.DTOs.Accounting;
 using ABR.Application.DTOs.Vyaj;
 using ABR.Application.Interfaces;
 using ABR.Application.Services.Vyaj;
@@ -115,6 +116,9 @@ public sealed class VyajService : IVyajService
             .FirstOrDefaultAsync(p => p.Id == dto.PartyId && !p.IsDeleted, cancellationToken)
             ?? throw new KeyNotFoundException("Vyaj party not found.");
 
+        if (dto.EmiAmount.HasValue && dto.EmiAmount.Value >= dto.Principal)
+            throw new InvalidOperationException("First EMI must be less than principal.");
+
         var rateBasis = dto.RateBasis.ToLowerInvariant();
         var period = rateBasis == "month" ? dto.RatePeriodMonths : null;
 
@@ -131,9 +135,22 @@ public sealed class VyajService : IVyajService
         };
 
         _context.VyajEntries.Add(entry);
+
+        if (dto.EmiAmount is > 0)
+        {
+            _context.VyajPayments.Add(new VyajPayment
+            {
+                Entry = entry,
+                PaymentDate = dto.StartDate,
+                Amount = dto.EmiAmount.Value,
+                PaymentType = "principal"
+            });
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
 
-        return MapEntry(entry);
+        var loaded = await LoadEntryAsync(entry.Id, cancellationToken);
+        return MapEntry(loaded);
     }
 
     public async Task<VyajEntryDto> ToggleEntryClosedAsync(Guid entryId, ToggleVyajEntryClosedDto dto, CancellationToken cancellationToken = default)
@@ -178,6 +195,49 @@ public sealed class VyajService : IVyajService
         payment.IsDeleted = true;
         payment.DeletedAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<DailyEntryExcelFileDto> ExportExcelAsync(Guid siteId, CancellationToken cancellationToken = default)
+    {
+        var (siteName, parties) = await LoadExportDataAsync(siteId, cancellationToken);
+        var content = VyajExportBuilder.BuildExcel(siteName, parties);
+        return new DailyEntryExcelFileDto
+        {
+            Content = content,
+            FileName = $"vyaj-khata-{DateOnly.FromDateTime(DateTime.UtcNow):yyyy-MM-dd}.xlsx"
+        };
+    }
+
+    public async Task<DailyEntryExcelFileDto> ExportPdfAsync(Guid siteId, CancellationToken cancellationToken = default)
+    {
+        var (siteName, parties) = await LoadExportDataAsync(siteId, cancellationToken);
+        var content = VyajExportBuilder.BuildPdf(siteName, parties);
+        return new DailyEntryExcelFileDto
+        {
+            Content = content,
+            FileName = $"vyaj-khata-{DateOnly.FromDateTime(DateTime.UtcNow):yyyy-MM-dd}.pdf",
+            ContentType = "application/pdf"
+        };
+    }
+
+    private async Task<(string SiteName, IReadOnlyList<VyajPartyDetailDto> Parties)> LoadExportDataAsync(
+        Guid siteId,
+        CancellationToken cancellationToken)
+    {
+        var siteName = await _context.Sites.AsNoTracking()
+            .Where(s => s.Id == siteId)
+            .Select(s => s.SiteName)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(siteName))
+            throw new InvalidOperationException("Site not found.");
+
+        var summaries = await GetPartiesAsync(siteId, cancellationToken);
+        var parties = new List<VyajPartyDetailDto>();
+        foreach (var summary in summaries)
+            parties.Add(await GetPartyDetailAsync(summary.Id, cancellationToken));
+
+        return (siteName, parties);
     }
 
     private IQueryable<VyajParty> PartyQuery() =>
@@ -318,7 +378,7 @@ public sealed class VyajService : IVyajService
     {
         var payments = entry.Payments
             .Where(p => !p.IsDeleted)
-            .Select(p => (p.Amount, p.PaymentType));
+            .Select(p => (p.Amount, p.PaymentType, p.PaymentDate));
 
         return VyajCalculationService.CalculateEntryTotals(
             entry.Principal,

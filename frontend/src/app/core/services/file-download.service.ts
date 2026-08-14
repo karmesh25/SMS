@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, from, map, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response.model';
@@ -21,7 +21,7 @@ interface ExportSavedPayload {
 export class FileDownloadService {
   private readonly http = inject(HttpClient);
 
-  download(path: string, params?: Record<string, string | number | boolean>): Observable<FileDownloadOutcome> {
+  download(path: string, params?: Record<string, string | number | boolean | null | undefined>): Observable<FileDownloadOutcome> {
     return this.http.get(`${environment.apiUrl}${path}`, {
       params: this.buildParams(params),
       responseType: 'blob',
@@ -38,6 +38,34 @@ export class FileDownloadService {
     anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  async resolveErrorMessage(err: unknown, fallback = 'Export failed. Please try again.'): Promise<string> {
+    if (!(err instanceof HttpErrorResponse)) {
+      return fallback;
+    }
+
+    const body = err.error;
+    if (body instanceof Blob) {
+      try {
+        const text = await body.text();
+        const parsed = JSON.parse(text) as { message?: string; errors?: string[] };
+        return parsed.message || parsed.errors?.[0] || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    if (typeof body === 'object' && body !== null) {
+      const parsed = body as { message?: string; errors?: string[] };
+      return parsed.message || parsed.errors?.[0] || fallback;
+    }
+
+    if (typeof body === 'string' && body.trim()) {
+      return body;
+    }
+
+    return fallback;
   }
 
   private toOutcome(response: HttpResponse<Blob>): Observable<FileDownloadOutcome> {
@@ -75,11 +103,12 @@ export class FileDownloadService {
     return match?.[1]?.trim() ?? null;
   }
 
-  private buildParams(params?: Record<string, string | number | boolean>): HttpParams | undefined {
+  private buildParams(params?: Record<string, string | number | boolean | null | undefined>): HttpParams | undefined {
     if (!params) return undefined;
 
     let httpParams = new HttpParams();
     Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === '') return;
       httpParams = httpParams.set(key, String(value));
     });
     return httpParams;

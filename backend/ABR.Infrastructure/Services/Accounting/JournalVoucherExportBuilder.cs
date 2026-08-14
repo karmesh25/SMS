@@ -65,6 +65,8 @@ internal static class JournalVoucherExportBuilder
 
     public static byte[] BuildPdf(IReadOnlyList<JournalVoucherExportRow> rows, string siteName, DateOnly? dateFrom, DateOnly? dateTo)
     {
+        QuestPDF.Settings.License = LicenseType.Community;
+
         var document = Document.Create(container =>
         {
             container.Page(page =>

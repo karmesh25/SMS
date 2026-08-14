@@ -12,11 +12,14 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { catchError, EMPTY, filter, finalize, switchMap, tap } from 'rxjs';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { ModuleSubnavComponent } from '../../shared/components/module-subnav/module-subnav.component';
 import { HasPermissionDirective } from '../../shared/directives/has-permission.directive';
 import { IndianCurrencyPipe } from '../../shared/pipes/indian-currency.pipe';
 import { SelectOption } from '../../shared/components/searchable-select/searchable-select.component';
+import { ACCOUNTING_NAV_ITEMS } from '../../shared/nav/module-nav-items';
 import { AuthService } from '../../core/services/auth.service';
 import { DailyEntryService, ProfitSummary } from '../../core/services/daily-entry.service';
+import { FileDownloadOutcome, FileDownloadService } from '../../core/services/file-download.service';
 import { MasterDataService } from '../../core/services/master-data.service';
 import { SiteContextService } from '../../core/services/site-context.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -42,6 +45,7 @@ interface SubLedger { id: string; ledgerName: string; flatNo?: string; }
     MatProgressBarModule,
     MatSelectModule,
     PageHeaderComponent,
+    ModuleSubnavComponent,
     HasPermissionDirective,
     IndianCurrencyPipe,
     VyajPartySidebarComponent,
@@ -58,7 +62,10 @@ export class VyajKhataComponent {
   private readonly siteContext = inject(SiteContextService);
   private readonly toast = inject(ToastService);
   private readonly authService = inject(AuthService);
+  private readonly fileDownloads = inject(FileDownloadService);
   private readonly breakpointObserver = inject(BreakpointObserver);
+
+  readonly accountingNav = ACCOUNTING_NAV_ITEMS;
 
   readonly isTabletDown = toSignal(
     this.breakpointObserver.observe('(max-width: 959px)').pipe(map((r) => r.matches)),
@@ -79,6 +86,7 @@ export class VyajKhataComponent {
   readonly subLedgers = signal<SubLedger[]>([]);
 
   readonly readOnly = computed(() => !this.authService.hasPermission('vyaj', 'manage'));
+  readonly hasActiveSite = computed(() => !!this.siteContext.activeSiteId());
 
   readonly siteVyajDue = computed(() => this.parties().reduce((sum, p) => sum + (p.vyajDue || 0), 0));
   readonly sitePrincipalDue = computed(() => this.parties().reduce((sum, p) => sum + (p.principalDue || 0), 0));
@@ -191,6 +199,35 @@ export class VyajKhataComponent {
     this.loadParties$(siteId).subscribe();
     const partyId = this.selectedPartyId();
     if (partyId) this.loadPartyDetail$(partyId).subscribe();
+  }
+
+  exportExcel(): void {
+    const siteId = this.siteContext.activeSiteId();
+    if (!siteId) return;
+    this.vyajService.exportExcel(siteId).subscribe({
+      next: (outcome) => this.handleDownload(outcome, `vyaj-khata-${new Date().toISOString().slice(0, 10)}.xlsx`),
+      error: (err) => void this.fileDownloads.resolveErrorMessage(err).then((msg) => this.toast.error(msg))
+    });
+  }
+
+  exportPdf(): void {
+    const siteId = this.siteContext.activeSiteId();
+    if (!siteId) return;
+    this.vyajService.exportPdf(siteId).subscribe({
+      next: (outcome) => this.handleDownload(outcome, `vyaj-khata-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: (err) => void this.fileDownloads.resolveErrorMessage(err).then((msg) => this.toast.error(msg))
+    });
+  }
+
+  private handleDownload(outcome: FileDownloadOutcome, fallbackFilename: string): void {
+    if (outcome.mode === 'pendrive') {
+      this.toast.success(outcome.message ?? `Saved to pendrive: ${outcome.savedPath ?? fallbackFilename}`);
+      return;
+    }
+    if (outcome.blob) {
+      this.fileDownloads.saveToBrowser(outcome.blob, outcome.filename ?? fallbackFilename);
+      this.toast.success('Vyaj export downloaded');
+    }
   }
 
   selectParty(partyId: string): void {

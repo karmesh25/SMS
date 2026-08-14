@@ -156,7 +156,17 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
     .file-input { display: none; }
     .profit { font-weight: 700; color: var(--abr-success); font-size: 1.1rem; }
     .profit.negative { color: var(--abr-danger); }
-    .type-toggle { grid-column: 1 / -1; width: 100%; }
+    .type-toggle {
+      grid-column: 1 / -1;
+      width: 100%;
+      display: flex;
+    }
+    .type-toggle mat-button-toggle { flex: 1 1 50%; text-align: center; }
+    ::ng-deep .type-toggle .mat-button-toggle-button { width: 100%; }
+    ::ng-deep .type-toggle .mat-button-toggle-label-content {
+      width: 100%;
+      justify-content: center;
+    }
     .entry-table-tabs {
       display: flex;
       width: 100%;
@@ -175,16 +185,10 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
     .aavak-title { color: var(--abr-success); }
     .javak-title { color: var(--abr-danger); }
     table { width: 100%; min-width: 520px; }
+    .abr-table .mat-column-entryDate { white-space: nowrap; }
     @media (max-width: 599px) {
       .header-actions { width: 100%; }
       .header-actions button { flex: 1 1 calc(50% - 0.25rem); min-width: 140px; }
-      .type-toggle {
-        display: flex;
-        flex-direction: column;
-      }
-      .type-toggle mat-button-toggle {
-        flex: 1 1 auto;
-      }
     }
   `]
 })

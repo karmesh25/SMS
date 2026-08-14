@@ -38,6 +38,10 @@ public class CreateVyajEntryDtoValidator : AbstractValidator<CreateVyajEntryDto>
       .Must(p => p is null || AllowedPeriods.Contains(p.Value))
       .WithMessage("Rate period must be 3, 6, or 9 months.");
     RuleFor(x => x.EmiAmount).GreaterThan(0).When(x => x.EmiAmount.HasValue);
+    RuleFor(x => x.EmiAmount)
+      .LessThan(x => x.Principal)
+      .When(x => x.EmiAmount.HasValue)
+      .WithMessage("First EMI must be less than principal.");
     RuleFor(x => x.StartDate).NotEmpty();
   }
 }

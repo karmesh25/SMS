@@ -11,6 +11,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { ModuleSubnavComponent } from '../../../shared/components/module-subnav/module-subnav.component';
 import { SearchableSelectComponent, SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
+import { DateFieldComponent } from '../../../shared/components/date-field/date-field.component';
 import { ACCOUNTING_NAV_ITEMS } from '../../../shared/nav/module-nav-items';
 import { MasterDataService } from '../../../core/services/master-data.service';
 import { SiteContextService } from '../../../core/services/site-context.service';
@@ -38,45 +39,34 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
     PageHeaderComponent,
     ModuleSubnavComponent,
     SearchableSelectComponent,
+    DateFieldComponent,
     AppDatePipe,
     IndianCurrencyPipe
   ],
   template: `
-    <div class="header-row">
-      <app-page-header title="Journal Voucher" subtitle="Balanced debit/credit voucher entries"></app-page-header>
-      <div class="header-actions">
-        <mat-form-field appearance="outline" class="export-date">
-          <mat-label>From</mat-label>
-          <input matInput type="date" [formControl]="exportFrom" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="export-date">
-          <mat-label>To</mat-label>
-          <input matInput type="date" [formControl]="exportTo" />
-        </mat-form-field>
-        <button mat-stroked-button (click)="exportExcel()" [disabled]="!siteId">Excel</button>
-        <button mat-stroked-button (click)="exportPdf()" [disabled]="!siteId">PDF</button>
-      </div>
-    </div>
+    <app-page-header title="Journal Voucher" subtitle="Balanced debit/credit voucher entries">
+      <app-date-field label="From" [formControl]="exportFrom" [compact]="true" />
+      <app-date-field label="To" [formControl]="exportTo" [compact]="true" />
+      <button mat-stroked-button type="button" (click)="exportExcel()" [disabled]="!siteId">Excel</button>
+      <button mat-stroked-button type="button" (click)="exportPdf()" [disabled]="!siteId">PDF</button>
+    </app-page-header>
 
     <app-module-subnav [items]="accountingNav" />
 
     <section class="abr-panel">
       <h2 class="abr-panel__title"><mat-icon>article</mat-icon>Voucher Details</h2>
       <form [formGroup]="form" class="voucher-form" (ngSubmit)="save()">
-      <div class="form-head abr-form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Voucher Date</mat-label>
-          <input matInput type="date" formControlName="voucherDate" />
-        </mat-form-field>
+      <div class="form-head">
+        <app-date-field label="Voucher Date" formControlName="voucherDate" />
         <mat-form-field appearance="outline">
           <mat-label>Voucher No</mat-label>
           <input matInput [value]="selectedVoucherNo()" readonly />
         </mat-form-field>
-        <mat-form-field appearance="outline" class="narration">
+        <mat-form-field appearance="outline" class="debit-narration">
           <mat-label>Debit Narration</mat-label>
           <input matInput formControlName="debitNarration" maxlength="500" />
         </mat-form-field>
-        <mat-form-field appearance="outline" class="narration">
+        <mat-form-field appearance="outline" class="credit-narration">
           <mat-label>Credit Narration</mat-label>
           <input matInput formControlName="creditNarration" maxlength="500" />
         </mat-form-field>
@@ -179,12 +169,16 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
     </section>
   `,
   styles: [`
-    .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-    .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-    .export-date { width: 150px; }
     .voucher-form { margin-top: 1rem; }
-    .form-head { margin-bottom: 1rem; }
-    .narration { grid-column: span 2; }
+    .form-head {
+      display: grid;
+      grid-template-columns: minmax(160px, 200px) minmax(160px, 200px) 1fr;
+      gap: var(--abr-space-md, 1rem);
+      align-items: start;
+      margin-bottom: 1rem;
+    }
+    .debit-narration { grid-column: 3; }
+    .credit-narration { grid-column: 1 / -1; }
     .line-table table { width: 100%; min-width: 900px; }
     .line-actions { margin-top: 0.5rem; }
     .totals { display: flex; gap: 1.5rem; font-weight: 600; margin-top: 1rem; }
@@ -192,6 +186,13 @@ interface SubLedger { id: string; ledgerName: string; mainLedgerId: string; main
     .form-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
     .recent-list { margin-top: 1.5rem; }
     .recent-list table { width: 100%; min-width: 960px; }
+    @media (max-width: 959px) {
+      .form-head { grid-template-columns: 1fr 1fr; }
+      .debit-narration, .credit-narration { grid-column: 1 / -1; }
+    }
+    @media (max-width: 599px) {
+      .form-head { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class JournalVoucherComponent {
@@ -396,21 +397,25 @@ export class JournalVoucherComponent {
   exportExcel(): void {
     if (!this.siteId) return;
     this.jvService.exportLedgerExcel(this.siteId, this.exportParams()).subscribe({
-      next: (outcome) => this.handleDownload(outcome, `journal-voucher-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`)
+      next: (outcome) => this.handleDownload(outcome, `journal-voucher-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`),
+      error: (err) => void this.fileDownloads.resolveErrorMessage(err).then((msg) => this.toast.error(msg))
     });
   }
 
   exportPdf(): void {
     if (!this.siteId) return;
     this.jvService.exportLedgerPdf(this.siteId, this.exportParams()).subscribe({
-      next: (outcome) => this.handleDownload(outcome, `journal-voucher-ledger-${new Date().toISOString().slice(0, 10)}.pdf`)
+      next: (outcome) => this.handleDownload(outcome, `journal-voucher-ledger-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: (err) => void this.fileDownloads.resolveErrorMessage(err).then((msg) => this.toast.error(msg))
     });
   }
 
   private exportParams(): { dateFrom?: string; dateTo?: string } {
+    const dateFrom = this.exportFrom.value?.trim();
+    const dateTo = this.exportTo.value?.trim();
     return {
-      dateFrom: this.exportFrom.value || undefined,
-      dateTo: this.exportTo.value || undefined
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {})
     };
   }
 

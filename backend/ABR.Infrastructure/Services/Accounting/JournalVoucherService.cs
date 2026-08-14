@@ -139,7 +139,7 @@ public sealed class JournalVoucherService : IJournalVoucherService
 
     public async Task<DailyEntryExcelFileDto> ExportLedgerExcelAsync(JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken = default)
     {
-        var siteName = await _context.Sites.Where(s => s.Id == request.SiteId).Select(s => s.SiteName).FirstAsync(cancellationToken);
+        var siteName = await ResolveSiteNameAsync(request.SiteId, cancellationToken);
         var rows = await QueryExportRows(request, cancellationToken);
         var content = JournalVoucherExportBuilder.BuildExcel(rows, siteName, request.DateFrom, request.DateTo);
         return new DailyEntryExcelFileDto
@@ -151,7 +151,7 @@ public sealed class JournalVoucherService : IJournalVoucherService
 
     public async Task<DailyEntryExcelFileDto> ExportLedgerPdfAsync(JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken = default)
     {
-        var siteName = await _context.Sites.Where(s => s.Id == request.SiteId).Select(s => s.SiteName).FirstAsync(cancellationToken);
+        var siteName = await ResolveSiteNameAsync(request.SiteId, cancellationToken);
         var rows = await QueryExportRows(request, cancellationToken);
         var content = JournalVoucherExportBuilder.BuildPdf(rows, siteName, request.DateFrom, request.DateTo);
         return new DailyEntryExcelFileDto
@@ -160,6 +160,20 @@ public sealed class JournalVoucherService : IJournalVoucherService
             FileName = $"journal-voucher-ledger-{DateOnly.FromDateTime(DateTime.UtcNow):yyyy-MM-dd}.pdf",
             ContentType = "application/pdf"
         };
+    }
+
+    private async Task<string> ResolveSiteNameAsync(Guid siteId, CancellationToken cancellationToken)
+    {
+        var siteName = await _context.Sites
+            .AsNoTracking()
+            .Where(s => s.Id == siteId)
+            .Select(s => s.SiteName)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(siteName))
+            throw new InvalidOperationException("Site not found.");
+
+        return siteName;
     }
 
     private IQueryable<JournalVoucher> BaseQuery() =>
@@ -246,7 +260,7 @@ public sealed class JournalVoucherService : IJournalVoucherService
 
     private async Task<IReadOnlyList<JournalVoucherExportRow>> QueryExportRows(JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken)
     {
-        var q = BaseQuery().Where(v => v.SiteId == request.SiteId && !v.IsDeleted);
+        var q = BaseQuery().AsNoTracking().Where(v => v.SiteId == request.SiteId && !v.IsDeleted);
         if (request.DateFrom.HasValue)
             q = q.Where(v => v.VoucherDate >= request.DateFrom.Value);
         if (request.DateTo.HasValue)
@@ -263,8 +277,8 @@ public sealed class JournalVoucherService : IJournalVoucherService
             LineNo = l.LineNo,
             EntryType = l.EntryType,
             Amount = l.Amount,
-            MainLedgerName = l.SubLedger.MainLedger.LedgerName,
-            SubLedgerName = l.SubLedger.LedgerName
+            MainLedgerName = l.SubLedger?.MainLedger?.LedgerName ?? string.Empty,
+            SubLedgerName = l.SubLedger?.LedgerName ?? string.Empty
         })).ToList();
     }
 }

@@ -10,19 +10,75 @@ public static class VyajCalculationService
         DateOnly asOfDate,
         int? ratePeriodMonths = null)
     {
+        return CalculateReducingGrossVyaj(
+            principal,
+            ratePercent,
+            rateBasis,
+            startDate,
+            asOfDate,
+            Array.Empty<(decimal Amount, DateOnly PaymentDate)>(),
+            ratePeriodMonths);
+    }
+
+    /// <summary>
+    /// Accrues vyaj on reducing principal: principal payments create time segments.
+    /// Month-period caps (3/6/9) are measured from the original <paramref name="startDate"/>.
+    /// Flat rate applies once to outstanding principal as of <paramref name="asOfDate"/>.
+    /// </summary>
+    public static decimal CalculateReducingGrossVyaj(
+        decimal principal,
+        decimal ratePercent,
+        string rateBasis,
+        DateOnly startDate,
+        DateOnly asOfDate,
+        IEnumerable<(decimal Amount, DateOnly PaymentDate)> principalPayments,
+        int? ratePeriodMonths = null)
+    {
         if (principal <= 0 || ratePercent <= 0)
             return 0;
 
+        var basis = rateBasis?.ToLowerInvariant() ?? "month";
         var rate = ratePercent / 100m;
 
-        return rateBasis switch
+        var paymentsByDate = principalPayments
+            .Where(p => p.Amount > 0 && p.PaymentDate <= asOfDate)
+            .GroupBy(p => p.PaymentDate)
+            .OrderBy(g => g.Key)
+            .Select(g => (Date: g.Key, Amount: g.Sum(x => x.Amount)))
+            .ToList();
+
+        if (string.Equals(basis, "flat", StringComparison.Ordinal))
         {
-            "flat" => RoundMoney(principal * rate),
-            "month" => RoundMoney(principal * rate * ResolveMonthFactor(startDate, asOfDate, ratePeriodMonths)),
-            "year" => RoundMoney(principal * rate * DaysBetween(startDate, asOfDate) / 365m),
-            "day" => RoundMoney(principal * rate * DaysBetween(startDate, asOfDate)),
-            _ => RoundMoney(principal * rate * ResolveMonthFactor(startDate, asOfDate, ratePeriodMonths))
-        };
+            var outstanding = principal;
+            foreach (var (_, amount) in paymentsByDate)
+                outstanding = Math.Max(0, outstanding - amount);
+            return RoundMoney(outstanding * rate);
+        }
+
+        decimal gross = 0;
+        var outstandingPrincipal = principal;
+        var cursor = startDate;
+
+        foreach (var (payDate, amount) in paymentsByDate)
+        {
+            if (payDate > cursor)
+            {
+                gross += AccrueSegment(
+                    outstandingPrincipal, rate, basis, startDate, cursor, payDate, ratePeriodMonths);
+            }
+
+            outstandingPrincipal = Math.Max(0, outstandingPrincipal - amount);
+            if (payDate > cursor)
+                cursor = payDate;
+        }
+
+        if (asOfDate > cursor)
+        {
+            gross += AccrueSegment(
+                outstandingPrincipal, rate, basis, startDate, cursor, asOfDate, ratePeriodMonths);
+        }
+
+        return RoundMoney(gross);
     }
 
     public static VyajEntryTotals CalculateEntryTotals(
@@ -35,12 +91,33 @@ public static class VyajCalculationService
         int? ratePeriodMonths = null)
     {
         var asOf = asOfDate ?? DateOnly.FromDateTime(DateTime.Now);
-        var grossVyaj = CalculateGrossVyaj(principal, ratePercent, rateBasis, startDate, asOf, ratePeriodMonths);
+        var dated = payments.Select(p => (p.Amount, p.PaymentType, PaymentDate: startDate));
+        return CalculateEntryTotals(principal, ratePercent, rateBasis, startDate, dated, asOf, ratePeriodMonths);
+    }
+
+    public static VyajEntryTotals CalculateEntryTotals(
+        decimal principal,
+        decimal ratePercent,
+        string rateBasis,
+        DateOnly startDate,
+        IEnumerable<(decimal Amount, string PaymentType, DateOnly PaymentDate)> payments,
+        DateOnly? asOfDate = null,
+        int? ratePeriodMonths = null)
+    {
+        var asOf = asOfDate ?? DateOnly.FromDateTime(DateTime.Now);
+        var paymentList = payments.ToList();
+
+        var principalPays = paymentList
+            .Where(p => string.Equals(p.PaymentType, "principal", StringComparison.OrdinalIgnoreCase))
+            .Select(p => (p.Amount, p.PaymentDate));
+
+        var grossVyaj = CalculateReducingGrossVyaj(
+            principal, ratePercent, rateBasis, startDate, asOf, principalPays, ratePeriodMonths);
 
         decimal interestPaid = 0;
         decimal principalPaid = 0;
 
-        foreach (var (amount, paymentType) in payments)
+        foreach (var (amount, paymentType, _) in paymentList)
         {
             if (string.Equals(paymentType, "principal", StringComparison.OrdinalIgnoreCase))
                 principalPaid += amount;
@@ -55,6 +132,33 @@ public static class VyajCalculationService
             PrincipalPaid = RoundMoney(principalPaid),
             VyajDue = RoundMoney(Math.Max(0, grossVyaj - interestPaid)),
             PrincipalDue = RoundMoney(Math.Max(0, principal - principalPaid))
+        };
+    }
+
+    private static decimal AccrueSegment(
+        decimal outstandingPrincipal,
+        decimal rate,
+        string rateBasis,
+        DateOnly entryStart,
+        DateOnly segmentStart,
+        DateOnly segmentEnd,
+        int? ratePeriodMonths)
+    {
+        if (outstandingPrincipal <= 0 || segmentEnd <= segmentStart)
+            return 0;
+
+        return rateBasis switch
+        {
+            "month" => outstandingPrincipal * rate *
+                       Math.Max(0,
+                           ResolveMonthFactor(entryStart, segmentEnd, ratePeriodMonths) -
+                           ResolveMonthFactor(entryStart, segmentStart, ratePeriodMonths)),
+            "year" => outstandingPrincipal * rate * DaysBetween(segmentStart, segmentEnd) / 365m,
+            "day" => outstandingPrincipal * rate * DaysBetween(segmentStart, segmentEnd),
+            _ => outstandingPrincipal * rate *
+                 Math.Max(0,
+                     ResolveMonthFactor(entryStart, segmentEnd, ratePeriodMonths) -
+                     ResolveMonthFactor(entryStart, segmentStart, ratePeriodMonths))
         };
     }
 

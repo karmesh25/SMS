@@ -145,40 +145,6 @@ internal static class ReportExportPdfBuilder
             });
 
             col.Item().PaddingTop(10).Text($"{(data.Profit >= 0 ? "Net Profit" : "Net Loss")}: {ReportExportHelpers.FormatIndianAmount(Math.Abs(data.Profit))}").Bold();
-
-            col.Item().PaddingTop(12).PaddingBottom(4).Text("Vyaj Khata").Bold().FontSize(10);
-            col.Item().Table(table =>
-            {
-                table.ColumnsDefinition(cols =>
-                {
-                    cols.RelativeColumn(2);
-                    cols.RelativeColumn(1.4f);
-                    cols.RelativeColumn(1.4f);
-                    cols.RelativeColumn(1);
-                    cols.RelativeColumn(1);
-                    cols.RelativeColumn(1);
-                });
-                table.Header(header =>
-                {
-                    HeaderCell(header, "Party");
-                    HeaderCell(header, "Main");
-                    HeaderCell(header, "Sub");
-                    HeaderCell(header, "Principal");
-                    HeaderCell(header, "Vyaj Due");
-                    HeaderCell(header, "Pending");
-                });
-                foreach (var item in data.VyajItems)
-                {
-                    DataCell(table, item.PartyName);
-                    DataCell(table, item.MainLedgerName ?? string.Empty);
-                    DataCell(table, item.SubLedgerName ?? string.Empty);
-                    DataCell(table, ReportExportHelpers.FormatIndianAmount(item.PrincipalDue));
-                    DataCell(table, ReportExportHelpers.FormatIndianAmount(item.VyajDue));
-                    DataCell(table, ReportExportHelpers.FormatIndianAmount(item.TotalPending));
-                }
-            });
-            col.Item().PaddingTop(4).Text($"Total Vyaj Due: {ReportExportHelpers.FormatIndianAmount(data.TotalVyajDue)}").Bold();
-            col.Item().Text($"Total Principal Due: {ReportExportHelpers.FormatIndianAmount(data.TotalVyajPrincipalDue)}").Bold();
         });
     }
 

@@ -54,9 +54,9 @@ public class VyajCalculationServiceTests
     }
 
     [Fact]
-    public void EntryTotals_SubtractsInterestPayments()
+    public void EntryTotals_SubtractsInterestPayments_WithoutPrincipalReduction()
     {
-        var payments = new[] { (500m, "interest"), (200m, "principal") };
+        var payments = new[] { (500m, "interest", new DateOnly(2024, 2, 1)) };
         var totals = VyajCalculationService.CalculateEntryTotals(
             100_000, 2, "month",
             new DateOnly(2024, 1, 1),
@@ -65,15 +65,69 @@ public class VyajCalculationServiceTests
 
         Assert.Equal(6_000, totals.GrossVyaj);
         Assert.Equal(500, totals.InterestPaid);
-        Assert.Equal(200, totals.PrincipalPaid);
+        Assert.Equal(0, totals.PrincipalPaid);
         Assert.Equal(5_500, totals.VyajDue);
-        Assert.Equal(99_800, totals.PrincipalDue);
+        Assert.Equal(100_000, totals.PrincipalDue);
+    }
+
+    [Fact]
+    public void ReducingBalance_FirstEmiOnStart_AccruesOnRemaining()
+    {
+        // 50L principal, first EMI 5L on start → remaining 45L @ 2%/month for 3 months
+        var payments = new[] { (500_000m, "principal", new DateOnly(2024, 1, 1)) };
+        var totals = VyajCalculationService.CalculateEntryTotals(
+            5_000_000, 2, "month",
+            new DateOnly(2024, 1, 1),
+            payments,
+            new DateOnly(2024, 4, 1),
+            ratePeriodMonths: 3);
+
+        Assert.Equal(270_000, totals.GrossVyaj); // 45L * 2% * 3
+        Assert.Equal(500_000, totals.PrincipalPaid);
+        Assert.Equal(4_500_000, totals.PrincipalDue);
+        Assert.Equal(270_000, totals.VyajDue);
+    }
+
+    [Fact]
+    public void ReducingBalance_PrincipalPaidMidPeriod_SegmentsInterest()
+    {
+        // 100k @ 2%/month: Jan1–Feb1 on 100k (1 month = 2000), then pay 20k, Feb1–Apr1 on 80k (2 months = 3200)
+        var payments = new[] { (20_000m, "principal", new DateOnly(2024, 2, 1)) };
+        var totals = VyajCalculationService.CalculateEntryTotals(
+            100_000, 2, "month",
+            new DateOnly(2024, 1, 1),
+            payments,
+            new DateOnly(2024, 4, 1));
+
+        Assert.Equal(5_200, totals.GrossVyaj);
+        Assert.Equal(80_000, totals.PrincipalDue);
+    }
+
+    [Fact]
+    public void MonthPeriodCap_StillRespectedWithReducingBalance()
+    {
+        var payments = new[] { (500_000m, "principal", new DateOnly(2024, 1, 1)) };
+        var at3Months = VyajCalculationService.CalculateEntryTotals(
+            5_000_000, 2, "month",
+            new DateOnly(2024, 1, 1),
+            payments,
+            new DateOnly(2024, 4, 1),
+            ratePeriodMonths: 3);
+        var at6Months = VyajCalculationService.CalculateEntryTotals(
+            5_000_000, 2, "month",
+            new DateOnly(2024, 1, 1),
+            payments,
+            new DateOnly(2024, 7, 1),
+            ratePeriodMonths: 3);
+
+        Assert.Equal(at3Months.GrossVyaj, at6Months.GrossVyaj);
+        Assert.Equal(270_000, at3Months.GrossVyaj);
     }
 
     [Fact]
     public void EntryTotals_VyajDueNeverNegative()
     {
-        var payments = new[] { (10_000m, "interest") };
+        var payments = new[] { (10_000m, "interest", new DateOnly(2024, 1, 1)) };
         var totals = VyajCalculationService.CalculateEntryTotals(
             50_000, 1, "flat",
             new DateOnly(2024, 1, 1),

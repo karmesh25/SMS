@@ -26,16 +26,6 @@ interface BalanceSheetData {
   javakItems: LedgerItem[];
   totalJavak: number;
   profit: number;
-  vyajItems: {
-    partyName: string;
-    mainLedgerName?: string;
-    subLedgerName?: string;
-    principalDue: number;
-    vyajDue: number;
-    totalPending: number;
-  }[];
-  totalVyajDue: number;
-  totalVyajPrincipalDue: number;
 }
 
 @Component({
@@ -95,37 +85,6 @@ interface BalanceSheetData {
         <p [class]="data.profit >= 0 ? 'profit-positive' : 'profit-negative'">
           {{ data.profit >= 0 ? 'Net Profit' : 'Net Loss' }}: Rs. {{ data.profit | indianCurrency }}
         </p>
-        <section class="vyaj-section">
-          <h3>Vyaj Khata</h3>
-          <div class="abr-table-card">
-            <table>
-              <tr>
-                <th>Party</th>
-                <th>Main Ledger</th>
-                <th>Sub Ledger</th>
-                <th>Principal Due</th>
-                <th>Vyaj Due</th>
-                <th>Total Pending</th>
-              </tr>
-              @for (item of data.vyajItems; track item.partyName) {
-                <tr>
-                  <td>{{ item.partyName }}</td>
-                  <td>{{ item.mainLedgerName || '—' }}</td>
-                  <td>{{ item.subLedgerName || '—' }}</td>
-                  <td>{{ item.principalDue | indianCurrency }}</td>
-                  <td>{{ item.vyajDue | indianCurrency }}</td>
-                  <td>{{ item.totalPending | indianCurrency }}</td>
-                </tr>
-              }
-              <tr>
-                <th colspan="3">Totals</th>
-                <th>{{ data.totalVyajPrincipalDue | indianCurrency }}</th>
-                <th>{{ data.totalVyajDue | indianCurrency }}</th>
-                <th>{{ (data.totalVyajPrincipalDue + data.totalVyajDue) | indianCurrency }}</th>
-              </tr>
-            </table>
-          </div>
-        </section>
       }
     </div>
   `,
@@ -134,8 +93,6 @@ interface BalanceSheetData {
     .split { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
     @media (max-width: 959px) { .split { grid-template-columns: 1fr; } }
     h3 { padding: 0.5rem; margin: 0 0 0.5rem; }
-    .vyaj-section { margin-top: 1.5rem; }
-    .vyaj-section table { width: 100%; min-width: 720px; }
   `]
 })
 export class BalanceSheetComponent implements OnInit {

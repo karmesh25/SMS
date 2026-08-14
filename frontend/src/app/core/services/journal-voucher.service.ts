@@ -63,10 +63,18 @@ export class JournalVoucherService {
   }
 
   exportLedgerExcel(siteId: string, params?: { dateFrom?: string; dateTo?: string }) {
-    return this.downloads.download('/journal-vouchers/export/ledger-excel', { siteId, ...params });
+    return this.downloads.download('/journal-vouchers/export/ledger-excel', {
+      siteId,
+      dateFrom: params?.dateFrom,
+      dateTo: params?.dateTo
+    });
   }
 
   exportLedgerPdf(siteId: string, params?: { dateFrom?: string; dateTo?: string }) {
-    return this.downloads.download('/journal-vouchers/export/ledger-pdf', { siteId, ...params });
+    return this.downloads.download('/journal-vouchers/export/ledger-pdf', {
+      siteId,
+      dateFrom: params?.dateFrom,
+      dateTo: params?.dateTo
+    });
   }
 }

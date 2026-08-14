@@ -126,7 +126,7 @@ export class AppComponent {
       items: [
         { label: 'Daily Entry', route: '/accounting', icon: 'receipt', moduleKey: 'daily_entry', exact: true },
         { label: 'Dastavej', route: '/accounting/dastavej', icon: 'description', moduleKey: 'dastavej' },
-        { label: 'Vyaj Khata', route: '/vyaj', icon: 'menu_book', moduleKey: 'vyaj', exact: true },
+        { label: 'Vyaj Khata', route: '/accounting/vyaj', icon: 'menu_book', moduleKey: 'vyaj' },
         { label: 'Journal Voucher', route: '/accounting/journal-voucher', icon: 'article', moduleKey: 'journal_voucher' }
       ]
     },

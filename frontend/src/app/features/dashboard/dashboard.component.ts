@@ -240,9 +240,9 @@ import { AppDatePipe } from '../../shared/pipes/app-date.pipe';
     }
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 1.15rem;
       margin-bottom: 1.5rem;
+      grid-template-columns: 1fr;
     }
     .kpi-card {
       position: relative;
@@ -285,11 +285,18 @@ import { AppDatePipe } from '../../shared/pipes/app-date.pipe';
     .table-wrap table { min-width: 480px; }
     @media (max-width: 599px) {
       .dashboard-header { flex-direction: column; align-items: stretch; }
-      .kpi-grid { grid-template-columns: 1fr; }
       .tables-grid { grid-template-columns: 1fr; }
     }
-    @media (min-width: 600px) and (max-width: 959px) {
+    @media (min-width: 600px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 960px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .kpi-grid > .kpi-card:nth-child(5) { grid-column: span 2; }
+    }
+    @media (min-width: 1280px) {
+      .kpi-grid { grid-template-columns: repeat(5, 1fr); }
+      .kpi-grid > .kpi-card:nth-child(5) { grid-column: auto; }
     }
     .type-badge {
       display: inline-block;

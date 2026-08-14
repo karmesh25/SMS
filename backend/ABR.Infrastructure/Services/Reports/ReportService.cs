@@ -9,12 +9,10 @@ namespace ABR.Infrastructure.Services.Reports;
 public sealed class ReportService : IReportService
 {
     private readonly AbrDbContext _context;
-    private readonly IVyajService _vyajService;
 
-    public ReportService(AbrDbContext context, IVyajService vyajService)
+    public ReportService(AbrDbContext context)
     {
         _context = context;
-        _vyajService = vyajService;
     }
 
     public async Task<PagedReportDto<AllEntryReportRowDto>> GetAllEntryAsync(AllEntryReportFilterDto filter, CancellationToken cancellationToken = default)
@@ -127,21 +125,6 @@ public sealed class ReportService : IReportService
         var totalAavak = aavakItems.Sum(x => x.TotalAmount);
         var totalJavak = javakItems.Sum(x => x.TotalAmount);
 
-        var vyajParties = await _vyajService.GetPartiesAsync(filter.SiteId, cancellationToken);
-        var vyajItems = vyajParties
-            .Where(p => p.VyajDue > 0 || p.PrincipalDue > 0)
-            .OrderBy(p => p.Name)
-            .Select(p => new BalanceSheetVyajItemDto
-            {
-                PartyName = p.Name,
-                MainLedgerName = p.MainLedgerName,
-                SubLedgerName = p.SubLedgerName,
-                PrincipalDue = p.PrincipalDue,
-                VyajDue = p.VyajDue,
-                TotalPending = p.PrincipalDue + p.VyajDue
-            })
-            .ToList();
-
         return new BalanceSheetReportDto
         {
             SiteName = site.SiteName,
@@ -151,10 +134,7 @@ public sealed class ReportService : IReportService
             TotalAavak = totalAavak,
             JavakItems = javakItems,
             TotalJavak = totalJavak,
-            Profit = totalAavak - totalJavak,
-            VyajItems = vyajItems,
-            TotalVyajDue = vyajItems.Sum(x => x.VyajDue),
-            TotalVyajPrincipalDue = vyajItems.Sum(x => x.PrincipalDue)
+            Profit = totalAavak - totalJavak
         };
     }
 

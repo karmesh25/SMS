@@ -25,9 +25,9 @@ import { MatButtonModule } from '@angular/material/button';
     .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: flex-end;
       gap: 1rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
 
     .breadcrumb {
@@ -55,9 +55,17 @@ import { MatButtonModule } from '@angular/material/button';
 
     .actions {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: 0.5rem;
       flex-wrap: wrap;
+      padding-top: 0.15rem;
+    }
+
+    .actions ::ng-deep button.mat-mdc-outlined-button,
+    .actions ::ng-deep button.mat-mdc-unelevated-button,
+    .actions ::ng-deep button.mat-mdc-button {
+      height: 40px;
+      margin-bottom: 4px;
     }
 
     @media (max-width: 959px) {

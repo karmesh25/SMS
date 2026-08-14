@@ -9,7 +9,7 @@ import { BreadcrumbService } from '../../../core/services/breadcrumb.service';
   template: `
     @if (breadcrumb.items().length > 0) {
       <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-        @for (item of breadcrumb.items(); track item.label; let last = $last) {
+        @for (item of breadcrumb.items(); track item.url + '|' + item.label; let last = $last) {
           @if (!last && item.url) {
             <a [routerLink]="item.url">{{ item.label }}</a>
           } @else {

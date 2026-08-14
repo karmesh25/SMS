@@ -1,11 +1,18 @@
 <div class="vyaj-page">
-  <div class="vyaj-header">
-    <app-page-header title="Vyaj Khata" subtitle="Interest ledger — parties, entries & payments"></app-page-header>
-    <button mat-stroked-button (click)="refresh()" [disabled]="loading()">
+  <app-page-header title="Vyaj Khata" subtitle="Interest ledger — parties, entries & payments">
+    <button mat-stroked-button type="button" (click)="exportExcel()" [disabled]="!hasActiveSite() || loading()">
+      Excel
+    </button>
+    <button mat-stroked-button type="button" (click)="exportPdf()" [disabled]="!hasActiveSite() || loading()">
+      PDF
+    </button>
+    <button mat-stroked-button type="button" (click)="refresh()" [disabled]="loading()">
       <mat-icon>refresh</mat-icon>
       Refresh
     </button>
-  </div>
+  </app-page-header>
+
+  <app-module-subnav [items]="accountingNav" />
 
   <div class="summary-bar">
     @if (profit(); as p) {

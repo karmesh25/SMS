@@ -40,6 +40,42 @@ public class JournalVoucherController : ControllerBase
         return Ok(ApiResponse<PagedJournalVouchersDto>.Ok(result));
     }
 
+    [HttpGet("export/ledger-excel")]
+    [RequirePermission(AppModules.JournalVoucher, PermissionLevel.View)]
+    public async Task<IActionResult> ExportLedgerExcel([FromQuery] JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken)
+    {
+        if (request.SiteId == Guid.Empty)
+            return BadRequest(new { message = "SiteId is required." });
+
+        try
+        {
+            var file = await _service.ExportLedgerExcelAsync(request, cancellationToken);
+            return await ExportDownloadResults.FromBytesAsync(_exportStorage, file.Content, file.ContentType, file.FileName, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("export/ledger-pdf")]
+    [RequirePermission(AppModules.JournalVoucher, PermissionLevel.View)]
+    public async Task<IActionResult> ExportLedgerPdf([FromQuery] JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken)
+    {
+        if (request.SiteId == Guid.Empty)
+            return BadRequest(new { message = "SiteId is required." });
+
+        try
+        {
+            var file = await _service.ExportLedgerPdfAsync(request, cancellationToken);
+            return await ExportDownloadResults.FromBytesAsync(_exportStorage, file.Content, file.ContentType, file.FileName, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpGet("{id:guid}")]
     [RequirePermission(AppModules.JournalVoucher, PermissionLevel.View)]
     public async Task<ActionResult<ApiResponse<JournalVoucherDto>>> GetById(Guid id, CancellationToken cancellationToken)
@@ -84,28 +120,6 @@ public class JournalVoucherController : ControllerBase
         if (!deleted)
             return NotFound(ApiResponse<object>.Fail("Journal voucher not found."));
         return Ok(ApiResponse<object>.Ok(new { }, "Journal voucher deleted."));
-    }
-
-    [HttpGet("export/ledger-excel")]
-    [RequirePermission(AppModules.JournalVoucher, PermissionLevel.View)]
-    public async Task<IActionResult> ExportLedgerExcel([FromQuery] JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken)
-    {
-        if (request.SiteId == Guid.Empty)
-            return BadRequest(new { message = "SiteId is required." });
-
-        var file = await _service.ExportLedgerExcelAsync(request, cancellationToken);
-        return await ExportDownloadResults.FromBytesAsync(_exportStorage, file.Content, file.ContentType, file.FileName, cancellationToken);
-    }
-
-    [HttpGet("export/ledger-pdf")]
-    [RequirePermission(AppModules.JournalVoucher, PermissionLevel.View)]
-    public async Task<IActionResult> ExportLedgerPdf([FromQuery] JournalVoucherLedgerExportRequestDto request, CancellationToken cancellationToken)
-    {
-        if (request.SiteId == Guid.Empty)
-            return BadRequest(new { message = "SiteId is required." });
-
-        var file = await _service.ExportLedgerPdfAsync(request, cancellationToken);
-        return await ExportDownloadResults.FromBytesAsync(_exportStorage, file.Content, file.ContentType, file.FileName, cancellationToken);
     }
 
     private Guid? GetUserId()

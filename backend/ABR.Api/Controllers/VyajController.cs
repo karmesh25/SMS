@@ -1,4 +1,5 @@
 using ABR.Api.Authorization;
+using ABR.Api.Helpers;
 using ABR.Application.Common;
 using ABR.Application.DTOs.Vyaj;
 using ABR.Application.Interfaces;
@@ -14,6 +15,7 @@ namespace ABR.Api.Controllers;
 public class VyajController : ControllerBase
 {
     private readonly IVyajService _service;
+    private readonly IExportFileStorage _exportStorage;
     private readonly IValidator<CreateVyajPartyDto> _createPartyValidator;
     private readonly IValidator<UpdateVyajPartyDto> _updatePartyValidator;
     private readonly IValidator<CreateVyajEntryDto> _createEntryValidator;
@@ -21,12 +23,14 @@ public class VyajController : ControllerBase
 
     public VyajController(
         IVyajService service,
+        IExportFileStorage exportStorage,
         IValidator<CreateVyajPartyDto> createPartyValidator,
         IValidator<UpdateVyajPartyDto> updatePartyValidator,
         IValidator<CreateVyajEntryDto> createEntryValidator,
         IValidator<CreateVyajPaymentDto> createPaymentValidator)
     {
         _service = service;
+        _exportStorage = exportStorage;
         _createPartyValidator = createPartyValidator;
         _updatePartyValidator = updatePartyValidator;
         _createEntryValidator = createEntryValidator;
@@ -42,6 +46,42 @@ public class VyajController : ControllerBase
 
         var result = await _service.GetPartiesAsync(siteId, cancellationToken);
         return Ok(ApiResponse<IReadOnlyList<VyajPartySummaryDto>>.Ok(result));
+    }
+
+    [HttpGet("export/excel")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.View)]
+    public async Task<IActionResult> ExportExcel([FromQuery] Guid siteId, CancellationToken cancellationToken)
+    {
+        if (siteId == Guid.Empty)
+            return BadRequest(new { message = "SiteId is required." });
+
+        try
+        {
+            var file = await _service.ExportExcelAsync(siteId, cancellationToken);
+            return await ExportDownloadResults.FromBytesAsync(_exportStorage, file.Content, file.ContentType, file.FileName, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("export/pdf")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.View)]
+    public async Task<IActionResult> ExportPdf([FromQuery] Guid siteId, CancellationToken cancellationToken)
+    {
+        if (siteId == Guid.Empty)
+            return BadRequest(new { message = "SiteId is required." });
+
+        try
+        {
+            var file = await _service.ExportPdfAsync(siteId, cancellationToken);
+            return await ExportDownloadResults.FromBytesAsync(_exportStorage, file.Content, file.ContentType, file.FileName, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("parties/{id:guid}")]
@@ -128,6 +168,10 @@ public class VyajController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(ApiResponse<VyajEntryDto>.Fail(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<VyajEntryDto>.Fail(ex.Message));
         }
     }
 

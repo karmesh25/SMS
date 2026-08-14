@@ -1,3 +1,4 @@
+using ABR.Application.DTOs.Accounting;
 using ABR.Application.DTOs.Vyaj;
 
 namespace ABR.Application.Interfaces;
@@ -14,4 +15,6 @@ public interface IVyajService
     Task DeleteEntryAsync(Guid entryId, CancellationToken cancellationToken = default);
     Task<VyajPaymentDto> CreatePaymentAsync(CreateVyajPaymentDto dto, CancellationToken cancellationToken = default);
     Task DeletePaymentAsync(Guid paymentId, CancellationToken cancellationToken = default);
+    Task<DailyEntryExcelFileDto> ExportExcelAsync(Guid siteId, CancellationToken cancellationToken = default);
+    Task<DailyEntryExcelFileDto> ExportPdfAsync(Guid siteId, CancellationToken cancellationToken = default);
 }

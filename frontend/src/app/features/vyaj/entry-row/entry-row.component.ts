@@ -9,6 +9,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { IndianAmountDirective } from '../../../shared/directives/indian-amount.directive';
+import { DateFieldComponent } from '../../../shared/components/date-field/date-field.component';
 import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
 import { PAYMENT_TYPE_OPTIONS, VyajEntry } from '../models/vyaj.models';
@@ -27,6 +28,7 @@ import { PAYMENT_TYPE_OPTIONS, VyajEntry } from '../models/vyaj.models';
     MatTooltipModule,
     HasPermissionDirective,
     IndianAmountDirective,
+    DateFieldComponent,
     AppDatePipe,
     IndianCurrencyPipe
   ],

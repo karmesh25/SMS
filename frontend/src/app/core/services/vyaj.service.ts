@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import { FileDownloadOutcome, FileDownloadService } from './file-download.service';
 import {
   CreateVyajEntryRequest,
   CreateVyajPartyRequest,
@@ -15,6 +16,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class VyajService {
   private readonly api = inject(ApiService);
+  private readonly downloads = inject(FileDownloadService);
 
   getParties(siteId: string): Observable<{ success: boolean; data: VyajPartySummary[] }> {
     return this.api.get<VyajPartySummary[]>('/vyaj/parties', { siteId });
@@ -54,5 +56,13 @@ export class VyajService {
 
   deletePayment(paymentId: string): Observable<{ success: boolean }> {
     return this.api.delete(`/vyaj/payments/${paymentId}`);
+  }
+
+  exportExcel(siteId: string): Observable<FileDownloadOutcome> {
+    return this.downloads.download('/vyaj/export/excel', { siteId });
+  }
+
+  exportPdf(siteId: string): Observable<FileDownloadOutcome> {
+    return this.downloads.download('/vyaj/export/pdf', { siteId });
   }
 }

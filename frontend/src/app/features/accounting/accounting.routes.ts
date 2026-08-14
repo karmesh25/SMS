@@ -19,5 +19,11 @@ export const ACCOUNTING_ROUTES: Routes = [
     data: { breadcrumb: 'Journal Voucher' },
     canActivate: [permissionGuard('journal_voucher', 'view')],
     loadComponent: () => import('./journal-voucher/journal-voucher.component').then(m => m.JournalVoucherComponent)
+  },
+  {
+    path: 'vyaj',
+    data: { breadcrumb: 'Vyaj Khata' },
+    canActivate: [permissionGuard('vyaj', 'view')],
+    loadComponent: () => import('../vyaj/vyaj-khata.component').then(m => m.VyajKhataComponent)
   }
 ];
