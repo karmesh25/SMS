@@ -8,10 +8,28 @@
     </div>
 
     <form [formGroup]="form" class="panel-form" (ngSubmit)="submit()">
-      <mat-form-field appearance="outline">
-        <mat-label>Principal</mat-label>
-        <input matInput formControlName="principal" appIndianAmount />
-      </mat-form-field>
+      @if (partyHasOpenEntries() && !principalRequired()) {
+        <p class="continue-hint">
+          Continues on remaining principal
+          @if (suggestedPrincipal(); as sp) {
+            (Rs. {{ sp | indianCurrency }})
+          }
+          — leave principal blank to roll forward (prior open entries close), or enter a top-up amount for an extra loan.
+        </p>
+      }
+
+      @if (showPrincipalField() || partyHasOpenEntries()) {
+        <mat-form-field appearance="outline">
+          <mat-label>
+            @if (partyHasOpenEntries()) {
+              Principal top-up (optional)
+            } @else {
+              Principal
+            }
+          </mat-label>
+          <input matInput formControlName="principal" appIndianAmount />
+        </mat-form-field>
+      }
 
       <mat-form-field appearance="outline">
         <mat-label>First EMI (principal installment)</mat-label>
@@ -27,11 +45,19 @@
       <mat-form-field appearance="outline">
         <mat-label>Rate basis</mat-label>
         <mat-select formControlName="rateBasisUi">
-          @for (opt of rateBasisOptions; track opt.value) {
+          @for (opt of rateBasisOptions(); track opt.value) {
             <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
+
+      @if (showCustomDays()) {
+        <mat-form-field appearance="outline">
+          <mat-label>Custom days</mat-label>
+          <input matInput type="number" min="1" formControlName="customDays" />
+          <mat-hint>Compound interval in days</mat-hint>
+        </mat-form-field>
+      }
 
       <app-date-field label="Start date" formControlName="startDate" />
 

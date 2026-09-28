@@ -1,56 +1,47 @@
 <article class="entry-row" [class.closed]="entry().isClosed">
-  <div class="entry-grid">
-    <div class="cell">
-      <span class="label">Principal</span>
-      <span class="mono">Rs. {{ entry().principal | indianCurrency }}</span>
-    </div>
-    <div class="cell">
-      <span class="label">First EMI</span>
-      <span class="mono">
-        @if (entry().emiAmount) {
-          Rs. {{ entry().emiAmount! | indianCurrency }}
-        } @else {
-          —
-        }
-      </span>
-    </div>
-    <div class="cell">
-      <span class="label">Rate</span>
-      <span>{{ entry().ratePercent }}% / {{ basisLabel(entry().rateBasis, entry().ratePeriodMonths) }}</span>
-    </div>
-    <div class="cell">
-      <span class="label">Since</span>
-      <span>{{ entry().startDate | appDate }}</span>
-    </div>
-    <div class="cell">
-      <span class="label">Vyaj accrued</span>
-      <span class="mono">Rs. {{ entry().grossVyaj | indianCurrency }}</span>
-    </div>
-    <div class="cell">
-      <span class="label">Vyaj paid</span>
-      <span class="mono">Rs. {{ entry().interestPaid | indianCurrency }}</span>
-    </div>
-    <div class="cell due-cell">
-      <span class="label">Vyaj due</span>
-      <span class="mono due" [class.settled]="entry().vyajDue === 0">
-        Rs. {{ entry().vyajDue | indianCurrency }}
-      </span>
-    </div>
-    <div class="cell actions">
-      <mat-slide-toggle
-        [checked]="entry().isClosed"
+  <div class="entry-line">
+    <span class="mono col-principal">
+      Rs. {{ entry().principal | indianCurrency }}
+      @if (entry().principalDue !== entry().principal) {
+        <span class="sub"> ({{ entry().principalDue | indianCurrency }})</span>
+      }
+    </span>
+    <span class="col-rate">{{ entry().ratePercent }}% / {{ basisLabel(entry().rateBasis, entry().ratePeriodMonths) }}</span>
+    <span class="col-since">{{ entry().startDate | appDate }}</span>
+    <span class="mono col-accrued">Rs. {{ entry().grossVyaj | indianCurrency }}</span>
+    <span class="mono col-paid">Rs. {{ entry().interestPaid | indianCurrency }}</span>
+    <span class="mono col-due due" [class.settled]="entry().vyajDue === 0">
+      Rs. {{ entry().vyajDue | indianCurrency }}
+    </span>
+    <span class="col-actions">
+      <button
+        mat-icon-button
+        type="button"
+        class="closed-btn"
+        [class.active]="entry().isClosed"
         [disabled]="readOnly()"
-        (change)="closedToggled.emit($event.checked)"
-        matTooltip="Close settled entries instead of deleting">
-        Closed
-      </mat-slide-toggle>
+        matTooltip="{{ entry().isClosed ? 'Reopen entry' : 'Mark closed' }}"
+        (click)="closedToggled.emit(!entry().isClosed)">
+        <mat-icon>{{ entry().isClosed ? 'lock' : 'lock_open' }}</mat-icon>
+      </button>
       <button
         mat-stroked-button
         type="button"
+        class="add-vyaj-btn"
         *appHasPermission="'vyaj'; level: 'manage'"
-        (click)="showPayment.set(!showPayment())">
-        Record payment
+        matTooltip="Record interest payment"
+        (click)="openAddVyaj()">
+        Add Vyaj
       </button>
+      @if (entry().payments.length) {
+        <button
+          mat-icon-button
+          type="button"
+          matTooltip="{{ showPayments() ? 'Hide payments' : 'Show payments' }}"
+          (click)="showPayments.set(!showPayments())">
+          <mat-icon>{{ showPayments() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </button>
+      }
       <button
         mat-icon-button
         type="button"
@@ -60,19 +51,12 @@
         (click)="deleteEntry.emit()">
         <mat-icon>delete</mat-icon>
       </button>
-    </div>
-  </div>
-
-  <div class="subtotals">
-    <span>Principal due: Rs. {{ entry().principalDue | indianCurrency }}</span>
-    @if (entry().emiAmount) {
-      <span>First EMI applied: Rs. {{ entry().emiAmount! | indianCurrency }}</span>
-    }
+    </span>
   </div>
 
   @if (showPayment() && !readOnly()) {
     <form class="payment-form" [formGroup]="paymentForm" (ngSubmit)="submitPayment()">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Type</mat-label>
         <mat-select formControlName="paymentType">
           @for (opt of paymentTypeOptions; track opt.value) {
@@ -80,31 +64,36 @@
           }
         </mat-select>
       </mat-form-field>
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>Amount</mat-label>
         <input matInput formControlName="amount" appIndianAmount />
       </mat-form-field>
       <app-date-field label="Date" formControlName="paymentDate" />
       <button mat-flat-button color="primary" type="submit" [disabled]="paymentForm.invalid || savingPayment()">
-        Save payment
+        Save
       </button>
+      <button mat-button type="button" (click)="showPayment.set(false)">Cancel</button>
     </form>
   }
 
-  @if (entry().payments.length) {
+  @if (showPayments() && entry().payments.length) {
     <ul class="payment-list">
       @for (p of entry().payments; track p.id) {
         <li>
           <span>{{ p.paymentDate | appDate }}</span>
-          <span>{{ p.paymentType === 'interest' ? 'Vyaj' : 'Principal' }}</span>
+          <span>{{ paymentTypeLabel(p.paymentType) }}</span>
           <span class="mono">Rs. {{ p.amount | indianCurrency }}</span>
-          <button
-            mat-icon-button
-            type="button"
-            *appHasPermission="'vyaj'; level: 'manage'"
-            (click)="deletePayment.emit(p.id)">
-            <mat-icon>close</mat-icon>
-          </button>
+          @if (p.paymentType !== 'capitalize') {
+            <button
+              mat-icon-button
+              type="button"
+              *appHasPermission="'vyaj'; level: 'manage'"
+              (click)="deletePayment.emit(p.id)">
+              <mat-icon>close</mat-icon>
+            </button>
+          } @else {
+            <span class="cap-spacer"></span>
+          }
         </li>
       }
     </ul>

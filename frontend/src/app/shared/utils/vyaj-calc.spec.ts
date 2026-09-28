@@ -59,6 +59,29 @@ describe('vyaj-calc', () => {
     expect(gross).toBe(270_000);
   });
 
+  it('rate period no longer hard-caps accrual past interval', () => {
+    const at3 = calculateReducingGrossVyaj(
+      5_000_000,
+      2,
+      'month',
+      '2024-01-01',
+      '2024-04-01',
+      [{ amount: 500_000, paymentDate: '2024-01-01' }],
+      3
+    );
+    const at6 = calculateReducingGrossVyaj(
+      5_000_000,
+      2,
+      'month',
+      '2024-01-01',
+      '2024-07-01',
+      [{ amount: 500_000, paymentDate: '2024-01-01' }],
+      3
+    );
+    expect(at3).toBe(270_000);
+    expect(at6).toBe(540_000);
+  });
+
   it('monthsBetween handles partial month', () => {
     expect(monthsBetween('2024-03-15', '2024-04-10')).toBeCloseTo(26 / 30, 5);
     expect(monthsBetween('2024-03-15', '2024-04-15')).toBe(1);
@@ -67,5 +90,21 @@ describe('vyaj-calc', () => {
   it('daysBetween never negative', () => {
     expect(daysBetween('2024-05-01', '2024-04-01')).toBe(0);
     expect(daysBetween('2024-01-01', '2024-01-31')).toBe(30);
+  });
+
+  it('capitalize settles due and raises principal for later accrual', () => {
+    const totals = calculateEntryTotals(
+      100_000,
+      2,
+      'month',
+      '2024-01-01',
+      [{ amount: 2_000, paymentType: 'capitalize', paymentDate: '2024-01-31' }],
+      '2024-03-01'
+    );
+
+    expect(totals.grossVyaj).toBe(4_040);
+    expect(totals.interestPaid).toBe(2_000);
+    expect(totals.vyajDue).toBe(2_040);
+    expect(totals.principalDue).toBe(102_000);
   });
 });

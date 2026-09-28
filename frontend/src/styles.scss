@@ -157,6 +157,10 @@ html[data-theme='dark'] {
   box-sizing: border-box;
 }
 
+html {
+  font-size: 15px; /* ~1pt smaller than browser default 16px */
+}
+
 html,
 body {
   height: 100%;

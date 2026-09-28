@@ -21,7 +21,7 @@ internal static class VyajExportBuilder
         var row = 5;
         var headers = new[]
         {
-            "Party", "Main Ledger", "Sub Ledger", "Entry Start", "Principal", "First EMI",
+            "Party", "Kind", "Main Ledger", "Sub Ledger", "Entry Start", "Principal", "First EMI",
             "Rate %", "Rate Basis", "Period Months", "Principal Due", "Vyaj Accrued",
             "Vyaj Paid", "Vyaj Due", "Status"
         };
@@ -36,8 +36,9 @@ internal static class VyajExportBuilder
             if (openEntries.Count == 0 && party.Entries.Count == 0)
             {
                 ws.Cell(row, 1).Value = party.Name;
-                ws.Cell(row, 2).Value = party.MainLedgerName ?? string.Empty;
-                ws.Cell(row, 3).Value = party.SubLedgerName ?? string.Empty;
+                ws.Cell(row, 2).Value = FormatPartyKind(party.PartyKind);
+                ws.Cell(row, 3).Value = party.MainLedgerName ?? string.Empty;
+                ws.Cell(row, 4).Value = party.SubLedgerName ?? string.Empty;
                 row++;
                 continue;
             }
@@ -45,20 +46,21 @@ internal static class VyajExportBuilder
             foreach (var entry in party.Entries.OrderBy(e => e.StartDate))
             {
                 ws.Cell(row, 1).Value = party.Name;
-                ws.Cell(row, 2).Value = party.MainLedgerName ?? string.Empty;
-                ws.Cell(row, 3).Value = party.SubLedgerName ?? string.Empty;
-                ws.Cell(row, 4).Value = entry.StartDate.ToString("dd-MM-yyyy");
-                ws.Cell(row, 5).Value = entry.Principal;
-                ws.Cell(row, 6).Value = entry.EmiAmount ?? 0;
-                ws.Cell(row, 7).Value = entry.RatePercent;
-                ws.Cell(row, 8).Value = entry.RateBasis;
-                ws.Cell(row, 9).Value = entry.RatePeriodMonths?.ToString() ?? string.Empty;
-                ws.Cell(row, 10).Value = entry.PrincipalDue;
-                ws.Cell(row, 11).Value = entry.GrossVyaj;
-                ws.Cell(row, 12).Value = entry.InterestPaid;
-                ws.Cell(row, 13).Value = entry.VyajDue;
-                ws.Cell(row, 14).Value = entry.IsClosed ? "Closed" : "Open";
-                foreach (var col in new[] { 5, 6, 7, 10, 11, 12, 13 })
+                ws.Cell(row, 2).Value = FormatPartyKind(party.PartyKind);
+                ws.Cell(row, 3).Value = party.MainLedgerName ?? string.Empty;
+                ws.Cell(row, 4).Value = party.SubLedgerName ?? string.Empty;
+                ws.Cell(row, 5).Value = entry.StartDate.ToString("dd-MM-yyyy");
+                ws.Cell(row, 6).Value = entry.Principal;
+                ws.Cell(row, 7).Value = entry.EmiAmount ?? 0;
+                ws.Cell(row, 8).Value = entry.RatePercent;
+                ws.Cell(row, 9).Value = entry.RateBasis;
+                ws.Cell(row, 10).Value = entry.RatePeriodMonths?.ToString() ?? string.Empty;
+                ws.Cell(row, 11).Value = entry.PrincipalDue;
+                ws.Cell(row, 12).Value = entry.GrossVyaj;
+                ws.Cell(row, 13).Value = entry.InterestPaid;
+                ws.Cell(row, 14).Value = entry.VyajDue;
+                ws.Cell(row, 15).Value = entry.IsClosed ? "Closed" : "Open";
+                foreach (var col in new[] { 6, 7, 8, 11, 12, 13, 14 })
                     ws.Cell(row, col).Style.NumberFormat.Format = "0.00";
                 row++;
             }
@@ -67,11 +69,11 @@ internal static class VyajExportBuilder
         row += 1;
         ws.Cell(row, 1).Value = "Site Totals (open entries)";
         ws.Cell(row, 1).Style.Font.Bold = true;
-        ws.Cell(row, 10).Value = parties.Sum(p => p.TotalPrincipalDue);
-        ws.Cell(row, 11).Value = parties.Sum(p => p.TotalGrossVyaj);
-        ws.Cell(row, 12).Value = parties.Sum(p => p.TotalVyajPaid);
-        ws.Cell(row, 13).Value = parties.Sum(p => p.TotalVyajDue);
-        foreach (var col in new[] { 10, 11, 12, 13 })
+        ws.Cell(row, 11).Value = parties.Sum(p => p.TotalPrincipalDue);
+        ws.Cell(row, 12).Value = parties.Sum(p => p.TotalGrossVyaj);
+        ws.Cell(row, 13).Value = parties.Sum(p => p.TotalVyajPaid);
+        ws.Cell(row, 14).Value = parties.Sum(p => p.TotalVyajDue);
+        foreach (var col in new[] { 11, 12, 13, 14 })
         {
             ws.Cell(row, col).Style.Font.Bold = true;
             ws.Cell(row, col).Style.NumberFormat.Format = "0.00";
@@ -96,9 +98,7 @@ internal static class VyajExportBuilder
                     ws.Cell(row, 1).Value = party.Name;
                     ws.Cell(row, 2).Value = entry.StartDate.ToString("dd-MM-yyyy");
                     ws.Cell(row, 3).Value = payment.PaymentDate.ToString("dd-MM-yyyy");
-                    ws.Cell(row, 4).Value = string.Equals(payment.PaymentType, "principal", StringComparison.OrdinalIgnoreCase)
-                        ? "Principal"
-                        : "Vyaj";
+                    ws.Cell(row, 4).Value = FormatPaymentType(payment.PaymentType);
                     ws.Cell(row, 5).Value = payment.Amount;
                     ws.Cell(row, 5).Style.NumberFormat.Format = "0.00";
                     row++;
@@ -137,8 +137,8 @@ internal static class VyajExportBuilder
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.RelativeColumn(1.4f);
-                            columns.RelativeColumn(1.0f);
+                            columns.RelativeColumn(1.3f);
+                            columns.RelativeColumn(0.7f);
                             columns.RelativeColumn(0.9f);
                             columns.RelativeColumn(0.9f);
                             columns.RelativeColumn(0.8f);
@@ -146,12 +146,14 @@ internal static class VyajExportBuilder
                             columns.RelativeColumn(0.9f);
                             columns.RelativeColumn(0.9f);
                             columns.RelativeColumn(0.8f);
+                            columns.RelativeColumn(0.8f);
                             columns.ConstantColumn(48);
                         });
 
                         table.Header(header =>
                         {
                             header.Cell().Element(HeaderCell).Text("PARTY");
+                            header.Cell().Element(HeaderCell).Text("KIND");
                             header.Cell().Element(HeaderCell).Text("START");
                             header.Cell().Element(HeaderCell).AlignRight().Text("PRINCIPAL");
                             header.Cell().Element(HeaderCell).AlignRight().Text("FIRST EMI");
@@ -172,6 +174,7 @@ internal static class VyajExportBuilder
                                     : $"{entry.RatePercent}% / {entry.RateBasis}";
 
                                 table.Cell().Element(BodyCell).Text(party.Name);
+                                table.Cell().Element(BodyCell).Text(FormatPartyKind(party.PartyKind));
                                 table.Cell().Element(BodyCell).Text(entry.StartDate.ToString("dd-MM-yyyy"));
                                 table.Cell().Element(BodyCell).AlignRight().Text(entry.Principal.ToString("N2"));
                                 table.Cell().Element(BodyCell).AlignRight().Text((entry.EmiAmount ?? 0).ToString("N2"));
@@ -200,4 +203,15 @@ internal static class VyajExportBuilder
 
     private static IContainer BodyCell(IContainer container) =>
         container.PaddingVertical(2).PaddingHorizontal(2).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2);
+
+    private static string FormatPartyKind(string? kind) =>
+        string.Equals(kind, "asset", StringComparison.OrdinalIgnoreCase) ? "Asset" : "Direct";
+
+    private static string FormatPaymentType(string? type) =>
+        type?.ToLowerInvariant() switch
+        {
+            "principal" => "Principal",
+            "capitalize" => "Capitalized to principal",
+            _ => "Vyaj"
+        };
 }

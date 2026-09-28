@@ -22,7 +22,7 @@ public class DailyEntryServiceTests
         await context.SaveChangesAsync();
 
         var audit = new Mock<IAuditLogService>();
-        var service = new DailyEntryService(context, audit.Object);
+        var service = new DailyEntryService(context, audit.Object, Mock.Of<INotificationService>());
 
         var profit = await service.GetProfitAsync(siteId);
 
@@ -45,7 +45,7 @@ public class DailyEntryServiceTests
         await context.SaveChangesAsync();
 
         var audit = new Mock<IAuditLogService>();
-        var service = new DailyEntryService(context, audit.Object);
+        var service = new DailyEntryService(context, audit.Object, Mock.Of<INotificationService>());
 
         var profit = await service.GetProfitAsync(siteId);
 
@@ -58,7 +58,7 @@ public class DailyEntryServiceTests
     {
         await using var context = TestDbContextFactory.Create();
         var audit = new Mock<IAuditLogService>();
-        var service = new DailyEntryService(context, audit.Object);
+        var service = new DailyEntryService(context, audit.Object, Mock.Of<INotificationService>());
 
         var profit = await service.GetProfitAsync(Guid.NewGuid());
 

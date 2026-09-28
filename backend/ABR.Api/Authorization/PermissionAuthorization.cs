@@ -25,36 +25,10 @@ public sealed class PermissionAuthorizationHandler : AuthorizationHandler<Permis
         }
 
         var permissionsClaim = context.User.FindFirst("permissions")?.Value;
-        if (string.IsNullOrWhiteSpace(permissionsClaim))
-            return Task.CompletedTask;
-
-        try
-        {
-            var permissions = System.Text.Json.JsonSerializer.Deserialize<List<PermissionClaim>>(permissionsClaim);
-            var perm = permissions?.FirstOrDefault(p => p.ModuleKey == requirement.Module);
-            if (perm is null)
-                return Task.CompletedTask;
-
-            var allowed = requirement.Level == PermissionLevel.Manage
-                ? perm.CanManage
-                : perm.CanView;
-
-            if (allowed)
-                context.Succeed(requirement);
-        }
-        catch
-        {
-            // Deny on malformed claim
-        }
+        if (JwtPermissionClaims.HasAccess(permissionsClaim, requirement.Module, requirement.Level))
+            context.Succeed(requirement);
 
         return Task.CompletedTask;
-    }
-
-    private sealed class PermissionClaim
-    {
-        public string ModuleKey { get; set; } = string.Empty;
-        public bool CanView { get; set; }
-        public bool CanManage { get; set; }
     }
 }
 

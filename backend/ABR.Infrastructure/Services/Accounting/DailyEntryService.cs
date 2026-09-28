@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ABR.Application.DTOs.Accounting;
+using ABR.Application.DTOs.Notifications;
 using ABR.Application.Interfaces;
 using ABR.Domain.Entities;
 using ABR.Infrastructure.Persistence;
@@ -13,11 +14,13 @@ public sealed class DailyEntryService : IDailyEntryService
 
     private readonly AbrDbContext _context;
     private readonly IAuditLogService _auditLog;
+    private readonly INotificationService _notifications;
 
-    public DailyEntryService(AbrDbContext context, IAuditLogService auditLog)
+    public DailyEntryService(AbrDbContext context, IAuditLogService auditLog, INotificationService notifications)
     {
         _context = context;
         _auditLog = auditLog;
+        _notifications = notifications;
     }
 
     public static string BankCashBankLabel(string bankName, string accountNo) => $"{bankName} - {accountNo}";
@@ -98,6 +101,7 @@ public sealed class DailyEntryService : IDailyEntryService
             entry.CashBank,
             entry.Description
         });
+        var originalEntryDate = entry.EntryDate;
 
         entry.EntryType = dto.EntryType;
         entry.EntryDate = dto.EntryDate;
@@ -109,6 +113,22 @@ public sealed class DailyEntryService : IDailyEntryService
 
         await _context.SaveChangesAsync(cancellationToken);
         await _auditLog.LogAsync(userId, "Update", "daily_entries", entry.Id, oldValues, JsonSerializer.Serialize(dto), cancellationToken);
+
+        if (_notifications.IsOlderThanSixMonths(originalEntryDate) || _notifications.IsOlderThanSixMonths(dto.EntryDate))
+        {
+            await _notifications.NotifyOldRecordChangeAsync(new CreateChangeNotificationRequest
+            {
+                SiteId = entry.SiteId,
+                ActorUserId = userId,
+                Module = "daily_entry",
+                EntityType = "daily_entry",
+                EntityId = entry.Id,
+                Title = "Old daily entry edited",
+                Message = $"A daily entry dated {originalEntryDate:yyyy-MM-dd} was updated.",
+                OldValues = oldValues,
+                NewValues = JsonSerializer.Serialize(dto)
+            }, cancellationToken);
+        }
 
         return await GetByIdAsync(id, cancellationToken);
     }

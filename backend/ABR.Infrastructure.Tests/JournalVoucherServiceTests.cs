@@ -24,7 +24,7 @@ public class JournalVoucherServiceTests
         await context.SaveChangesAsync();
 
         var audit = new Mock<IAuditLogService>();
-        var service = new JournalVoucherService(context, audit.Object);
+        var service = new JournalVoucherService(context, audit.Object, Mock.Of<INotificationService>());
 
         var dto = new CreateJournalVoucherDto
         {
@@ -57,7 +57,7 @@ public class JournalVoucherServiceTests
         await context.SaveChangesAsync();
 
         var audit = new Mock<IAuditLogService>();
-        var service = new JournalVoucherService(context, audit.Object);
+        var service = new JournalVoucherService(context, audit.Object, Mock.Of<INotificationService>());
 
         var first = await service.CreateAsync(new CreateJournalVoucherDto
         {
@@ -130,7 +130,7 @@ public class JournalVoucherServiceTests
     {
         await using var context = TestDbContextFactory.Create();
         var audit = new Mock<IAuditLogService>();
-        var service = new JournalVoucherService(context, audit.Object);
+        var service = new JournalVoucherService(context, audit.Object, Mock.Of<INotificationService>());
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             service.ExportLedgerExcelAsync(new JournalVoucherLedgerExportRequestDto { SiteId = Guid.NewGuid() }));
@@ -151,7 +151,7 @@ public class JournalVoucherServiceTests
         await context.SaveChangesAsync();
 
         var audit = new Mock<IAuditLogService>();
-        var service = new JournalVoucherService(context, audit.Object);
+        var service = new JournalVoucherService(context, audit.Object, Mock.Of<INotificationService>());
 
         await service.CreateAsync(new CreateJournalVoucherDto
         {

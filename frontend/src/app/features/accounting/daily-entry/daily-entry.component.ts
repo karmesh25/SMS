@@ -91,7 +91,7 @@ interface BankRow { id: string; bankName: string; accountNo: string; }
       <mat-form-field appearance="outline">
         <mat-label>Description</mat-label>
         <input matInput formControlName="description" maxlength="200" />
-        <mat-hint align="end">{{ form.controls.description.value?.length || 0 }}/200</mat-hint>
+        <mat-hint align="end">{{ form.controls.description.value.length || 0 }}/200</mat-hint>
       </mat-form-field>
       <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Entry</button>
       </form>

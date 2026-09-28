@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IReportExportService, ReportExportService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IVyajService, VyajService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }
@@ -267,6 +268,8 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
+        await EnsureSupervisorBanksAsync(context, sandboxSite, logger);
+
         var legacyDemoUser = await context.Users.FirstOrDefaultAsync(u => u.Username == "demo");
         if (legacyDemoUser is not null && legacyDemoUser.IsActive)
         {
@@ -274,5 +277,113 @@ public static class DbInitializer
             await context.SaveChangesAsync();
             logger.LogInformation("Deactivated legacy demo user.");
         }
+    }
+
+    private static async Task EnsureSupervisorBanksAsync(AbrDbContext context, Site sandboxSite, ILogger logger)
+    {
+        var hasBanks = await context.BankAccounts.AnyAsync(b => b.SiteId == sandboxSite.Id);
+        if (hasBanks)
+            return;
+
+        var hdfc = new BankAccount
+        {
+            SiteId = sandboxSite.Id,
+            BankName = "HDFC Current",
+            AccountNo = "50200012345678",
+            IfscCode = "HDFC0001234",
+            Branch = "Ring Road",
+            OpeningBalance = 250000m,
+            IsActive = true
+        };
+        var sbi = new BankAccount
+        {
+            SiteId = sandboxSite.Id,
+            BankName = "SBI Savings",
+            AccountNo = "30123456789",
+            IfscCode = "SBIN0004321",
+            Branch = "City Light",
+            OpeningBalance = 85000m,
+            IsActive = true
+        };
+        context.BankAccounts.AddRange(hdfc, sbi);
+        await context.SaveChangesAsync();
+
+        var mainLedger = await context.MainLedgers.FirstOrDefaultAsync(m => m.SiteId == sandboxSite.Id);
+        if (mainLedger is null)
+        {
+            mainLedger = new MainLedger
+            {
+                SiteId = sandboxSite.Id,
+                LedgerName = "General Income",
+                Description = "Sandbox bank activity ledger"
+            };
+            context.MainLedgers.Add(mainLedger);
+            await context.SaveChangesAsync();
+        }
+
+        var subLedger = await context.SubLedgers.FirstOrDefaultAsync(s => s.MainLedgerId == mainLedger.Id);
+        if (subLedger is null)
+        {
+            subLedger = new SubLedger
+            {
+                MainLedgerId = mainLedger.Id,
+                LedgerName = "Bank Receipts"
+            };
+            context.SubLedgers.Add(subLedger);
+            await context.SaveChangesAsync();
+        }
+
+        var hdfcLabel = DailyEntryService.BankCashBankLabel(hdfc.BankName, hdfc.AccountNo);
+        var sbiLabel = DailyEntryService.BankCashBankLabel(sbi.BankName, sbi.AccountNo);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        context.DailyEntries.AddRange(
+            new DailyEntry
+            {
+                SiteId = sandboxSite.Id,
+                EntryType = "aavak",
+                EntryDate = today.AddDays(-12),
+                MainLedgerId = mainLedger.Id,
+                SubLedgerId = subLedger.Id,
+                Amount = 125000m,
+                CashBank = hdfcLabel,
+                Description = "Customer receipt"
+            },
+            new DailyEntry
+            {
+                SiteId = sandboxSite.Id,
+                EntryType = "javak",
+                EntryDate = today.AddDays(-8),
+                MainLedgerId = mainLedger.Id,
+                SubLedgerId = subLedger.Id,
+                Amount = 42000m,
+                CashBank = hdfcLabel,
+                Description = "Supplier payment"
+            },
+            new DailyEntry
+            {
+                SiteId = sandboxSite.Id,
+                EntryType = "aavak",
+                EntryDate = today.AddDays(-5),
+                MainLedgerId = mainLedger.Id,
+                SubLedgerId = subLedger.Id,
+                Amount = 35000m,
+                CashBank = sbiLabel,
+                Description = "Installment deposit"
+            },
+            new DailyEntry
+            {
+                SiteId = sandboxSite.Id,
+                EntryType = "javak",
+                EntryDate = today.AddDays(-2),
+                MainLedgerId = mainLedger.Id,
+                SubLedgerId = subLedger.Id,
+                Amount = 15000m,
+                CashBank = sbiLabel,
+                Description = "Office expense"
+            });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded Navrang supervisor demo banks and sample bank daily entries.");
     }
 }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ABR.Api.Authorization;
 using ABR.Api.Helpers;
 using ABR.Application.Common;
@@ -128,7 +129,7 @@ public class VyajController : ControllerBase
 
         try
         {
-            var result = await _service.UpdatePartyAsync(id, dto, cancellationToken);
+            var result = await _service.UpdatePartyAsync(id, dto, GetUserId(), cancellationToken);
             return Ok(ApiResponse<VyajPartySummaryDto>.Ok(result));
         }
         catch (KeyNotFoundException ex)
@@ -143,7 +144,7 @@ public class VyajController : ControllerBase
     {
         try
         {
-            await _service.DeletePartyAsync(id, cancellationToken);
+            await _service.DeletePartyAsync(id, GetUserId(), cancellationToken);
             return Ok(ApiResponse<object>.Ok(new { deleted = true }));
         }
         catch (KeyNotFoundException ex)
@@ -181,7 +182,7 @@ public class VyajController : ControllerBase
     {
         try
         {
-            var result = await _service.ToggleEntryClosedAsync(id, dto, cancellationToken);
+            var result = await _service.ToggleEntryClosedAsync(id, dto, GetUserId(), cancellationToken);
             return Ok(ApiResponse<VyajEntryDto>.Ok(result));
         }
         catch (KeyNotFoundException ex)
@@ -196,7 +197,7 @@ public class VyajController : ControllerBase
     {
         try
         {
-            await _service.DeleteEntryAsync(id, cancellationToken);
+            await _service.DeleteEntryAsync(id, GetUserId(), cancellationToken);
             return Ok(ApiResponse<object>.Ok(new { deleted = true }));
         }
         catch (KeyNotFoundException ex)
@@ -215,7 +216,7 @@ public class VyajController : ControllerBase
 
         try
         {
-            var result = await _service.CreatePaymentAsync(dto, cancellationToken);
+            var result = await _service.CreatePaymentAsync(dto, GetUserId(), cancellationToken);
             return Ok(ApiResponse<VyajPaymentDto>.Ok(result));
         }
         catch (KeyNotFoundException ex)
@@ -230,12 +231,91 @@ public class VyajController : ControllerBase
     {
         try
         {
-            await _service.DeletePaymentAsync(id, cancellationToken);
+            await _service.DeletePaymentAsync(id, GetUserId(), cancellationToken);
             return Ok(ApiResponse<object>.Ok(new { deleted = true }));
         }
         catch (KeyNotFoundException ex)
         {
             return NotFound(ApiResponse<object>.Fail(ex.Message));
         }
+    }
+
+    [HttpGet("rate-options")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.View)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<VyajRateBasisOptionDto>>>> GetRateOptions(
+        [FromQuery] Guid siteId,
+        CancellationToken cancellationToken)
+    {
+        if (siteId == Guid.Empty)
+            return BadRequest(ApiResponse<IReadOnlyList<VyajRateBasisOptionDto>>.Fail("siteId is required."));
+
+        var result = await _service.GetRateOptionsAsync(siteId, cancellationToken);
+        return Ok(ApiResponse<IReadOnlyList<VyajRateBasisOptionDto>>.Ok(result));
+    }
+
+    [HttpPost("rate-options")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
+    public async Task<ActionResult<ApiResponse<VyajRateBasisOptionDto>>> CreateRateOption(
+        [FromBody] CreateVyajRateBasisOptionDto dto,
+        [FromServices] IValidator<CreateVyajRateBasisOptionDto> validator,
+        CancellationToken cancellationToken)
+    {
+        var validation = await validator.ValidateAsync(dto, cancellationToken);
+        if (!validation.IsValid)
+            return BadRequest(ApiResponse<VyajRateBasisOptionDto>.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage))));
+
+        try
+        {
+            var result = await _service.CreateRateOptionAsync(dto, cancellationToken);
+            return Ok(ApiResponse<VyajRateBasisOptionDto>.Ok(result, "Rate option created."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<VyajRateBasisOptionDto>.Fail(ex.Message));
+        }
+    }
+
+    [HttpPut("rate-options/{id:guid}")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
+    public async Task<ActionResult<ApiResponse<VyajRateBasisOptionDto>>> UpdateRateOption(
+        Guid id,
+        [FromBody] UpdateVyajRateBasisOptionDto dto,
+        [FromServices] IValidator<UpdateVyajRateBasisOptionDto> validator,
+        CancellationToken cancellationToken)
+    {
+        var validation = await validator.ValidateAsync(dto, cancellationToken);
+        if (!validation.IsValid)
+            return BadRequest(ApiResponse<VyajRateBasisOptionDto>.Fail(string.Join("; ", validation.Errors.Select(e => e.ErrorMessage))));
+
+        try
+        {
+            var result = await _service.UpdateRateOptionAsync(id, dto, cancellationToken);
+            return Ok(ApiResponse<VyajRateBasisOptionDto>.Ok(result, "Rate option updated."));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<VyajRateBasisOptionDto>.Fail(ex.Message));
+        }
+    }
+
+    [HttpDelete("rate-options/{id:guid}")]
+    [RequirePermission(AppModules.Vyaj, PermissionLevel.Manage)]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteRateOption(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _service.DeleteRateOptionAsync(id, cancellationToken);
+            return Ok(ApiResponse<object>.Ok(new { deleted = true }));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.Fail(ex.Message));
+        }
+    }
+
+    private Guid? GetUserId()
+    {
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return Guid.TryParse(sub, out var id) ? id : null;
     }
 }

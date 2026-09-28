@@ -25,7 +25,7 @@ if not exist "%PGBIN%\psql.exe" (
     exit /b 1
 )
 if not exist "%SECRETS%" (
-    echo ERROR: Encrypted secrets not found. Run SETUP_FIRST_RUN.bat first.
+    echo ERROR: Encrypted secrets not found. Run 02_SETUP_FIRST_RUN.bat first.
     pause
     exit /b 1
 )
@@ -71,7 +71,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
-for /f "usebackq delims=" %%P in (`"%TOOLS%\ABR.Secrets.exe" dump-password --secrets "%SECRETS%"`) do set "PGPASSWORD=%%P"
+for /f "usebackq delims=" %%P in (`""%TOOLS%\ABR.Secrets.exe" dump-password --secrets "%SECRETS%""`) do set "PGPASSWORD=%%P"
+if "!PGPASSWORD!"=="" (
+    echo ERROR: Could not read database password from encrypted secrets.
+    set "ABR_MASTER_PASSWORD="
+    pause
+    exit /b 1
+)
 
 echo Stopping ABR API to release database connections...
 taskkill /IM ABR.Api.exe /F >nul 2>&1
@@ -129,7 +135,7 @@ if errorlevel 1 (
 if exist "%TEMP_SQL%" del /f /q "%TEMP_SQL%"
 set "PGPASSWORD="
 echo.
-echo Restore complete. Start the app with START.bat.
+echo Restore complete. Start the app with 04_START.bat.
 pause
 exit /b 0
 

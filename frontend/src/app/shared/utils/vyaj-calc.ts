@@ -1,5 +1,5 @@
-export type RateBasis = 'flat' | 'month' | 'year' | 'day';
-export type PaymentType = 'interest' | 'principal';
+export type RateBasis = 'flat' | 'month' | 'year' | 'day' | 'custom';
+export type PaymentType = 'interest' | 'principal' | 'capitalize';
 
 export interface VyajPaymentInput {
   amount: number;
@@ -58,11 +58,19 @@ export function resolveMonthFactor(
   asOfDate: string | Date,
   ratePeriodMonths?: number | null
 ): number {
-  const elapsed = monthsBetween(startDate, asOfDate);
+  // ratePeriodMonths is the due/compound interval used by capitalization — not an accrual cap.
+  void ratePeriodMonths;
+  return monthsBetween(startDate, asOfDate);
+}
+
+export function resolveCompoundPeriodMonths(
+  rateBasis?: string | null,
+  ratePeriodMonths?: number | null
+): number {
   if (ratePeriodMonths === 3 || ratePeriodMonths === 6 || ratePeriodMonths === 9) {
-    return Math.min(elapsed, ratePeriodMonths);
+    return ratePeriodMonths;
   }
-  return elapsed;
+  return 1;
 }
 
 function accrueSegment(
@@ -90,6 +98,7 @@ function accrueSegment(
     case 'year':
       return outstandingPrincipal * rate * (daysBetween(segmentStart, segmentEnd) / 365);
     case 'day':
+    case 'custom':
       return outstandingPrincipal * rate * daysBetween(segmentStart, segmentEnd);
     default:
       return (
@@ -104,14 +113,14 @@ function accrueSegment(
   }
 }
 
-/** Accrues vyaj on reducing principal after dated principal payments. */
+/** Accrues vyaj on principal after dated principal (-1) / capitalize (+1) events. */
 export function calculateReducingGrossVyaj(
   principal: number,
   ratePercent: number,
   rateBasis: RateBasis,
   startDate: string | Date,
   asOfDate: string | Date = new Date(),
-  principalPayments: { amount: number; paymentDate: string | Date }[] = [],
+  principalPayments: { amount: number; paymentDate: string | Date; deltaSign?: number }[] = [],
   ratePeriodMonths?: number | null
 ): number {
   if (principal <= 0 || ratePercent <= 0) return 0;
@@ -123,17 +132,18 @@ export function calculateReducingGrossVyaj(
   for (const p of principalPayments) {
     if (p.amount <= 0) continue;
     if (parseDate(p.paymentDate) > asOf) continue;
+    const sign = p.deltaSign ?? -1;
     const key = toDateKey(p.paymentDate);
-    paymentsByDate.set(key, (paymentsByDate.get(key) ?? 0) + p.amount);
+    paymentsByDate.set(key, (paymentsByDate.get(key) ?? 0) + p.amount * sign);
   }
 
   const ordered = [...paymentsByDate.entries()]
-    .map(([key, amount]) => ({ date: parseDate(key), amount }))
+    .map(([key, delta]) => ({ date: parseDate(key), delta }))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 
   if (rateBasis === 'flat') {
     let outstanding = principal;
-    for (const p of ordered) outstanding = Math.max(0, outstanding - p.amount);
+    for (const p of ordered) outstanding = Math.max(0, outstanding + p.delta);
     return roundMoney(outstanding * rate);
   }
 
@@ -153,7 +163,7 @@ export function calculateReducingGrossVyaj(
         ratePeriodMonths
       );
     }
-    outstandingPrincipal = Math.max(0, outstandingPrincipal - p.amount);
+    outstandingPrincipal = Math.max(0, outstandingPrincipal + p.delta);
     if (p.date > cursor) cursor = p.date;
   }
 
@@ -200,11 +210,12 @@ export function calculateEntryTotals(
   asOfDate: string | Date = new Date(),
   ratePeriodMonths?: number | null
 ): VyajEntryTotals {
-  const principalPays = payments
-    .filter((p) => p.paymentType === 'principal')
+  const principalEvents = payments
+    .filter((p) => p.paymentType === 'principal' || p.paymentType === 'capitalize')
     .map((p) => ({
       amount: p.amount,
-      paymentDate: p.paymentDate ?? startDate
+      paymentDate: p.paymentDate ?? startDate,
+      deltaSign: p.paymentType === 'capitalize' ? 1 : -1
     }));
 
   const grossVyaj = calculateReducingGrossVyaj(
@@ -213,16 +224,20 @@ export function calculateEntryTotals(
     rateBasis,
     startDate,
     asOfDate,
-    principalPays,
+    principalEvents,
     ratePeriodMonths
   );
 
   let interestPaid = 0;
   let principalPaid = 0;
+  let capitalized = 0;
 
   for (const p of payments) {
     if (p.paymentType === 'principal') principalPaid += p.amount;
-    else interestPaid += p.amount;
+    else if (p.paymentType === 'capitalize') {
+      capitalized += p.amount;
+      interestPaid += p.amount;
+    } else interestPaid += p.amount;
   }
 
   return {
@@ -230,6 +245,6 @@ export function calculateEntryTotals(
     interestPaid: roundMoney(interestPaid),
     principalPaid: roundMoney(principalPaid),
     vyajDue: roundMoney(Math.max(0, grossVyaj - interestPaid)),
-    principalDue: roundMoney(Math.max(0, principal - principalPaid))
+    principalDue: roundMoney(Math.max(0, principal + capitalized - principalPaid))
   };
 }

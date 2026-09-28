@@ -11,19 +11,31 @@
         class="party-row"
         [class.active]="party.id === selectedPartyId()"
         (click)="partySelected.emit(party.id)">
-        <span class="party-name">{{ party.name }}</span>
+        <span class="party-top">
+          <span class="party-name">{{ party.name }}</span>
+          <span class="kind-badge" [class.kind-badge--asset]="party.partyKind === 'asset'">
+            {{ party.partyKind === 'asset' ? 'Asset' : 'Direct' }}
+          </span>
+        </span>
         <span class="party-due" [class.settled]="party.vyajDue === 0">
           Rs. {{ party.vyajDue | indianCurrency }}
         </span>
       </button>
     } @empty {
-      <p class="empty-hint">No parties yet. Add one below.</p>
+      <p class="empty-hint">No parties yet.</p>
     }
   </div>
 
   <div class="add-party" *appHasPermission="'vyaj'; level: 'manage'">
     <mat-form-field appearance="outline" class="dense">
-      <mat-label>Party name</mat-label>
+      <mat-label>Party kind</mat-label>
+      <mat-select [(ngModel)]="newPartyKind">
+        <mat-option value="direct">Direct</mat-option>
+        <mat-option value="asset">Asset-based</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="dense">
+      <mat-label>{{ newPartyKind === 'asset' ? 'Asset name' : 'Party name' }}</mat-label>
       <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitParty()" />
     </mat-form-field>
     <mat-form-field appearance="outline" class="dense">
@@ -44,7 +56,11 @@
         }
       </mat-select>
     </mat-form-field>
-    <button mat-flat-button color="primary" [disabled]="!newPartyName.trim()" (click)="submitParty()">
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="!newPartyName.trim()"
+      (click)="submitParty()">
       <mat-icon>person_add</mat-icon>
       Add party
     </button>

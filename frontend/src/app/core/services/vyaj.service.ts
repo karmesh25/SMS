@@ -10,7 +10,8 @@ import {
   VyajEntry,
   VyajPartyDetail,
   VyajPartySummary,
-  VyajPayment
+  VyajPayment,
+  VyajRateBasisOption
 } from '../../features/vyaj/models/vyaj.models';
 
 @Injectable({ providedIn: 'root' })
@@ -56,6 +57,22 @@ export class VyajService {
 
   deletePayment(paymentId: string): Observable<{ success: boolean }> {
     return this.api.delete(`/vyaj/payments/${paymentId}`);
+  }
+
+  getRateOptions(siteId: string): Observable<{ success: boolean; data: VyajRateBasisOption[] }> {
+    return this.api.get<VyajRateBasisOption[]>('/vyaj/rate-options', { siteId });
+  }
+
+  createRateOption(dto: { siteId: string; label: string; dayCount: number }): Observable<{ success: boolean; data: VyajRateBasisOption }> {
+    return this.api.post<VyajRateBasisOption>('/vyaj/rate-options', dto);
+  }
+
+  updateRateOption(id: string, dto: { label: string; dayCount: number; isActive: boolean }): Observable<{ success: boolean; data: VyajRateBasisOption }> {
+    return this.api.put<VyajRateBasisOption>(`/vyaj/rate-options/${id}`, dto);
+  }
+
+  deleteRateOption(id: string): Observable<{ success: boolean }> {
+    return this.api.delete(`/vyaj/rate-options/${id}`);
   }
 
   exportExcel(siteId: string): Observable<FileDownloadOutcome> {

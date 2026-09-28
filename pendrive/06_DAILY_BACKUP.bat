@@ -9,28 +9,34 @@ set "CONFIG=%ROOT%config"
 set "TOOLS=%ROOT%tools"
 set "SECRETS=%CONFIG%\secrets.enc"
 set "SCRIPT_DIR=%~dp0"
-set "TIMESTAMP=%date:~-4%%date:4,2%%date:7,2%_%time:~0,2%%time:~3,2%%time:~6,2%"
+set "TIMESTAMP=%date:~-4%%date:~4,2%%date:~7,2%_%time:~0,2%%time:~3,2%%time:~6,2%"
 set "TIMESTAMP=%TIMESTAMP: =0%"
 
 if not exist "%BACKUP%" mkdir "%BACKUP%"
 
 if not exist "%PGBIN%\pg_dump.exe" (
     echo ERROR: pg_dump not found at %PGBIN%
+    pause
     exit /b 1
 )
 
 if not exist "%SECRETS%" (
-    echo ERROR: Encrypted secrets not found. Run SETUP_FIRST_RUN.bat first.
+    echo ERROR: Encrypted secrets not found. Run 02_SETUP_FIRST_RUN.bat first.
+    pause
     exit /b 1
 )
 
 call "%SCRIPT_DIR%load_master_password.bat"
-if errorlevel 1 exit /b 1
+if errorlevel 1 (
+    pause
+    exit /b 1
+)
 
-for /f "usebackq delims=" %%P in (`"%TOOLS%\ABR.Secrets.exe" dump-password --secrets "%SECRETS%"`) do set "PGPASSWORD=%%P"
+for /f "usebackq delims=" %%P in (`""%TOOLS%\ABR.Secrets.exe" dump-password --secrets "%SECRETS%""`) do set "PGPASSWORD=%%P"
 if "!PGPASSWORD!"=="" (
     echo ERROR: Could not read database password from encrypted secrets.
     set "ABR_MASTER_PASSWORD="
+    pause
     exit /b 1
 )
 
@@ -44,6 +50,7 @@ if errorlevel 1 (
     echo ERROR: Backup failed.
     if exist "%TEMP_SQL%" del /f /q "%TEMP_SQL%"
     set "ABR_MASTER_PASSWORD="
+    pause
     exit /b 1
 )
 
@@ -56,11 +63,12 @@ set "ABR_MASTER_PASSWORD="
 if not "!ENC_RESULT!"=="0" (
     echo ERROR: Failed to encrypt backup.
     if exist "%BACKUP_FILE%" del /f /q "%BACKUP_FILE%"
+    pause
     exit /b 1
 )
 
 echo Encrypted backup created successfully.
-echo Restore later with RESTORE_BACKUP.bat.
+echo Restore later with 07_RESTORE_BACKUP.bat.
 
 echo Cleaning backups older than the last 7 files...
 for /f "skip=7 delims=" %%F in ('dir /b /o-d "%BACKUP%\abr_backup_*.sql.enc" 2^>nul') do (
@@ -68,3 +76,4 @@ for /f "skip=7 delims=" %%F in ('dir /b /o-d "%BACKUP%\abr_backup_*.sql.enc" 2^>
 )
 
 echo Done.
+pause

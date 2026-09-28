@@ -8,10 +8,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
 import { SelectOption } from '../../../shared/components/searchable-select/searchable-select.component';
-import { VyajPartySummary } from '../models/vyaj.models';
+import { VyajPartyKind, VyajPartySummary } from '../models/vyaj.models';
 
 export interface NewVyajPartyPayload {
   name: string;
+  partyKind: VyajPartyKind;
   mainLedgerId?: string | null;
   subLedgerId?: string | null;
 }
@@ -43,6 +44,7 @@ export class VyajPartySidebarComponent {
   readonly mainLedgerChanged = output<string>();
 
   newPartyName = '';
+  newPartyKind: VyajPartyKind = 'direct';
   newMainLedgerId = '';
   newSubLedgerId = '';
 
@@ -54,12 +56,15 @@ export class VyajPartySidebarComponent {
   submitParty(): void {
     const name = this.newPartyName.trim();
     if (!name) return;
+
     this.addParty.emit({
       name,
+      partyKind: this.newPartyKind,
       mainLedgerId: this.newMainLedgerId || null,
       subLedgerId: this.newSubLedgerId || null
     });
     this.newPartyName = '';
+    this.newPartyKind = 'direct';
     this.newMainLedgerId = '';
     this.newSubLedgerId = '';
   }

@@ -51,3 +51,13 @@
   color: var(--abr-danger);
   font-weight: 600;
 }
+
+.continue-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--abr-space-sm) var(--abr-space-md);
+  border-radius: var(--abr-radius-sm);
+  background: var(--abr-info-soft);
+  color: var(--abr-text-secondary);
+  font-size: 0.85rem;
+}

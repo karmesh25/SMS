@@ -6,10 +6,14 @@ public sealed class VyajPartySummaryDto
     public Guid SiteId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string? Notes { get; init; }
+    public string PartyKind { get; init; } = "direct";
     public Guid? MainLedgerId { get; init; }
     public Guid? SubLedgerId { get; init; }
+    public Guid? BookingId { get; init; }
     public string? MainLedgerName { get; init; }
     public string? SubLedgerName { get; init; }
+    public string? BookingLabel { get; init; }
+    public decimal? BookingRemaining { get; init; }
     public decimal VyajDue { get; init; }
     public decimal PrincipalDue { get; init; }
     public int OpenEntryCount { get; init; }
@@ -21,10 +25,14 @@ public sealed class VyajPartyDetailDto
     public Guid SiteId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string? Notes { get; init; }
+    public string PartyKind { get; init; } = "direct";
     public Guid? MainLedgerId { get; init; }
     public Guid? SubLedgerId { get; init; }
+    public Guid? BookingId { get; init; }
     public string? MainLedgerName { get; init; }
     public string? SubLedgerName { get; init; }
+    public string? BookingLabel { get; init; }
+    public decimal? BookingRemaining { get; init; }
     public decimal TotalVyajDue { get; init; }
     public decimal TotalGrossVyaj { get; init; }
     public decimal TotalVyajPaid { get; init; }
@@ -40,6 +48,7 @@ public sealed class VyajEntryDto
     public decimal RatePercent { get; init; }
     public string RateBasis { get; init; } = "month";
     public int? RatePeriodMonths { get; init; }
+    public int? CustomDays { get; init; }
     public decimal? EmiAmount { get; init; }
     public DateOnly StartDate { get; init; }
     public bool IsClosed { get; init; }
@@ -65,25 +74,31 @@ public sealed class CreateVyajPartyDto
     public Guid SiteId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public string PartyKind { get; set; } = "direct";
     public Guid? MainLedgerId { get; set; }
     public Guid? SubLedgerId { get; set; }
+    public Guid? BookingId { get; set; }
 }
 
 public sealed class UpdateVyajPartyDto
 {
     public string Name { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public string PartyKind { get; set; } = "direct";
     public Guid? MainLedgerId { get; set; }
     public Guid? SubLedgerId { get; set; }
+    public Guid? BookingId { get; set; }
 }
 
 public sealed class CreateVyajEntryDto
 {
     public Guid PartyId { get; set; }
-    public decimal Principal { get; set; }
+    /// <summary>Optional when party already has open entries (continuation / top-up).</summary>
+    public decimal? Principal { get; set; }
     public decimal RatePercent { get; set; }
     public string RateBasis { get; set; } = "month";
     public int? RatePeriodMonths { get; set; }
+    public int? CustomDays { get; set; }
     public decimal? EmiAmount { get; set; }
     public DateOnly StartDate { get; set; }
 }
@@ -99,4 +114,27 @@ public sealed class CreateVyajPaymentDto
     public DateOnly PaymentDate { get; set; }
     public decimal Amount { get; set; }
     public string PaymentType { get; set; } = "interest";
+}
+
+public sealed class VyajRateBasisOptionDto
+{
+    public Guid Id { get; init; }
+    public Guid SiteId { get; init; }
+    public string Label { get; init; } = string.Empty;
+    public int DayCount { get; init; }
+    public bool IsActive { get; init; }
+}
+
+public sealed class CreateVyajRateBasisOptionDto
+{
+    public Guid SiteId { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public int DayCount { get; set; }
+}
+
+public sealed class UpdateVyajRateBasisOptionDto
+{
+    public string Label { get; set; } = string.Empty;
+    public int DayCount { get; set; }
+    public bool IsActive { get; set; } = true;
 }

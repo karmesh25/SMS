@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ABR.Application.DTOs.Accounting;
+using ABR.Application.DTOs.Notifications;
 using ABR.Application.Interfaces;
 using ABR.Domain.Entities;
 using ABR.Infrastructure.Persistence;
@@ -13,11 +14,13 @@ public sealed class JournalVoucherService : IJournalVoucherService
 
     private readonly AbrDbContext _context;
     private readonly IAuditLogService _auditLog;
+    private readonly INotificationService _notifications;
 
-    public JournalVoucherService(AbrDbContext context, IAuditLogService auditLog)
+    public JournalVoucherService(AbrDbContext context, IAuditLogService auditLog, INotificationService notifications)
     {
         _context = context;
         _auditLog = auditLog;
+        _notifications = notifications;
     }
 
     public async Task<PagedJournalVouchersDto> GetListAsync(JournalVoucherFilterDto filter, CancellationToken cancellationToken = default)
@@ -100,6 +103,7 @@ public sealed class JournalVoucherService : IJournalVoucherService
             entity.TotalCredit,
             Lines = entity.Lines.Select(l => new { l.SubLedgerId, l.EntryType, l.Amount, l.LineNo })
         });
+        var originalVoucherDate = entity.VoucherDate;
 
         var (totalDebit, totalCredit) = ValidateAndComputeTotals(dto.Lines);
 
@@ -121,6 +125,23 @@ public sealed class JournalVoucherService : IJournalVoucherService
 
         await _context.SaveChangesAsync(cancellationToken);
         await _auditLog.LogAsync(userId, "Update", "journal_vouchers", entity.Id, oldValues, JsonSerializer.Serialize(dto), cancellationToken);
+
+        if (_notifications.IsOlderThanSixMonths(originalVoucherDate) || _notifications.IsOlderThanSixMonths(dto.VoucherDate))
+        {
+            await _notifications.NotifyOldRecordChangeAsync(new CreateChangeNotificationRequest
+            {
+                SiteId = entity.SiteId,
+                ActorUserId = userId,
+                Module = "journal",
+                EntityType = "journal_voucher",
+                EntityId = entity.Id,
+                Title = "Old journal voucher edited",
+                Message = $"Journal voucher {entity.VoucherNo} dated {originalVoucherDate:yyyy-MM-dd} was updated.",
+                OldValues = oldValues,
+                NewValues = JsonSerializer.Serialize(dto)
+            }, cancellationToken);
+        }
+
         return await GetByIdAsync(id, cancellationToken);
     }
 

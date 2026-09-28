@@ -64,30 +64,33 @@ Client-ready USB package — see **[pendrive/CLIENT_SETUP_AND_START.txt](pendriv
 
 1. Run `pendrive\build_pendrive.bat` — outputs to `pendrive\package\`
 2. Copy PostgreSQL 15 portable binaries to `pendrive\package\db\bin\` (see [pendrive/db/README_POSTGRES.txt](pendrive/db/README_POSTGRES.txt))
-3. Run `pendrive\validate_package.bat` — all checks must pass
+3. Run `pendrive\01_VALIDATE_PACKAGE.bat` — all checks must pass
 4. Copy everything inside `pendrive\package\` to the USB drive root
 
 ### First run on client PC
 
-1. `SETUP_FIRST_RUN.bat` — initialize database and create encrypted `config/secrets.enc` (choose master password)
-2. `REGISTER_THIS_PC.bat` — authorize this computer (Admin → Devices)
-3. `STOP.bat`, then `START.bat` for daily use (enter master password each start)
+Run these in order (numbered on the USB):
+
+1. `01_VALIDATE_PACKAGE.bat` — confirm all files, including PostgreSQL binaries, are present
+2. `02_SETUP_FIRST_RUN.bat` — initialize database and create encrypted `config/secrets.enc` (choose master password)
+3. `03_REGISTER_THIS_PC.bat` — authorize this computer (Admin → Devices)
+4. `05_STOP.bat`, then `04_START.bat` for daily use (enter master password each start)
 
 ### Security (pendrive)
 
-- **Master password** — required at each `START.bat` and `DAILY_BACKUP.bat`; unlocks `config/secrets.enc`. Passed to tools via the `ABR_MASTER_PASSWORD` environment variable (never on the command line)
+- **Master password** — required at each `04_START.bat` and `06_DAILY_BACKUP.bat`; unlocks `config/secrets.enc`. Passed to tools via the `ABR_MASTER_PASSWORD` environment variable (never on the command line)
 - **No secrets in appsettings** — connection string, JWT key, and license secret are encrypted on USB
 - **Authenticated encryption** — `secrets.enc`, `device.lic`, and database backups use AES‑256‑GCM with a random per‑file PBKDF2 salt (tamper‑evident). Legacy AES‑CBC files remain readable
-- **Encrypted backups** — `DAILY_BACKUP.bat` writes `backup\*.sql.enc`; restore with `RESTORE_BACKUP.bat`. No plaintext dump is left on the USB
+- **Encrypted backups** — `06_DAILY_BACKUP.bat` writes `backup\*.sql.enc`; restore with `07_RESTORE_BACKUP.bat`. No plaintext dump is left on the USB
 - **PostgreSQL** — strong random password; `scram-sha-256` auth enforced after setup (whitespace‑robust `pg_hba.conf` rewrite; no trust mode)
 - **Not protected** — copying `db/data/` offline can still expose raw data files; report exports in `exports\` remain plain files
-- **Old USB** — run `UPGRADE_SECURITY.bat` to migrate to encrypted secrets
+- **Old USB** — run `08_UPGRADE_SECURITY.bat` to migrate to encrypted secrets
 
 ### Daily operation
 
-- `START.bat` / `STOP.bat` — always stop before removing USB
-- `DAILY_BACKUP.bat` — encrypted backup to `backup\` on the USB (`*.sql.enc`)
-- `RESTORE_BACKUP.bat` — decrypt and restore the latest (or a chosen) backup
+- `04_START.bat` / `05_STOP.bat` — always stop before removing USB
+- `06_DAILY_BACKUP.bat` — encrypted backup to `backup\` on the USB (`*.sql.enc`)
+- `07_RESTORE_BACKUP.bat` — decrypt and restore the latest (or a chosen) backup
 - Reports export to `exports\` on the USB (not the PC Downloads folder)
 
 ### Production sandbox (owner only)

@@ -1,5 +1,10 @@
 @echo off
-setlocal EnableDelayedExpansion
+setlocal DisableDelayedExpansion
+rem NOTE: delayed expansion stays off - the master password may contain "!"
+rem which EnableDelayedExpansion silently strips when the value is later
+rem referenced, corrupting it (load_master_password.bat runs via CALL in
+rem this same cmd session, so it inherits whatever mode is active here).
+rem Enabled only inside the narrow WAITPG retry loop below.
 
 set "DRIVE=%~d0"
 set "ROOT=%DRIVE%\"
@@ -32,7 +37,7 @@ if not exist "%PGBIN%\pg_ctl.exe" (
 
 if not exist "%PGDATA%" (
     echo ERROR: Database not initialized.
-    echo Run SETUP_FIRST_RUN.bat first.
+    echo Run 02_SETUP_FIRST_RUN.bat first.
     pause
     exit /b 1
 )
@@ -64,6 +69,7 @@ if errorlevel 1 (
 
 echo [2/4] Waiting for PostgreSQL...
 set /a RETRIES=0
+setlocal EnableDelayedExpansion
 :WAITPG
 set /a RETRIES+=1
 "%PGBIN%\pg_isready.exe" -p 5433 >nul 2>&1
@@ -76,6 +82,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+endlocal
 
 echo [3/4] Starting ABR API on port 5050...
 if not defined ASPNETCORE_ENVIRONMENT set "ASPNETCORE_ENVIRONMENT=Production"
@@ -100,9 +107,9 @@ echo   Reports save to: %EXPORTS%
 echo.
 if /I "%Security__EnforceDeviceLock%"=="false" (
     echo Device lock is OFF for registration. Authorize this PC in Admin -^> Devices.
-    echo Then run STOP.bat and use START.bat normally.
+    echo Then run 05_STOP.bat and use 04_START.bat normally.
 ) else (
-    echo Use STOP.bat before removing the USB drive.
+    echo Use 05_STOP.bat before removing the USB drive.
 )
 echo.
 set "ABR_MASTER_PASSWORD="

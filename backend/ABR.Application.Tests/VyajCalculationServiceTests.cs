@@ -104,7 +104,7 @@ public class VyajCalculationServiceTests
     }
 
     [Fact]
-    public void MonthPeriodCap_StillRespectedWithReducingBalance()
+    public void MonthPeriod_NoLongerHardCapsAccrual_ContinuesPastInterval()
     {
         var payments = new[] { (500_000m, "principal", new DateOnly(2024, 1, 1)) };
         var at3Months = VyajCalculationService.CalculateEntryTotals(
@@ -120,8 +120,39 @@ public class VyajCalculationServiceTests
             new DateOnly(2024, 7, 1),
             ratePeriodMonths: 3);
 
-        Assert.Equal(at3Months.GrossVyaj, at6Months.GrossVyaj);
-        Assert.Equal(270_000, at3Months.GrossVyaj);
+        Assert.Equal(270_000, at3Months.GrossVyaj); // 45L * 2% * 3
+        Assert.Equal(540_000, at6Months.GrossVyaj); // 45L * 2% * 6 — accrual continues
+    }
+
+    [Fact]
+    public void ResolveCompoundPeriodMonths_UsesRatePeriodOrMonthlyDefault()
+    {
+        Assert.Equal(3, VyajCalculationService.ResolveCompoundPeriodMonths("month", 3));
+        Assert.Equal(6, VyajCalculationService.ResolveCompoundPeriodMonths("month", 6));
+        Assert.Equal(1, VyajCalculationService.ResolveCompoundPeriodMonths("month", null));
+        Assert.Equal(1, VyajCalculationService.ResolveCompoundPeriodMonths("year", null));
+        Assert.Equal(1, VyajCalculationService.ResolveCompoundPeriodMonths("flat", null));
+    }
+
+    [Fact]
+    public void Flat_CapitalizeRaisesPrincipal_AndGrossUsesNewOutstanding()
+    {
+        // Flat 1.5% on 1_000_000 = 15_000. Capitalize unpaid 10_000 (after 5k interest paid).
+        var payments = new[]
+        {
+            (5_000m, "interest", new DateOnly(2024, 1, 15)),
+            (10_000m, "capitalize", new DateOnly(2024, 1, 31))
+        };
+        var totals = VyajCalculationService.CalculateEntryTotals(
+            1_000_000, 1.5m, "flat",
+            new DateOnly(2024, 1, 1),
+            payments,
+            new DateOnly(2024, 2, 1));
+
+        Assert.Equal(1_010_000, totals.PrincipalDue);
+        Assert.Equal(15_150, totals.GrossVyaj); // 1_010_000 * 1.5%
+        Assert.Equal(15_000, totals.InterestPaid); // 5k interest + 10k capitalize
+        Assert.Equal(150, totals.VyajDue);
     }
 
     [Fact]
@@ -148,5 +179,39 @@ public class VyajCalculationServiceTests
     {
         Assert.Equal(0, VyajCalculationService.DaysBetween(new DateOnly(2024, 5, 1), new DateOnly(2024, 4, 1)));
         Assert.Equal(30, VyajCalculationService.DaysBetween(new DateOnly(2024, 1, 1), new DateOnly(2024, 1, 31)));
+    }
+
+    [Fact]
+    public void Capitalize_SettlesVyajDue_AndRaisesPrincipal()
+    {
+        // Jan–Feb: 100k @ 2% = 2000 accrued. Capitalize 2000 on Jan 31.
+        // Feb–Mar: accrues on 102k = 2040. Total gross = 2000 + 2040 = 4040.
+        // Interest paid includes capitalize 2000 → due = 2040. Principal due = 102000.
+        var payments = new[] { (2_000m, "capitalize", new DateOnly(2024, 1, 31)) };
+        var totals = VyajCalculationService.CalculateEntryTotals(
+            100_000, 2, "month",
+            new DateOnly(2024, 1, 1),
+            payments,
+            new DateOnly(2024, 3, 1));
+
+        Assert.Equal(4_040, totals.GrossVyaj);
+        Assert.Equal(2_000, totals.InterestPaid);
+        Assert.Equal(2_040, totals.VyajDue);
+        Assert.Equal(102_000, totals.PrincipalDue);
+    }
+
+    [Fact]
+    public void Capitalize_DoesNotDoubleCountInVyajDue()
+    {
+        var payments = new[] { (2_000m, "capitalize", new DateOnly(2024, 1, 31)) };
+        var totals = VyajCalculationService.CalculateEntryTotals(
+            100_000, 2, "month",
+            new DateOnly(2024, 1, 1),
+            payments,
+            new DateOnly(2024, 1, 31));
+
+        Assert.Equal(2_000, totals.GrossVyaj);
+        Assert.Equal(0, totals.VyajDue);
+        Assert.Equal(102_000, totals.PrincipalDue);
     }
 }

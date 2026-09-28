@@ -1,8 +1,8 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, signal } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map, startWith } from 'rxjs';
+import { filter, map, startWith, Subscription } from 'rxjs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -13,12 +13,15 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatBadgeModule } from '@angular/material/badge';
 import { LoaderComponent } from './shared/components/loader/loader.component';
 import { BreadcrumbComponent } from './shared/components/breadcrumb/breadcrumb.component';
 import { HasPermissionDirective } from './shared/directives/has-permission.directive';
 import { AuthService } from './core/services/auth.service';
 import { SiteContextService } from './core/services/site-context.service';
 import { ThemeService } from './core/services/theme.service';
+import { ToastService } from './core/services/toast.service';
+import { NotificationService, UserNotification } from './core/services/notification.service';
 
 export interface NavLink {
   label: string;
@@ -50,6 +53,7 @@ export interface NavSection {
     MatDividerModule,
     MatTooltipModule,
     MatMenuModule,
+    MatBadgeModule,
     LoaderComponent,
     BreadcrumbComponent,
     HasPermissionDirective
@@ -57,15 +61,22 @@ export interface NavSection {
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly notificationService = inject(NotificationService);
+  private readonly toast = inject(ToastService);
 
   readonly siteContext = inject(SiteContextService);
   readonly theme = inject(ThemeService);
   readonly currentUser = this.authService.currentUser;
   readonly mobileMenuOpen = signal(false);
+  readonly notifications = signal<UserNotification[]>([]);
+  readonly unreadCount = signal(0);
+
+  private pollSub: Subscription | null = null;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly isTabletDown = toSignal(
     this.breakpointObserver.observe('(max-width: 959px)').pipe(map((r) => r.matches)),
@@ -79,6 +90,10 @@ export class AppComponent {
 
   readonly sidenavMode = computed(() => (this.isTabletDown() ? 'over' : 'side') as 'over' | 'side');
   readonly sidenavOpened = computed(() => !this.isTabletDown() || this.mobileMenuOpen());
+
+  readonly showNotifications = computed(() =>
+    this.authService.hasRole('Admin', 'SuperAdmin') && this.authService.isLoggedIn()
+  );
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -168,6 +183,109 @@ export class AppComponent {
     effect(() => {
       if (this.authService.authReady()) {
         this.siteContext.loadSites().subscribe();
+      }
+    });
+
+    effect(() => {
+      const show = this.showShell() && this.showNotifications();
+      const siteId = this.siteContext.activeSiteId();
+      this.stopPolling();
+      if (show) {
+        this.refreshNotifications(siteId);
+        this.pollTimer = setInterval(() => this.refreshNotifications(this.siteContext.activeSiteId()), 60_000);
+      } else {
+        this.notifications.set([]);
+        this.unreadCount.set(0);
+      }
+    });
+
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
+      if (this.showShell() && this.showNotifications()) {
+        this.refreshNotifications(this.siteContext.activeSiteId());
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.stopPolling();
+  }
+
+  private stopPolling(): void {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+    this.pollSub?.unsubscribe();
+    this.pollSub = null;
+  }
+
+  refreshNotifications(siteId?: string | null): void {
+    this.pollSub?.unsubscribe();
+    this.pollSub = this.notificationService.getList(siteId).subscribe({
+      next: (res) => {
+        if (res.success) this.notifications.set(res.data ?? []);
+      }
+    });
+    this.notificationService.getUnreadCount(siteId).subscribe({
+      next: (res) => {
+        if (res.success) this.unreadCount.set(res.data ?? 0);
+      }
+    });
+  }
+
+  onNotificationClick(n: UserNotification): void {
+    if (!n.isRead) {
+      this.notificationService.markRead(n.id).subscribe({
+        next: () => {
+          this.notifications.update((list) =>
+            list.map((x) => (x.id === n.id ? { ...x, isRead: true } : x))
+          );
+          this.unreadCount.update((c) => Math.max(0, c - 1));
+        }
+      });
+    }
+    const route =
+      n.module === 'vyaj'
+        ? '/accounting/vyaj'
+        : n.module === 'journal'
+          ? '/accounting/journal-voucher'
+          : '/accounting';
+    void this.router.navigateByUrl(route);
+  }
+
+  restoreNotification(event: Event, n: UserNotification): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.notificationService.restore(n.id).subscribe({
+      next: (res) => {
+        if (!res.success) {
+          this.toast.error(res.message || 'Restore failed');
+          return;
+        }
+        const msg = res.data?.message || res.message || 'Record restored';
+        this.toast.success(msg);
+        this.notifications.update((list) =>
+          list.map((x) =>
+            x.entityId === n.entityId && x.entityType === n.entityType
+              ? { ...x, canRestore: false, resolvedAt: new Date().toISOString(), isRead: true }
+              : x
+          )
+        );
+        this.unreadCount.update((c) => Math.max(0, c - (n.isRead ? 0 : 1)));
+        if (n.module === 'vyaj') {
+          void this.router.navigateByUrl('/accounting/vyaj');
+        }
+      },
+      error: () => this.toast.error('Failed to restore record')
+    });
+  }
+
+  markAllNotificationsRead(): void {
+    const siteId = this.siteContext.activeSiteId();
+    this.notificationService.markAllRead(siteId).subscribe({
+      next: () => {
+        this.notifications.update((list) => list.map((n) => ({ ...n, isRead: true })));
+        this.unreadCount.set(0);
       }
     });
   }

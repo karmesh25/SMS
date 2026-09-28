@@ -33,6 +33,8 @@ public class AbrDbContext : DbContext
     public DbSet<VyajParty> VyajParties => Set<VyajParty>();
     public DbSet<VyajEntry> VyajEntries => Set<VyajEntry>();
     public DbSet<VyajPayment> VyajPayments => Set<VyajPayment>();
+    public DbSet<VyajRateBasisOption> VyajRateBasisOptions => Set<VyajRateBasisOption>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +61,7 @@ public class AbrDbContext : DbContext
         ConfigureDailyEntry(modelBuilder);
         ConfigureJournalVoucher(modelBuilder);
         ConfigureVyaj(modelBuilder);
+        ConfigureUserNotification(modelBuilder);
         ConfigureAuditLog(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
     }
@@ -445,8 +448,10 @@ public class AbrDbContext : DbContext
         party.Property(e => e.SiteId).HasColumnName("site_id");
         party.Property(e => e.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
         party.Property(e => e.Notes).HasColumnName("notes");
+        party.Property(e => e.PartyKind).HasColumnName("party_kind").HasMaxLength(20).HasDefaultValue("direct");
         party.Property(e => e.MainLedgerId).HasColumnName("main_ledger_id");
         party.Property(e => e.SubLedgerId).HasColumnName("sub_ledger_id");
+        party.Property(e => e.BookingId).HasColumnName("booking_id");
         party.Property(e => e.IsDeleted).HasColumnName("is_deleted");
         party.Property(e => e.DeletedAt).HasColumnName("deleted_at");
         party.Property(e => e.CreatedAt).HasColumnName("created_at");
@@ -454,6 +459,7 @@ public class AbrDbContext : DbContext
         party.HasOne(e => e.Site).WithMany(s => s.VyajParties).HasForeignKey(e => e.SiteId).OnDelete(DeleteBehavior.Cascade);
         party.HasOne(e => e.MainLedger).WithMany().HasForeignKey(e => e.MainLedgerId).OnDelete(DeleteBehavior.SetNull);
         party.HasOne(e => e.SubLedger).WithMany().HasForeignKey(e => e.SubLedgerId).OnDelete(DeleteBehavior.SetNull);
+        party.HasOne(e => e.Booking).WithMany().HasForeignKey(e => e.BookingId).OnDelete(DeleteBehavior.SetNull);
         party.HasIndex(e => new { e.SiteId, e.IsDeleted });
 
         var entry = modelBuilder.Entity<VyajEntry>();
@@ -463,8 +469,9 @@ public class AbrDbContext : DbContext
         entry.Property(e => e.PartyId).HasColumnName("party_id");
         entry.Property(e => e.Principal).HasColumnName("principal").HasColumnType("decimal(15,2)");
         entry.Property(e => e.RatePercent).HasColumnName("rate_percent").HasColumnType("decimal(8,4)");
-        entry.Property(e => e.RateBasis).HasColumnName("rate_basis").HasMaxLength(10);
+        entry.Property(e => e.RateBasis).HasColumnName("rate_basis").HasMaxLength(20);
         entry.Property(e => e.RatePeriodMonths).HasColumnName("rate_period_months");
+        entry.Property(e => e.CustomDays).HasColumnName("custom_days");
         entry.Property(e => e.EmiAmount).HasColumnName("emi_amount").HasColumnType("decimal(15,2)");
         entry.Property(e => e.StartDate).HasColumnName("start_date");
         entry.Property(e => e.IsClosed).HasColumnName("is_closed");
@@ -489,6 +496,53 @@ public class AbrDbContext : DbContext
         payment.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         payment.HasOne(e => e.Entry).WithMany(en => en.Payments).HasForeignKey(e => e.EntryId).OnDelete(DeleteBehavior.Cascade);
         payment.HasIndex(e => new { e.EntryId, e.IsDeleted });
+
+        var rateOpt = modelBuilder.Entity<VyajRateBasisOption>();
+        rateOpt.ToTable("vyaj_rate_basis_options");
+        rateOpt.HasKey(e => e.Id);
+        rateOpt.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        rateOpt.Property(e => e.SiteId).HasColumnName("site_id");
+        rateOpt.Property(e => e.Label).HasColumnName("label").HasMaxLength(100).IsRequired();
+        rateOpt.Property(e => e.DayCount).HasColumnName("day_count");
+        rateOpt.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+        rateOpt.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        rateOpt.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+        rateOpt.Property(e => e.CreatedAt).HasColumnName("created_at");
+        rateOpt.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        rateOpt.HasOne(e => e.Site).WithMany().HasForeignKey(e => e.SiteId).OnDelete(DeleteBehavior.Cascade);
+        rateOpt.HasIndex(e => new { e.SiteId, e.IsDeleted });
+    }
+
+    private static void ConfigureUserNotification(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<UserNotification>();
+        entity.ToTable("user_notifications");
+        entity.HasKey(e => e.Id);
+        entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+        entity.Property(e => e.SiteId).HasColumnName("site_id");
+        entity.Property(e => e.RecipientUserId).HasColumnName("recipient_user_id");
+        entity.Property(e => e.Module).HasColumnName("module").HasMaxLength(40);
+        entity.Property(e => e.EntityType).HasColumnName("entity_type").HasMaxLength(60);
+        entity.Property(e => e.EntityId).HasColumnName("entity_id");
+        entity.Property(e => e.Title).HasColumnName("title").HasMaxLength(200);
+        entity.Property(e => e.Message).HasColumnName("message").HasMaxLength(1000);
+        entity.Property(e => e.OldValues).HasColumnName("old_values").HasColumnType("jsonb");
+        entity.Property(e => e.NewValues).HasColumnName("new_values").HasColumnType("jsonb");
+        entity.Property(e => e.IsRead).HasColumnName("is_read");
+        entity.Property(e => e.ActorUserId).HasColumnName("actor_user_id");
+        entity.Property(e => e.ResolvedAt).HasColumnName("resolved_at");
+        entity.Property(e => e.ResolvedByUserId).HasColumnName("resolved_by_user_id");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.DeletedAt).HasColumnName("deleted_at");
+        entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+        entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        entity.HasOne(e => e.Site).WithMany().HasForeignKey(e => e.SiteId).OnDelete(DeleteBehavior.Cascade);
+        entity.HasOne(e => e.RecipientUser).WithMany().HasForeignKey(e => e.RecipientUserId).OnDelete(DeleteBehavior.Cascade);
+        entity.HasOne(e => e.ActorUser).WithMany().HasForeignKey(e => e.ActorUserId).OnDelete(DeleteBehavior.SetNull);
+        entity.HasOne(e => e.ResolvedByUser).WithMany().HasForeignKey(e => e.ResolvedByUserId).OnDelete(DeleteBehavior.SetNull);
+        entity.HasIndex(e => new { e.RecipientUserId, e.IsRead, e.IsDeleted });
+        entity.HasIndex(e => new { e.SiteId, e.CreatedAt });
+        entity.HasIndex(e => new { e.EntityId, e.EntityType, e.ResolvedAt });
     }
 
     private static void ConfigureAuditLog(ModelBuilder modelBuilder)

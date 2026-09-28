@@ -10,6 +10,15 @@
       <mat-icon>refresh</mat-icon>
       Refresh
     </button>
+    <button
+      mat-stroked-button
+      type="button"
+      *appHasPermission="'vyaj'; level: 'manage'"
+      (click)="openRateOptionsManager()"
+      [disabled]="!hasActiveSite()">
+      <mat-icon>tune</mat-icon>
+      Rate options
+    </button>
   </app-page-header>
 
   <app-module-subnav [items]="accountingNav" />
@@ -38,6 +47,7 @@
           placeholder="Choose a party">
           @for (party of parties(); track party.id) {
             <mat-option [value]="party.id">
+              [{{ party.partyKind === 'asset' ? 'Asset' : 'Direct' }}]
               {{ party.name }} — Rs. {{ party.vyajDue | indianCurrency }}
             </mat-option>
           }
@@ -45,7 +55,14 @@
       </mat-form-field>
       <div class="mobile-add-party" *appHasPermission="'vyaj'; level: 'manage'">
         <mat-form-field appearance="outline" class="party-name-field">
-          <mat-label>New party name</mat-label>
+          <mat-label>Party kind</mat-label>
+          <mat-select [(ngModel)]="newPartyKind">
+            <mat-option value="direct">Direct</mat-option>
+            <mat-option value="asset">Asset-based</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="party-name-field">
+          <mat-label>{{ newPartyKind === 'asset' ? 'Asset name' : 'Party name' }}</mat-label>
           <input matInput [(ngModel)]="newPartyName" (keyup.enter)="submitNewParty()" />
         </mat-form-field>
         <mat-form-field appearance="outline" class="party-name-field">
@@ -92,6 +109,11 @@
         <header class="party-header">
           <div>
             <h2>{{ detail.name }}</h2>
+            <p class="notes kind-line">
+              <span class="kind-badge" [class.kind-badge--asset]="detail.partyKind === 'asset'">
+                {{ detail.partyKind === 'asset' ? 'Asset-based' : 'Direct' }}
+              </span>
+            </p>
             @if (detail.notes) {
               <p class="notes">{{ detail.notes }}</p>
             }
@@ -138,10 +160,24 @@
         <app-vyaj-add-entry-panel
           [open]="addEntryOpen()"
           [saving]="saving()"
+          [partyHasOpenEntries]="partyHasOpenEntries()"
+          [suggestedPrincipal]="suggestedPrincipal()"
+          [managedRateOptions]="rateOptions()"
           (saved)="saveEntry($event)"
           (closed)="addEntryOpen.set(false)" />
 
         <section class="entries">
+          @if (detail.entries.length) {
+            <div class="entries-header">
+              <span>Principal</span>
+              <span>Rate</span>
+              <span>Since</span>
+              <span>Accrued</span>
+              <span>Paid</span>
+              <span>Due</span>
+              <span class="hdr-actions">Actions</span>
+            </div>
+          }
           @for (entry of detail.entries; track entry.id) {
             <app-vyaj-entry-row
               [entry]="entry"
@@ -152,7 +188,7 @@
               (deleteEntry)="deleteEntry(entry.id)"
               (deletePayment)="deletePayment($event)" />
           } @empty {
-            <p class="empty-entries">No khata entries for this party yet.</p>
+            <p class="empty-entries">No khata entries for this {{ detail.partyKind === 'asset' ? 'asset' : 'party' }} yet.</p>
           }
         </section>
       } @else {

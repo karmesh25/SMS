@@ -24,6 +24,17 @@ if (PendriveSecretsLoader.SecretsFileExists())
     builder.Configuration.AddInMemoryCollection(secretOverrides);
 }
 
+var subscriptionLicense = builder.Configuration.GetSection("SubscriptionLicense");
+bool? licenseEnabled = null;
+if (bool.TryParse(subscriptionLicense["Enabled"], out var parsedEnabled))
+    licenseEnabled = parsedEnabled;
+
+DateOnly? licenseExpiry = null;
+if (DateOnly.TryParse(subscriptionLicense["ExpiryDate"], out var parsedExpiry))
+    licenseExpiry = parsedExpiry;
+
+SubscriptionLicense.Configure(licenseEnabled, licenseExpiry);
+
 builder.Host.UseSerilog((context, configuration) =>
 {
     configuration
@@ -127,6 +138,7 @@ builder.Services.AddApplication();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 builder.Services.AddInfrastructure(connectionString, builder.Configuration);
+builder.Services.AddHostedService<ABR.Api.HostedServices.VyajCapitalizationHostedService>();
 
 builder.Services.AddCors(options =>
 {

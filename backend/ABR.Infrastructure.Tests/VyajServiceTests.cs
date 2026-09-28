@@ -1,7 +1,9 @@
 using ABR.Application.DTOs.Vyaj;
+using ABR.Application.Interfaces;
 using ABR.Domain.Entities;
 using ABR.Infrastructure.Services.Vyaj;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace ABR.Infrastructure.Tests;
 
@@ -22,7 +24,7 @@ public class VyajServiceTests
             new VyajParty { SiteId = siteB, Name = "Party B" });
         await context.SaveChangesAsync();
 
-        var service = new VyajService(context);
+        var service = new VyajService(context, Mock.Of<INotificationService>());
         var parties = await service.GetPartiesAsync(siteA);
 
         Assert.Single(parties);
@@ -60,7 +62,7 @@ public class VyajServiceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new VyajService(context);
+        var service = new VyajService(context, Mock.Of<INotificationService>());
         await service.DeletePartyAsync(partyId);
 
         var deletedParty = await context.VyajParties.FindAsync(partyId);
@@ -102,7 +104,7 @@ public class VyajServiceTests
         context.VyajParties.Add(party);
         await context.SaveChangesAsync();
 
-        var service = new VyajService(context);
+        var service = new VyajService(context, Mock.Of<INotificationService>());
         var detail = await service.GetPartyDetailAsync(party.Id);
 
         Assert.Equal(1_000, detail.TotalVyajDue);
@@ -131,7 +133,7 @@ public class VyajServiceTests
         });
         await context.SaveChangesAsync();
 
-        var service = new VyajService(context);
+        var service = new VyajService(context, Mock.Of<INotificationService>());
         await service.CreatePaymentAsync(new CreateVyajPaymentDto
         {
             EntryId = entryId,
@@ -154,7 +156,7 @@ public class VyajServiceTests
         context.VyajParties.Add(new VyajParty { Id = partyId, SiteId = siteId, Name = "Borrower" });
         await context.SaveChangesAsync();
 
-        var service = new VyajService(context);
+        var service = new VyajService(context, Mock.Of<INotificationService>());
         var entry = await service.CreateEntryAsync(new CreateVyajEntryDto
         {
             PartyId = partyId,
@@ -183,7 +185,7 @@ public class VyajServiceTests
         context.VyajParties.Add(new VyajParty { Id = partyId, SiteId = siteId, Name = "Borrower" });
         await context.SaveChangesAsync();
 
-        var service = new VyajService(context);
+        var service = new VyajService(context, Mock.Of<INotificationService>());
         await service.CreateEntryAsync(new CreateVyajEntryDto
         {
             PartyId = partyId,
@@ -208,7 +210,7 @@ public class VyajServiceTests
         context.Sites.Add(new Site { Id = siteId, SiteName = "Tapi", IsActive = true });
         await context.SaveChangesAsync();
 
-        var service = new VyajService(context);
+        var service = new VyajService(context, Mock.Of<INotificationService>());
         var file = await service.ExportPdfAsync(siteId);
         Assert.NotEmpty(file.Content);
         Assert.Equal("application/pdf", file.ContentType);

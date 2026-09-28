@@ -5,14 +5,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { HasPermissionDirective } from '../../../shared/directives/has-permission.directive';
 import { IndianAmountDirective } from '../../../shared/directives/indian-amount.directive';
 import { DateFieldComponent } from '../../../shared/components/date-field/date-field.component';
 import { AppDatePipe } from '../../../shared/pipes/app-date.pipe';
 import { IndianCurrencyPipe } from '../../../shared/pipes/indian-currency.pipe';
-import { PAYMENT_TYPE_OPTIONS, VyajEntry } from '../models/vyaj.models';
+import { PAYMENT_TYPE_OPTIONS, paymentTypeLabel, VyajEntry } from '../models/vyaj.models';
 
 @Component({
   selector: 'app-vyaj-entry-row',
@@ -24,7 +23,6 @@ import { PAYMENT_TYPE_OPTIONS, VyajEntry } from '../models/vyaj.models';
     MatIconModule,
     MatInputModule,
     MatSelectModule,
-    MatSlideToggleModule,
     MatTooltipModule,
     HasPermissionDirective,
     IndianAmountDirective,
@@ -37,6 +35,7 @@ import { PAYMENT_TYPE_OPTIONS, VyajEntry } from '../models/vyaj.models';
 })
 export class VyajEntryRowComponent {
   private readonly fb = new FormBuilder();
+  readonly paymentTypeLabel = paymentTypeLabel;
 
   readonly entry = input.required<VyajEntry>();
   readonly readOnly = input(false);
@@ -49,6 +48,7 @@ export class VyajEntryRowComponent {
 
   readonly paymentTypeOptions = PAYMENT_TYPE_OPTIONS;
   readonly showPayment = signal(false);
+  readonly showPayments = signal(false);
 
   readonly paymentForm = this.fb.nonNullable.group({
     paymentType: ['interest' as const, Validators.required],
@@ -67,6 +67,16 @@ export class VyajEntryRowComponent {
       day: 'date-wise'
     };
     return map[basis] ?? basis;
+  }
+
+  openAddVyaj(): void {
+    const due = this.entry().vyajDue;
+    this.paymentForm.patchValue({
+      paymentType: 'interest',
+      amount: due > 0 ? String(due) : '',
+      paymentDate: new Date().toISOString().slice(0, 10)
+    });
+    this.showPayment.set(true);
   }
 
   submitPayment(): void {

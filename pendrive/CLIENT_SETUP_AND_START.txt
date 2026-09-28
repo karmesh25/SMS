@@ -3,32 +3,64 @@
   USB Pendrive - Setup and Daily Use Guide
 ================================================================================
 
-REQUIREMENTS (client PC)
+CLIENT PC REQUIREMENTS
 ------------------------
   - Windows 10 or 11 (64-bit)
   - NO PostgreSQL installation required
   - NO .NET installation required
   - USB 3.0 drive recommended (8 GB or larger)
+  (The published app is self-contained and the portable PostgreSQL binaries
+  travel on the USB itself - nothing is installed on the client's laptop.)
 
-USB FOLDER LAYOUT
------------------
-  START.bat                  - Start app daily
-  STOP.bat                   - Stop app before removing USB
-  SETUP_FIRST_RUN.bat        - Run once on first use (creates encrypted secrets)
-  REGISTER_THIS_PC.bat       - Run once to authorize this computer
-  UPGRADE_SECURITY.bat       - Upgrade old USB without encrypted secrets
-  DAILY_BACKUP.bat           - Encrypted database backup to backup\ folder
-  RESTORE_BACKUP.bat         - Restore an encrypted backup
+USB FOLDER LAYOUT (numbered in the order you run them)
+--------------------------------------------------------
+  01_VALIDATE_PACKAGE.bat    - Check nothing is missing before setup
+  02_SETUP_FIRST_RUN.bat     - Run once on first use (creates encrypted secrets)
+  03_REGISTER_THIS_PC.bat    - Run once to authorize this computer
+  04_START.bat               - Start app daily
+  05_STOP.bat                - Stop app before removing USB
+  06_DAILY_BACKUP.bat        - Encrypted database backup to backup\ folder
+  07_RESTORE_BACKUP.bat      - Restore an encrypted backup
+  08_UPGRADE_SECURITY.bat    - Upgrade an old USB that has no encrypted secrets
   CLIENT_SETUP_AND_START.txt - This file
 
   api\           - Application (ABR.Api.exe + wwwroot UI)
   tools\         - ABR.Secrets.exe (setup/backup utility)
-  db\bin\        - Portable PostgreSQL 15 binaries
+  db\bin\        - Portable PostgreSQL binaries (also needs db\share\, db\lib\)
   db\data\       - Database files (created by setup)
   config\        - secrets.enc (encrypted) + device.lic
   exports\       - Excel/PDF reports (saved on USB, not PC)
   backup\        - SQL backup files
   logs\          - Application and database logs
+
+
+================================================================================
+PART 0 - DEVELOPER: One-time setup on YOUR machine (not the client's)
+================================================================================
+
+You only need these installed on the laptop you use to BUILD the package.
+The client's PC needs none of this - see CLIENT PC REQUIREMENTS above.
+
+  1. .NET SDK 8 (or the version this repo targets)
+     Download: https://dotnet.microsoft.com/download
+     Verify:   dotnet --version
+
+  2. Node.js LTS (includes npm)
+     Download: https://nodejs.org
+     Verify:   node --version   and   npm --version
+
+  3. PostgreSQL binaries, JUST to harvest the portable bin\/share\/lib\ folders
+     (you do not need a running PostgreSQL server, just the files):
+       Option A - Install PostgreSQL normally, then copy bin\, share\, lib\
+                  from C:\Program Files\PostgreSQL\<version>\
+                  Download: https://www.postgresql.org/download/windows/
+       Option B - Download the EDB "zip archive" build (no installer, no
+                  install/uninstall on your machine at all) and extract its
+                  bin\, share\, lib\ folders directly.
+     See db\README_POSTGRES.txt for full detail.
+
+  You do NOT need Visual Studio - the .NET SDK + `dotnet` CLI is enough to
+  build this project from the command line.
 
 
 ================================================================================
@@ -40,58 +72,86 @@ Step 1 - Build the package (on your development PC)
     pendrive\build_pendrive.bat
 
   This creates the folder: pendrive\package\
+  If the window closes with an error, re-run it from an already-open Command
+  Prompt (not by double-click) so you can read the message, or check that
+  step's [n/6] line above where it stopped.
 
-Step 2 - Add portable PostgreSQL 15
-  Copy PostgreSQL binaries into:
+Step 2 - Add portable PostgreSQL
+  Copy the PostgreSQL bin\, share\, and lib\ folders into:
     pendrive\package\db\bin\
+    pendrive\package\db\share\
+    pendrive\package\db\lib\
 
-  Required files: initdb.exe, pg_ctl.exe, pg_isready.exe, createdb.exe,
-                  psql.exe, pg_dump.exe (and their DLL dependencies)
+  All three are required - bin\ alone is not enough (initdb needs share\
+  for catalog/timezone data and lib\ for extension DLLs like dict_snowball).
 
   See db\README_POSTGRES.txt for detailed instructions.
 
 Step 3 - Validate the package
   Run:
-    pendrive\validate_package.bat
+    pendrive\01_VALIDATE_PACKAGE.bat
 
   Or from inside the package folder:
-    validate_package.bat
+    01_VALIDATE_PACKAGE.bat
 
   All checks must pass before client delivery.
 
 Step 4 - Copy to USB
-  Copy EVERYTHING inside pendrive\package\ to the root of the USB drive.
-  Example: files should be at E:\START.bat, E:\api\, E:\db\, etc.
+  If the USB is brand new/empty, just copy EVERYTHING inside pendrive\package\
+  to the root of the USB drive (no formatting needed - copying is enough).
+  Example: files should end up at E:\01_VALIDATE_PACKAGE.bat, E:\api\, E:\db\, etc.
 
 Step 5 - Optional: pre-load demo data
-  On your PC: run SETUP_FIRST_RUN.bat, REGISTER_THIS_PC.bat, add sample
-  sites/bookings, then STOP.bat. Hand the USB to the client ready to demo.
+  On your PC: run 02_SETUP_FIRST_RUN.bat, 03_REGISTER_THIS_PC.bat, add sample
+  sites/bookings, then 05_STOP.bat. Hand the USB to the client ready to demo.
+
+Step 6 - OWNER ONLY: Set / extend licence expiry date (do not tell the client)
+  After build, the USB (or package) file is:
+    api\appsettings.json
+
+  Find this block and change the date (yyyy-MM-dd):
+    "SubscriptionLicense": {
+      "Enabled": true,
+      "ExpiryDate": "2028-07-20"
+    }
+
+  Examples:
+    - Extend to end of next year: "2030-12-31"
+    - Temporarily disable lock: set "Enabled": false  (not recommended for payment control)
+
+  Then 05_STOP.bat (if running) and 04_START.bat again so the new date loads.
+  Non-technical clients normally never open this file.
 
 
 ================================================================================
 PART 2 - CLIENT: First-time setup (once per USB + PC combination)
 ================================================================================
 
-Step 1 - Insert USB and run setup
+Step 1 - Check the package
   1. Insert the USB drive
-  2. Double-click SETUP_FIRST_RUN.bat
-  3. Choose a MASTER PASSWORD when prompted (twice for confirmation)
-     IMPORTANT: If you forget this password, encrypted secrets cannot be recovered.
-  4. Wait until you see "Setup complete"
+  2. Double-click 01_VALIDATE_PACKAGE.bat
+  3. All lines must show [OK] - if any show [FAIL], the USB is missing files;
+     contact your vendor before continuing.
 
-Step 2 - Register this computer (device lock - one time)
-  1. Double-click REGISTER_THIS_PC.bat
+Step 2 - Run first-time setup
+  1. Double-click 02_SETUP_FIRST_RUN.bat
+  2. Choose a MASTER PASSWORD when prompted (twice for confirmation)
+     IMPORTANT: If you forget this password, encrypted secrets cannot be recovered.
+  3. Wait until you see "Setup complete"
+
+Step 3 - Register this computer (device lock - one time)
+  1. Double-click 03_REGISTER_THIS_PC.bat
   2. Enter master password when prompted (if START asks)
   3. Browser opens at http://localhost:5050
-  3. Login:
+  4. Login:
        Username: admin
        Password: Admin@123
-  4. Go to: Admin -> Devices
-  5. Click "Authorize This PC" (or equivalent authorize button)
-  6. Double-click STOP.bat
+  5. Go to: Admin -> Devices
+  6. Click "Authorize This PC" (or equivalent authorize button)
+  7. Double-click 05_STOP.bat
 
-Step 3 - Normal start
-  1. Double-click START.bat
+Step 4 - Normal start
+  1. Double-click 04_START.bat
   2. Enter your MASTER PASSWORD when prompted
   3. Browser opens - login with your credentials
   4. Change the admin password after first login (recommended)
@@ -106,18 +166,18 @@ Demo / empty sandbox login (real data stays in the database):
 PART 3 - CLIENT: Daily use
 ================================================================================
 
-  START the app     -> Double-click START.bat (enter master password)
-  STOP the app      -> Double-click STOP.bat (always before removing USB)
-  Backup database   -> Double-click DAILY_BACKUP.bat (enter master password)
+  START the app     -> Double-click 04_START.bat (enter master password)
+  STOP the app      -> Double-click 05_STOP.bat (always before removing USB)
+  Backup database   -> Double-click 06_DAILY_BACKUP.bat (enter master password)
                        Creates an ENCRYPTED backup: backup\abr_backup_*.sql.enc
-  Restore database  -> Double-click RESTORE_BACKUP.bat (enter master password)
+  Restore database  -> Double-click 07_RESTORE_BACKUP.bat (enter master password)
                        Restores the latest encrypted backup (overwrites current data)
   Export reports    -> Use Export buttons in the app; files save to exports\
 
   Application URL: http://localhost:5050
 
   IMPORTANT:
-  - Always run STOP.bat before removing the USB drive
+  - Always run 05_STOP.bat before removing the USB drive
   - Do not delete the db\data folder (contains all your data)
   - Reports and exports stay on the USB for security
 
@@ -130,16 +190,16 @@ TROUBLESHOOTING
     -> db\bin\ folder is missing PostgreSQL files. Contact your vendor.
 
   "Invalid master password"
-    -> Re-enter the master password chosen during SETUP_FIRST_RUN.bat.
+    -> Re-enter the master password chosen during 02_SETUP_FIRST_RUN.bat.
 
   "Encrypted secrets not found"
-    -> Run SETUP_FIRST_RUN.bat first, or UPGRADE_SECURITY.bat on old USB.
+    -> Run 02_SETUP_FIRST_RUN.bat first, or 08_UPGRADE_SECURITY.bat on old USB.
 
   "Database not initialized"
-    -> Run SETUP_FIRST_RUN.bat first.
+    -> Run 02_SETUP_FIRST_RUN.bat first.
 
   "This device is not authorized"
-    -> Run REGISTER_THIS_PC.bat and authorize in Admin -> Devices.
+    -> Run 03_REGISTER_THIS_PC.bat and authorize in Admin -> Devices.
 
   Login fails with admin / Admin@123
     -> Database may already have a changed password. Contact administrator.
@@ -151,6 +211,12 @@ TROUBLESHOOTING
     -> Allow ABR.Api.exe from the USB drive (local trusted application).
 
   Browser shows blank page
-    -> Wait 10 seconds after START.bat and refresh. Ensure api\wwwroot exists.
+    -> Wait 10 seconds after 04_START.bat and refresh. Ensure api\wwwroot exists.
+
+  A .bat window opens and closes immediately with no message
+    -> Open Command Prompt, cd to the USB drive, and run the .bat by typing
+       its name so the window stays open and you can read the error, e.g.:
+         cd /d E:\
+         02_SETUP_FIRST_RUN.bat
 
 ================================================================================

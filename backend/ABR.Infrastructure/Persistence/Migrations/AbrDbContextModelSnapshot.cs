@@ -1058,6 +1058,105 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.UserNotification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("message");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("module");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("new_values");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("old_values");
+
+                    b.Property<Guid?>("RecipientUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipient_user_id");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_user_id");
+
+                    b.Property<Guid>("SiteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("site_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("ResolvedByUserId");
+
+                    b.HasIndex("SiteId", "CreatedAt");
+
+                    b.HasIndex("EntityId", "EntityType", "ResolvedAt");
+
+                    b.HasIndex("RecipientUserId", "IsRead", "IsDeleted");
+
+                    b.ToTable("user_notifications", (string)null);
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.UserSiteAccess", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1115,6 +1214,10 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<int?>("CustomDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("custom_days");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("deleted_at");
@@ -1141,8 +1244,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("RateBasis")
                         .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("rate_basis");
 
                     b.Property<decimal>("RatePercent")
@@ -1176,6 +1279,10 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("booking_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -1202,6 +1309,14 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("notes");
 
+                    b.Property<string>("PartyKind")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("direct")
+                        .HasColumnName("party_kind");
+
                     b.Property<Guid>("SiteId")
                         .HasColumnType("uuid")
                         .HasColumnName("site_id");
@@ -1215,6 +1330,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
 
                     b.HasIndex("MainLedgerId");
 
@@ -1272,6 +1389,57 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.HasIndex("EntryId", "IsDeleted");
 
                     b.ToTable("vyaj_payments", (string)null);
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajRateBasisOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("DayCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_count");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("label");
+
+                    b.Property<Guid>("SiteId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("site_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SiteId", "IsDeleted");
+
+                    b.ToTable("vyaj_rate_basis_options", (string)null);
                 });
 
             modelBuilder.Entity("ABR.Domain.Entities.Wing", b =>
@@ -1573,6 +1741,38 @@ namespace ABR.Infrastructure.Persistence.Migrations
                     b.Navigation("AppRole");
                 });
 
+            modelBuilder.Entity("ABR.Domain.Entities.UserNotification", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.User", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ABR.Domain.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ABR.Domain.Entities.User", "ResolvedByUser")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ABR.Domain.Entities.Site", "Site")
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActorUser");
+
+                    b.Navigation("RecipientUser");
+
+                    b.Navigation("ResolvedByUser");
+
+                    b.Navigation("Site");
+                });
+
             modelBuilder.Entity("ABR.Domain.Entities.UserSiteAccess", b =>
                 {
                     b.HasOne("ABR.Domain.Entities.Site", "Site")
@@ -1605,6 +1805,11 @@ namespace ABR.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ABR.Domain.Entities.VyajParty", b =>
                 {
+                    b.HasOne("ABR.Domain.Entities.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("ABR.Domain.Entities.MainLedger", "MainLedger")
                         .WithMany()
                         .HasForeignKey("MainLedgerId")
@@ -1620,6 +1825,8 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("SubLedgerId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Booking");
 
                     b.Navigation("MainLedger");
 
@@ -1637,6 +1844,17 @@ namespace ABR.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Entry");
+                });
+
+            modelBuilder.Entity("ABR.Domain.Entities.VyajRateBasisOption", b =>
+                {
+                    b.HasOne("ABR.Domain.Entities.Site", "Site")
+                        .WithMany()
+                        .HasForeignKey("SiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Site");
                 });
 
             modelBuilder.Entity("ABR.Domain.Entities.Wing", b =>

@@ -1,5 +1,11 @@
 @echo off
-setlocal EnableDelayedExpansion
+setlocal DisableDelayedExpansion
+rem NOTE: delayed expansion stays OFF by default because the master/DB
+rem passwords may contain "!" - under EnableDelayedExpansion, referencing
+rem a value with "!" via !VAR! (or even %VAR% on a line delayed-expansion
+rem also scans) silently strips the "!" and corrupts the password. It is
+rem enabled only inside the narrow WAITPG retry loop below, which never
+rem touches password variables.
 
 set "DRIVE=%~d0"
 set "ROOT=%DRIVE%\"
@@ -42,14 +48,14 @@ if not exist "%TOOLS%\ABR.Secrets.exe" (
 
 if exist "%SECRETS%" (
     echo ERROR: secrets.enc already exists. Setup was already completed.
-    echo To upgrade an older USB, run UPGRADE_SECURITY.bat instead.
+    echo To upgrade an older USB, run 08_UPGRADE_SECURITY.bat instead.
     pause
     exit /b 1
 )
 
 echo [1/8] Choose master password for encrypted secrets...
 for /f "usebackq delims=" %%P in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%prompt_setup_master_password.ps1"`) do set "MASTER_PASSWORD=%%P"
-if "!MASTER_PASSWORD!"=="" (
+if "%MASTER_PASSWORD%"=="" (
     echo ERROR: Master password setup cancelled.
     pause
     exit /b 1
@@ -77,6 +83,7 @@ if errorlevel 1 (
 
 echo [4/8] Waiting for PostgreSQL...
 set /a RETRIES=0
+setlocal EnableDelayedExpansion
 :WAITPG
 set /a RETRIES+=1
 "%PGBIN%\pg_isready.exe" -p 5433 >nul 2>&1
@@ -89,9 +96,10 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+endlocal
 
 echo [5/8] Generating encrypted secrets and database password...
-set "ABR_MASTER_PASSWORD=!MASTER_PASSWORD!"
+set "ABR_MASTER_PASSWORD=%MASTER_PASSWORD%"
 "%TOOLS%\ABR.Secrets.exe" generate --output "%SECRETS%" --setup-password-file "%SETUP_PWD%"
 if errorlevel 1 (
     echo ERROR: Failed to generate secrets.enc
@@ -102,7 +110,7 @@ if errorlevel 1 (
 
 set "DB_PASSWORD="
 for /f "usebackq delims=" %%P in ("%SETUP_PWD%") do set "DB_PASSWORD=%%P"
-if "!DB_PASSWORD!"=="" (
+if "%DB_PASSWORD%"=="" (
     echo ERROR: Database password was not generated.
     if exist "%SETUP_PWD%" del /f /q "%SETUP_PWD%"
     pause
@@ -110,7 +118,7 @@ if "!DB_PASSWORD!"=="" (
 )
 
 echo [6/8] Setting strong PostgreSQL password...
-"%PGBIN%\psql.exe" -p 5433 -U postgres -d postgres -c "ALTER USER postgres WITH PASSWORD '!DB_PASSWORD!';"
+"%PGBIN%\psql.exe" -p 5433 -U postgres -d postgres -c "ALTER USER postgres WITH PASSWORD '%DB_PASSWORD%';"
 if errorlevel 1 (
     echo ERROR: Failed to set PostgreSQL password.
     if exist "%SETUP_PWD%" del /f /q "%SETUP_PWD%"
@@ -128,7 +136,7 @@ if errorlevel 1 (
 )
 "%PGBIN%\pg_ctl.exe" -D "%PGDATA%" reload
 
-set "PGPASSWORD=!DB_PASSWORD!"
+set "PGPASSWORD=%DB_PASSWORD%"
 echo [8/8] Creating database abr_db...
 "%PGBIN%\createdb.exe" -p 5433 -U postgres abr_db 2>nul
 if errorlevel 1 (
@@ -139,6 +147,9 @@ if exist "%SETUP_PWD%" del /f /q "%SETUP_PWD%"
 set "MASTER_PASSWORD="
 set "ABR_MASTER_PASSWORD="
 
+echo Stopping PostgreSQL (setup instance)...
+"%PGBIN%\pg_ctl.exe" -D "%PGDATA%" stop -m fast >nul 2>&1
+
 echo.
 echo Setup complete.
 echo   - Encrypted secrets: %SECRETS%
@@ -146,8 +157,8 @@ echo   - PostgreSQL requires password (no trust auth)
 echo   - Database tables are created on first START
 echo.
 echo NEXT STEPS:
-echo   1. Run REGISTER_THIS_PC.bat (one-time device authorization)
-echo   2. Run STOP.bat, then START.bat (enter master password when prompted)
+echo   1. Run 03_REGISTER_THIS_PC.bat (one-time device authorization)
+echo   2. Run 05_STOP.bat, then 04_START.bat (enter master password when prompted)
 echo.
 echo IMPORTANT: If you forget the master password, secrets cannot be recovered.
 echo Default app login after first API start: admin / Admin@123
