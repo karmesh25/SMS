@@ -201,7 +201,7 @@ internal static class ReportExportPdfBuilder
                 DataCell(table, r.BrokerName);
                 DataCell(table, r.BrokerContact);
                 DataCell(table, ReportExportHelpers.FormatDate(r.BookingDate));
-                DataCell(table, ReportExportHelpers.FormatIndianAmount(r.Sqft));
+                DataCell(table, ReportExportHelpers.FormatPlainNumber(r.Sqft));
                 DataCell(table, ReportExportHelpers.FormatIndianAmount(r.Rate));
                 DataCell(table, ReportExportHelpers.FormatIndianAmount(r.TotalPrice));
                 DataCell(table, ReportExportHelpers.FormatIndianAmount(r.TotalPaid));

@@ -1,3 +1,4 @@
+using ABR.Infrastructure.Formatting;
 using ClosedXML.Excel;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -50,10 +51,10 @@ internal static class JournalVoucherExportBuilder
             ws.Cell(rowNum, 4).Value = row.MainLedgerName;
             ws.Cell(rowNum, 5).Value = row.SubLedgerName;
             ws.Cell(rowNum, 6).Value = row.EntryType.ToUpperInvariant();
-            ws.Cell(rowNum, 7).Value = row.Amount;
+            ws.Cell(rowNum, 7).Value = DisplayAmountFormatter.Scale(row.Amount);
             ws.Cell(rowNum, 8).Value = row.DebitNarration ?? string.Empty;
             ws.Cell(rowNum, 9).Value = row.CreditNarration ?? string.Empty;
-            ws.Cell(rowNum, 7).Style.NumberFormat.Format = "0.00";
+            ws.Cell(rowNum, 7).Style.NumberFormat.Format = "0.#####";
             rowNum++;
         }
 
@@ -119,7 +120,7 @@ internal static class JournalVoucherExportBuilder
                         table.Cell().Element(BodyCell).Text(row.MainLedgerName);
                         table.Cell().Element(BodyCell).Text(row.SubLedgerName);
                         table.Cell().Element(BodyCell).Text(row.EntryType.ToUpperInvariant());
-                        table.Cell().Element(BodyCell).AlignRight().Text(row.Amount.ToString("N2", System.Globalization.CultureInfo.InvariantCulture));
+                        table.Cell().Element(BodyCell).AlignRight().Text(DisplayAmountFormatter.Format(row.Amount));
                         table.Cell().Element(BodyCell).Text(row.DebitNarration ?? string.Empty);
                         table.Cell().Element(BodyCell).Text(row.CreditNarration ?? string.Empty);
                     }

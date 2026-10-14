@@ -119,7 +119,7 @@ internal static class ReportExportWordBuilder
             AddDataRow(table,
                 r.SiteName, r.WingName, r.FlatNo, r.MemberName, r.CustomerContact,
                 r.BrokerName, r.BrokerContact, ReportExportHelpers.FormatDate(r.BookingDate),
-                ReportExportHelpers.FormatIndianAmount(r.Sqft), ReportExportHelpers.FormatIndianAmount(r.Rate),
+                ReportExportHelpers.FormatPlainNumber(r.Sqft), ReportExportHelpers.FormatIndianAmount(r.Rate),
                 ReportExportHelpers.FormatIndianAmount(r.TotalPrice), ReportExportHelpers.FormatIndianAmount(r.TotalPaid),
                 ReportExportHelpers.FormatIndianAmount(r.RemainingAsPerCondition), ReportExportHelpers.FormatIndianAmount(r.TotalRemaining),
                 ReportExportHelpers.FormatDate(r.LastPaymentDate), r.DaysFromLastPayment?.ToString(),

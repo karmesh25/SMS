@@ -160,7 +160,7 @@ internal static class ReportExportExcelBuilder
             ws.Cell(row, 6).Value = r.BrokerName ?? string.Empty;
             ws.Cell(row, 7).Value = r.BrokerContact ?? string.Empty;
             ws.Cell(row, 8).Value = ReportExportHelpers.FormatDate(r.BookingDate);
-            ws.Cell(row, 9).Value = ReportExportHelpers.FormatIndianAmount(r.Sqft);
+            ws.Cell(row, 9).Value = ReportExportHelpers.FormatPlainNumber(r.Sqft);
             ws.Cell(row, 10).Value = ReportExportHelpers.FormatIndianAmount(r.Rate);
             ws.Cell(row, 11).Value = ReportExportHelpers.FormatIndianAmount(r.TotalPrice);
             ws.Cell(row, 12).Value = ReportExportHelpers.FormatIndianAmount(r.TotalPaid);

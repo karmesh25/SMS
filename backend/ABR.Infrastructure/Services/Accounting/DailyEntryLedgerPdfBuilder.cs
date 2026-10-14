@@ -88,5 +88,5 @@ internal static class DailyEntryLedgerPdfBuilder
         container.PaddingVertical(2).PaddingHorizontal(2).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2);
 
     private static string FormatAmount(decimal amount) =>
-        amount.ToString("N2", System.Globalization.CultureInfo.InvariantCulture);
+        ABR.Infrastructure.Formatting.DisplayAmountFormatter.Format(amount);
 }

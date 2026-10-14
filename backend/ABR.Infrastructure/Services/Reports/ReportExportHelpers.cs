@@ -1,6 +1,6 @@
 using System.Globalization;
-using System.Text;
 using ClosedXML.Excel;
+using ABR.Infrastructure.Formatting;
 
 namespace ABR.Infrastructure.Services.Reports;
 
@@ -9,37 +9,19 @@ internal static class ReportExportHelpers
     public const int MaxExportRows = 50_000;
     public const string HeaderBlue = "#1F4E79";
 
-    public static string FormatIndianAmount(decimal? amount)
+    public static string FormatIndianAmount(decimal? amount) => DisplayAmountFormatter.Format(amount);
+
+    public static string FormatIndianAmount(decimal amount) => DisplayAmountFormatter.Format(amount);
+
+    /// <summary>Non-money quantities (e.g. sqft) — no ÷1000 obfuscation.</summary>
+    public static string FormatPlainNumber(decimal? amount)
     {
         if (!amount.HasValue) return string.Empty;
-        return FormatIndianAmount(amount.Value);
+        return amount.Value.ToString("0.##", CultureInfo.InvariantCulture);
     }
 
-    public static string FormatIndianAmount(decimal amount)
-    {
-        var negative = amount < 0;
-        amount = Math.Abs(amount);
-        var parts = amount.ToString("F2", CultureInfo.InvariantCulture).Split('.');
-        var intPart = parts[0];
-        var decPart = parts[1];
-
-        if (intPart.Length <= 3)
-            return (negative ? "-" : string.Empty) + intPart + "." + decPart;
-
-        var lastThree = intPart[^3..];
-        var rest = intPart[..^3];
-        var sb = new StringBuilder();
-        while (rest.Length > 2)
-        {
-            sb.Insert(0, "," + rest[^2..]);
-            rest = rest[..^2];
-        }
-
-        sb.Insert(0, rest);
-        sb.Append(',');
-        sb.Append(lastThree);
-        return (negative ? "-" : string.Empty) + sb + "." + decPart;
-    }
+    public static string FormatPlainNumber(decimal amount) =>
+        amount.ToString("0.##", CultureInfo.InvariantCulture);
 
     public static string FormatDate(DateOnly? date) => date?.ToString("dd-MM-yyyy") ?? string.Empty;
 

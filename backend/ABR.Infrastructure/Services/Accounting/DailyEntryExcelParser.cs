@@ -1,4 +1,5 @@
 using System.Globalization;
+using ABR.Infrastructure.Formatting;
 using ClosedXML.Excel;
 
 namespace ABR.Infrastructure.Services.Accounting;
@@ -111,12 +112,12 @@ internal static class DailyEntryExcelParser
             ws.Cell(rowNum, 3).Value = row.MainLedgerName;
             ws.Cell(rowNum, 4).Value = row.SubLedgerName;
             ws.Cell(rowNum, 5).Value = row.Description ?? string.Empty;
-            ws.Cell(rowNum, 6).Value = cr > 0 ? cr : string.Empty;
-            ws.Cell(rowNum, 7).Value = dr > 0 ? dr : string.Empty;
-            ws.Cell(rowNum, 8).Value = balance;
-            ws.Cell(rowNum, 6).Style.NumberFormat.Format = "0.000";
-            ws.Cell(rowNum, 7).Style.NumberFormat.Format = "0.000";
-            ws.Cell(rowNum, 8).Style.NumberFormat.Format = "0.000";
+            ws.Cell(rowNum, 6).Value = cr > 0 ? DisplayAmountFormatter.Scale(cr) : string.Empty;
+            ws.Cell(rowNum, 7).Value = dr > 0 ? DisplayAmountFormatter.Scale(dr) : string.Empty;
+            ws.Cell(rowNum, 8).Value = DisplayAmountFormatter.Scale(balance);
+            ws.Cell(rowNum, 6).Style.NumberFormat.Format = "0.#####";
+            ws.Cell(rowNum, 7).Style.NumberFormat.Format = "0.#####";
+            ws.Cell(rowNum, 8).Style.NumberFormat.Format = "0.#####";
             rowNum++;
         }
 

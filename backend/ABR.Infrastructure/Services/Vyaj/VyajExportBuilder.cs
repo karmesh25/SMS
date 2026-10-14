@@ -1,4 +1,5 @@
 using ABR.Application.DTOs.Vyaj;
+using ABR.Infrastructure.Formatting;
 using ClosedXML.Excel;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -50,18 +51,18 @@ internal static class VyajExportBuilder
                 ws.Cell(row, 3).Value = party.MainLedgerName ?? string.Empty;
                 ws.Cell(row, 4).Value = party.SubLedgerName ?? string.Empty;
                 ws.Cell(row, 5).Value = entry.StartDate.ToString("dd-MM-yyyy");
-                ws.Cell(row, 6).Value = entry.Principal;
-                ws.Cell(row, 7).Value = entry.EmiAmount ?? 0;
+                ws.Cell(row, 6).Value = DisplayAmountFormatter.Scale(entry.Principal);
+                ws.Cell(row, 7).Value = DisplayAmountFormatter.Scale(entry.EmiAmount ?? 0);
                 ws.Cell(row, 8).Value = entry.RatePercent;
                 ws.Cell(row, 9).Value = entry.RateBasis;
                 ws.Cell(row, 10).Value = entry.RatePeriodMonths?.ToString() ?? string.Empty;
-                ws.Cell(row, 11).Value = entry.PrincipalDue;
-                ws.Cell(row, 12).Value = entry.GrossVyaj;
-                ws.Cell(row, 13).Value = entry.InterestPaid;
-                ws.Cell(row, 14).Value = entry.VyajDue;
+                ws.Cell(row, 11).Value = DisplayAmountFormatter.Scale(entry.PrincipalDue);
+                ws.Cell(row, 12).Value = DisplayAmountFormatter.Scale(entry.GrossVyaj);
+                ws.Cell(row, 13).Value = DisplayAmountFormatter.Scale(entry.InterestPaid);
+                ws.Cell(row, 14).Value = DisplayAmountFormatter.Scale(entry.VyajDue);
                 ws.Cell(row, 15).Value = entry.IsClosed ? "Closed" : "Open";
                 foreach (var col in new[] { 6, 7, 8, 11, 12, 13, 14 })
-                    ws.Cell(row, col).Style.NumberFormat.Format = "0.00";
+                    ws.Cell(row, col).Style.NumberFormat.Format = "0.#####";
                 row++;
             }
         }
@@ -69,14 +70,14 @@ internal static class VyajExportBuilder
         row += 1;
         ws.Cell(row, 1).Value = "Site Totals (open entries)";
         ws.Cell(row, 1).Style.Font.Bold = true;
-        ws.Cell(row, 11).Value = parties.Sum(p => p.TotalPrincipalDue);
-        ws.Cell(row, 12).Value = parties.Sum(p => p.TotalGrossVyaj);
-        ws.Cell(row, 13).Value = parties.Sum(p => p.TotalVyajPaid);
-        ws.Cell(row, 14).Value = parties.Sum(p => p.TotalVyajDue);
+        ws.Cell(row, 11).Value = DisplayAmountFormatter.Scale(parties.Sum(p => p.TotalPrincipalDue));
+        ws.Cell(row, 12).Value = DisplayAmountFormatter.Scale(parties.Sum(p => p.TotalGrossVyaj));
+        ws.Cell(row, 13).Value = DisplayAmountFormatter.Scale(parties.Sum(p => p.TotalVyajPaid));
+        ws.Cell(row, 14).Value = DisplayAmountFormatter.Scale(parties.Sum(p => p.TotalVyajDue));
         foreach (var col in new[] { 11, 12, 13, 14 })
         {
             ws.Cell(row, col).Style.Font.Bold = true;
-            ws.Cell(row, col).Style.NumberFormat.Format = "0.00";
+            ws.Cell(row, col).Style.NumberFormat.Format = "0.#####";
         }
 
         row += 2;
@@ -99,8 +100,8 @@ internal static class VyajExportBuilder
                     ws.Cell(row, 2).Value = entry.StartDate.ToString("dd-MM-yyyy");
                     ws.Cell(row, 3).Value = payment.PaymentDate.ToString("dd-MM-yyyy");
                     ws.Cell(row, 4).Value = FormatPaymentType(payment.PaymentType);
-                    ws.Cell(row, 5).Value = payment.Amount;
-                    ws.Cell(row, 5).Style.NumberFormat.Format = "0.00";
+                    ws.Cell(row, 5).Value = DisplayAmountFormatter.Scale(payment.Amount);
+                    ws.Cell(row, 5).Style.NumberFormat.Format = "0.#####";
                     row++;
                 }
             }
@@ -176,21 +177,21 @@ internal static class VyajExportBuilder
                                 table.Cell().Element(BodyCell).Text(party.Name);
                                 table.Cell().Element(BodyCell).Text(FormatPartyKind(party.PartyKind));
                                 table.Cell().Element(BodyCell).Text(entry.StartDate.ToString("dd-MM-yyyy"));
-                                table.Cell().Element(BodyCell).AlignRight().Text(entry.Principal.ToString("N2"));
-                                table.Cell().Element(BodyCell).AlignRight().Text((entry.EmiAmount ?? 0).ToString("N2"));
+                                table.Cell().Element(BodyCell).AlignRight().Text(DisplayAmountFormatter.Format(entry.Principal));
+                                table.Cell().Element(BodyCell).AlignRight().Text(DisplayAmountFormatter.Format(entry.EmiAmount ?? 0));
                                 table.Cell().Element(BodyCell).Text(rateLabel);
-                                table.Cell().Element(BodyCell).AlignRight().Text(entry.PrincipalDue.ToString("N2"));
-                                table.Cell().Element(BodyCell).AlignRight().Text(entry.GrossVyaj.ToString("N2"));
-                                table.Cell().Element(BodyCell).AlignRight().Text(entry.InterestPaid.ToString("N2"));
-                                table.Cell().Element(BodyCell).AlignRight().Text(entry.VyajDue.ToString("N2"));
+                                table.Cell().Element(BodyCell).AlignRight().Text(DisplayAmountFormatter.Format(entry.PrincipalDue));
+                                table.Cell().Element(BodyCell).AlignRight().Text(DisplayAmountFormatter.Format(entry.GrossVyaj));
+                                table.Cell().Element(BodyCell).AlignRight().Text(DisplayAmountFormatter.Format(entry.InterestPaid));
+                                table.Cell().Element(BodyCell).AlignRight().Text(DisplayAmountFormatter.Format(entry.VyajDue));
                                 table.Cell().Element(BodyCell).Text(entry.IsClosed ? "Closed" : "Open");
                             }
                         }
                     });
 
                     col.Item().PaddingTop(10).Text(
-                        $"Totals (open) — Principal due: {parties.Sum(p => p.TotalPrincipalDue):N2}  |  " +
-                        $"Vyaj due: {parties.Sum(p => p.TotalVyajDue):N2}").Bold();
+                        $"Totals (open) — Principal due: {DisplayAmountFormatter.Format(parties.Sum(p => p.TotalPrincipalDue))}  |  " +
+                        $"Vyaj due: {DisplayAmountFormatter.Format(parties.Sum(p => p.TotalVyajDue))}").Bold();
                 });
             });
         });

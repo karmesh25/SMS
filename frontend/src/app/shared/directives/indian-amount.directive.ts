@@ -1,17 +1,15 @@
 import { DestroyRef, Directive, ElementRef, HostListener, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgControl } from '@angular/forms';
-import { IndianCurrencyPipe } from '../pipes/indian-currency.pipe';
+import { formatIndianGroupedAmount } from '../pipes/indian-currency.pipe';
 
 @Directive({
   selector: 'input[appIndianAmount]',
-  standalone: true,
-  providers: [IndianCurrencyPipe]
+  standalone: true
 })
 export class IndianAmountDirective implements OnInit {
   private readonly el = inject(ElementRef<HTMLInputElement>);
   private readonly control = inject(NgControl, { optional: true });
-  private readonly currencyPipe = inject(IndianCurrencyPipe);
   private readonly destroyRef = inject(DestroyRef);
   private editing = false;
 
@@ -66,7 +64,7 @@ export class IndianAmountDirective implements OnInit {
       this.el.nativeElement.value = '';
       return;
     }
-    this.el.nativeElement.value = this.currencyPipe.transform(Number(num));
+    this.el.nativeElement.value = formatIndianGroupedAmount(Number(num));
   }
 
   private parseAmount(raw: string): number {
