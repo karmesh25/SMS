@@ -31,10 +31,12 @@ export interface SelectOption<T = string> {
     }
   ],
   template: `
-    <mat-form-field appearance="outline" class="searchable-select">
+    <mat-form-field appearance="outline" class="searchable-select" [subscriptSizing]="subscriptSizing">
       <mat-label>{{ label }}</mat-label>
       <mat-select
         #selectRef
+        panelClass="abr-select-panel-fit"
+        [panelWidth]="panelWidth"
         [value]="value"
         [disabled]="disabled"
         (openedChange)="onOpenedChange($event)"
@@ -85,6 +87,9 @@ export class SearchableSelectComponent<T = string> implements ControlValueAccess
   @Input() label = 'Select';
   @Input() options: SelectOption<T>[] = [];
   @Input() virtualScrollThreshold = 100;
+  @Input() subscriptSizing: 'fixed' | 'dynamic' = 'fixed';
+  /** Match trigger width so suggestion list does not spill wider than the field. */
+  @Input() panelWidth: string | number | null = 'auto';
   @Output() readonly selectionChange = new EventEmitter<T>();
 
   @ViewChild('selectRef') selectRef?: MatSelect;

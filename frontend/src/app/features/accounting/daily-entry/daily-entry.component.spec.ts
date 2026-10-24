@@ -5,6 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { DailyEntryComponent } from './daily-entry.component';
 import { DailyEntryService } from '../../../core/services/daily-entry.service';
+import { FileDownloadService } from '../../../core/services/file-download.service';
 import { MasterDataService } from '../../../core/services/master-data.service';
 import { SiteContextService } from '../../../core/services/site-context.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -20,6 +21,7 @@ describe('DailyEntryComponent', () => {
         { provide: MasterDataService, useValue: { getMainLedgers: () => of({ success: true, data: [{ id: 'm1', ledgerName: 'Member A/c' }, { id: 'm2', ledgerName: 'Construction' }] }), getSubLedgers: () => of({ success: true, data: [] }), getBanks: () => of({ success: true, data: [] }) } },
         { provide: SiteContextService, useValue: { activeSiteId: () => 'site-1', loadSites: () => of({ success: true, data: [] }) } },
         { provide: ToastService, useValue: { success: () => {}, error: () => {} } },
+        { provide: FileDownloadService, useValue: { saveToBrowser: () => {} } },
         { provide: MatDialog, useValue: { open: () => ({ afterClosed: () => of(false) }) } }
       ]
     }).compileComponents();

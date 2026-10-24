@@ -537,6 +537,25 @@ a {
   max-width: min(720px, calc(100vw - 2rem)) !important;
 }
 
+// Keep searchable-select suggestion panels within a compact field width
+.abr-select-panel-fit.mat-mdc-select-panel {
+  max-width: min(100vw - 2rem, 240px);
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.abr-select-panel-fit .mat-mdc-option .mdc-list-item__primary-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.abr-select-panel-fit .filter-box input {
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
 // ---------------------------------------------------------------------------
 // Print
 // ---------------------------------------------------------------------------
