@@ -44,10 +44,19 @@ public class BalanceSheetFilterDto
     public Guid? MainLedgerId { get; set; }
 }
 
-public class BalanceSheetLedgerItemDto
+public class BalanceSheetSubLedgerItemDto
 {
+    public Guid SubLedgerId { get; set; }
     public string LedgerName { get; set; } = string.Empty;
     public decimal TotalAmount { get; set; }
+}
+
+public class BalanceSheetLedgerItemDto
+{
+    public Guid MainLedgerId { get; set; }
+    public string LedgerName { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public IReadOnlyList<BalanceSheetSubLedgerItemDto> SubLedgers { get; set; } = Array.Empty<BalanceSheetSubLedgerItemDto>();
 }
 
 public class BalanceSheetReportDto

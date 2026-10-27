@@ -16,7 +16,13 @@ import { ModuleSubnavComponent } from '../../../shared/components/module-subnav/
 import { REPORT_NAV_ITEMS } from '../../../shared/nav/module-nav-items';
 
 interface MainLedger { id: string; ledgerName: string; }
-interface LedgerItem { ledgerName: string; totalAmount: number; }
+interface SubLedgerItem { subLedgerId: string; ledgerName: string; totalAmount: number; }
+interface LedgerItem {
+  mainLedgerId: string;
+  ledgerName: string;
+  totalAmount: number;
+  subLedgers: SubLedgerItem[];
+}
 interface BalanceSheetData {
   siteName: string;
   dateFrom?: string;
@@ -61,11 +67,28 @@ interface BalanceSheetData {
             <h3 class="aavak-header">Aavak</h3>
             <div class="abr-table-card">
               <table>
-                <tr><th>Ledger</th><th>Total</th></tr>
-                @for (item of data.aavakItems; track item.ledgerName) {
-                  <tr><td>{{ item.ledgerName }}</td><td>{{ item.totalAmount | indianCurrency }}</td></tr>
+                <tr><th class="expand-col"></th><th>Ledger</th><th>Total</th></tr>
+                @for (item of data.aavakItems; track item.mainLedgerId) {
+                  <tr class="main-row">
+                    <td class="expand-col">
+                      <button mat-icon-button type="button" class="expand-btn" (click)="toggleExpand('aavak', item.mainLedgerId)" [attr.aria-label]="isExpanded('aavak', item.mainLedgerId) ? 'Collapse' : 'Expand'">
+                        <mat-icon>{{ isExpanded('aavak', item.mainLedgerId) ? 'remove' : 'add' }}</mat-icon>
+                      </button>
+                    </td>
+                    <td>{{ item.ledgerName }}</td>
+                    <td>{{ item.totalAmount | indianCurrency }}</td>
+                  </tr>
+                  @if (isExpanded('aavak', item.mainLedgerId)) {
+                    @for (sub of item.subLedgers; track sub.subLedgerId) {
+                      <tr class="sub-row">
+                        <td class="expand-col"></td>
+                        <td class="sub-ledger">{{ sub.ledgerName }}</td>
+                        <td>{{ sub.totalAmount | indianCurrency }}</td>
+                      </tr>
+                    }
+                  }
                 }
-                <tr><th>Total</th><th>{{ data.totalAavak | indianCurrency }}</th></tr>
+                <tr><th class="expand-col"></th><th>Total</th><th>{{ data.totalAavak | indianCurrency }}</th></tr>
               </table>
             </div>
           </section>
@@ -73,11 +96,28 @@ interface BalanceSheetData {
             <h3 class="javak-header">Javak</h3>
             <div class="abr-table-card">
               <table>
-                <tr><th>Ledger</th><th>Total</th></tr>
-                @for (item of data.javakItems; track item.ledgerName) {
-                  <tr><td>{{ item.ledgerName }}</td><td>{{ item.totalAmount | indianCurrency }}</td></tr>
+                <tr><th class="expand-col"></th><th>Ledger</th><th>Total</th></tr>
+                @for (item of data.javakItems; track item.mainLedgerId) {
+                  <tr class="main-row">
+                    <td class="expand-col">
+                      <button mat-icon-button type="button" class="expand-btn" (click)="toggleExpand('javak', item.mainLedgerId)" [attr.aria-label]="isExpanded('javak', item.mainLedgerId) ? 'Collapse' : 'Expand'">
+                        <mat-icon>{{ isExpanded('javak', item.mainLedgerId) ? 'remove' : 'add' }}</mat-icon>
+                      </button>
+                    </td>
+                    <td>{{ item.ledgerName }}</td>
+                    <td>{{ item.totalAmount | indianCurrency }}</td>
+                  </tr>
+                  @if (isExpanded('javak', item.mainLedgerId)) {
+                    @for (sub of item.subLedgers; track sub.subLedgerId) {
+                      <tr class="sub-row">
+                        <td class="expand-col"></td>
+                        <td class="sub-ledger">{{ sub.ledgerName }}</td>
+                        <td>{{ sub.totalAmount | indianCurrency }}</td>
+                      </tr>
+                    }
+                  }
                 }
-                <tr><th>Total</th><th>{{ data.totalJavak | indianCurrency }}</th></tr>
+                <tr><th class="expand-col"></th><th>Total</th><th>{{ data.totalJavak | indianCurrency }}</th></tr>
               </table>
             </div>
           </section>
@@ -93,6 +133,11 @@ interface BalanceSheetData {
     .split { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
     @media (max-width: 959px) { .split { grid-template-columns: 1fr; } }
     h3 { padding: 0.5rem; margin: 0 0 0.5rem; }
+    .expand-col { width: 2.5rem; padding: 0 !important; text-align: center; }
+    .expand-btn { width: 2rem; height: 2rem; padding: 0; }
+    .expand-btn mat-icon { font-size: 1.125rem; width: 1.125rem; height: 1.125rem; }
+    .sub-row td { font-size: 0.9em; color: var(--abr-text-muted, #666); }
+    .sub-ledger { padding-left: 1.25rem !important; }
   `]
 })
 export class BalanceSheetComponent implements OnInit {
@@ -105,6 +150,7 @@ export class BalanceSheetComponent implements OnInit {
   readonly reportNav = REPORT_NAV_ITEMS;
   mainLedgers: MainLedger[] = [];
   data: BalanceSheetData | null = null;
+  private readonly expandedKeys = new Set<string>();
 
   form = this.fb.nonNullable.group({
     dateFrom: [''],
@@ -134,6 +180,7 @@ export class BalanceSheetComponent implements OnInit {
 
   search(): void {
     if (!this.siteId) return;
+    this.expandedKeys.clear();
     const raw = this.form.getRawValue();
     const params: Record<string, string | number | boolean> = { siteId: this.siteId };
     if (raw.dateFrom) params['dateFrom'] = raw.dateFrom;
@@ -142,6 +189,20 @@ export class BalanceSheetComponent implements OnInit {
     this.reports.getBalanceSheet(params).subscribe({
       next: (r) => { if (r.success) this.data = r.data as BalanceSheetData; }
     });
+  }
+
+  expandKey(side: 'aavak' | 'javak', mainLedgerId: string): string {
+    return `${side}:${mainLedgerId}`;
+  }
+
+  isExpanded(side: 'aavak' | 'javak', mainLedgerId: string): boolean {
+    return this.expandedKeys.has(this.expandKey(side, mainLedgerId));
+  }
+
+  toggleExpand(side: 'aavak' | 'javak', mainLedgerId: string): void {
+    const key = this.expandKey(side, mainLedgerId);
+    if (this.expandedKeys.has(key)) this.expandedKeys.delete(key);
+    else this.expandedKeys.add(key);
   }
 
   exportFilters(): Record<string, string | number | boolean> {

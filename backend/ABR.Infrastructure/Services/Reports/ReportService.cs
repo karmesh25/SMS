@@ -1,5 +1,6 @@
 using ABR.Application.DTOs.Reports;
 using ABR.Application.Interfaces;
+using ABR.Domain.Entities;
 using ABR.Infrastructure.Persistence;
 using ABR.Infrastructure.Services.Accounting;
 using Microsoft.EntityFrameworkCore;
@@ -97,6 +98,7 @@ public sealed class ReportService : IReportService
         var q = _context.DailyEntries
             .AsNoTracking()
             .Include(e => e.MainLedger)
+            .Include(e => e.SubLedger)
             .Where(e => e.SiteId == filter.SiteId && !e.IsDeleted);
 
         if (filter.DateFrom.HasValue)
@@ -108,19 +110,8 @@ public sealed class ReportService : IReportService
 
         var entries = await q.ToListAsync(cancellationToken);
 
-        var aavakItems = entries
-            .Where(e => e.EntryType == "aavak")
-            .GroupBy(e => e.MainLedger.LedgerName)
-            .Select(g => new BalanceSheetLedgerItemDto { LedgerName = g.Key, TotalAmount = g.Sum(e => e.Amount) })
-            .OrderBy(x => x.LedgerName)
-            .ToList();
-
-        var javakItems = entries
-            .Where(e => e.EntryType == "javak")
-            .GroupBy(e => e.MainLedger.LedgerName)
-            .Select(g => new BalanceSheetLedgerItemDto { LedgerName = g.Key, TotalAmount = g.Sum(e => e.Amount) })
-            .OrderBy(x => x.LedgerName)
-            .ToList();
+        var aavakItems = BuildBalanceSheetItems(entries.Where(e => e.EntryType == "aavak"));
+        var javakItems = BuildBalanceSheetItems(entries.Where(e => e.EntryType == "javak"));
 
         var totalAavak = aavakItems.Sum(x => x.TotalAmount);
         var totalJavak = javakItems.Sum(x => x.TotalAmount);
@@ -136,6 +127,35 @@ public sealed class ReportService : IReportService
             TotalJavak = totalJavak,
             Profit = totalAavak - totalJavak
         };
+    }
+
+    private static List<BalanceSheetLedgerItemDto> BuildBalanceSheetItems(IEnumerable<DailyEntry> entries)
+    {
+        return entries
+            .GroupBy(e => new { e.MainLedgerId, e.MainLedger.LedgerName })
+            .Select(g =>
+            {
+                var subLedgers = g
+                    .GroupBy(e => new { e.SubLedgerId, e.SubLedger.LedgerName })
+                    .Select(sg => new BalanceSheetSubLedgerItemDto
+                    {
+                        SubLedgerId = sg.Key.SubLedgerId,
+                        LedgerName = sg.Key.LedgerName,
+                        TotalAmount = sg.Sum(e => e.Amount)
+                    })
+                    .OrderBy(x => x.LedgerName)
+                    .ToList();
+
+                return new BalanceSheetLedgerItemDto
+                {
+                    MainLedgerId = g.Key.MainLedgerId,
+                    LedgerName = g.Key.LedgerName,
+                    TotalAmount = subLedgers.Sum(s => s.TotalAmount),
+                    SubLedgers = subLedgers
+                };
+            })
+            .OrderBy(x => x.LedgerName)
+            .ToList();
     }
 
     public async Task<PagedReportDto<TillDateReportRowDto>> GetTillDateAsync(TillDateReportFilterDto filter, CancellationToken cancellationToken = default)
