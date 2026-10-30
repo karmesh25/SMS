@@ -45,54 +45,61 @@ interface AllEntryRow {
         <app-module-subnav [items]="reportNav" />
         <section class="abr-panel">
           <h2 class="abr-panel__title"><mat-icon>filter_alt</mat-icon>Filters</h2>
-          <form [formGroup]="form" class="filters">
-            <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Main Ledger</mat-label>
-              <mat-select formControlName="mainLedgerId" (selectionChange)="loadSub()">
-                <mat-option value="">All</mat-option>
-                @for (m of mainLedgers; track m.id) { <mat-option [value]="m.id">{{ m.ledgerName }}</mat-option> }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Sub Ledger</mat-label>
-              <mat-select formControlName="subLedgerId">
-                <mat-option value="">All</mat-option>
-                @for (s of subLedgers; track s.id) { <mat-option [value]="s.id">{{ s.ledgerName }}</mat-option> }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Flat No</mat-label><input matInput formControlName="flatNo" /></mat-form-field>
-            <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
-            <app-report-export-buttons reportType="all-entry" [filters]="exportFilters()" [disabled]="!canExport" />
+          <form [formGroup]="form">
+            <div class="filters">
+              <mat-form-field appearance="outline"><mat-label>From</mat-label><input matInput type="date" formControlName="dateFrom" /></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>To</mat-label><input matInput type="date" formControlName="dateTo" /></mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Main Ledger</mat-label>
+                <mat-select formControlName="mainLedgerId" (selectionChange)="loadSub()">
+                  <mat-option value="">All</mat-option>
+                  @for (m of mainLedgers; track m.id) { <mat-option [value]="m.id">{{ m.ledgerName }}</mat-option> }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Sub Ledger</mat-label>
+                <mat-select formControlName="subLedgerId">
+                  <mat-option value="">All</mat-option>
+                  @for (s of subLedgers; track s.id) { <mat-option [value]="s.id">{{ s.ledgerName }}</mat-option> }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Flat No</mat-label><input matInput formControlName="flatNo" /></mat-form-field>
+            </div>
+            <div class="filter-actions">
+              <button mat-flat-button color="primary" type="button" (click)="search()">Search</button>
+              <app-report-export-buttons reportType="all-entry" [filters]="exportFilters()" [disabled]="!canExport" />
+            </div>
           </form>
         </section>
       </div>
       <div class="print-only"><h2>All Daily Entry Report</h2><p>{{ form.value.dateFrom }} — {{ form.value.dateTo }}</p></div>
       <div class="abr-table-card">
-      <table mat-table class="abr-table sticky-header">
+      <table class="abr-table sticky-header all-entry-table">
         <thead>
           <tr>
             <th colspan="7" class="aavak-header">Aavak</th>
-            <th colspan="6" class="javak-header">Javak</th>
+            <th colspan="5" class="javak-header javak-start">Javak</th>
           </tr>
           <tr>
-            <th>Date</th><th>Ledger</th><th>Sub</th><th>Flat</th><th>Cash/Bank</th><th>Amt</th><th>Desc</th>
-            <th>Ledger</th><th>Sub</th><th>Cash/Bank</th><th>Amt</th><th>Desc</th>
+            <th class="col-date">Date</th><th class="col-ledger">Ledger</th><th class="col-sub">Sub</th><th class="col-flat">Flat</th><th class="col-cash">Cash/Bank</th><th class="col-amt">Amt</th><th class="col-desc">Desc</th>
+            <th class="col-ledger javak-start">Ledger</th><th class="col-sub">Sub</th><th class="col-cash">Cash/Bank</th><th class="col-amt">Amt</th><th class="col-desc">Desc</th>
           </tr>
         </thead>
         <tbody>
           @for (row of rows; track $index) {
             <tr>
-              <td>{{ row.date | appDate }}</td>
-              <td>{{ row.aavakLedger ?? '-' }}</td><td>{{ row.aavakSubLedger ?? '-' }}</td><td>{{ row.aavakFlatNo ?? '-' }}</td>
-              <td>{{ row.aavakCashBank ?? '-' }}</td>
-              <td>{{ row.aavakAmount != null ? (row.aavakAmount | indianCurrency) : '-' }}</td>
-              <td>{{ row.aavakDescription ?? '-' }}</td>
-              <td>{{ row.javakLedger ?? '-' }}</td><td>{{ row.javakSubLedger ?? '-' }}</td>
-              <td>{{ row.javakCashBank ?? '-' }}</td>
-              <td>{{ row.javakAmount != null ? (row.javakAmount | indianCurrency) : '-' }}</td>
-              <td>{{ row.javakDescription ?? '-' }}</td>
+              <td class="col-date">{{ row.date | appDate }}</td>
+              <td class="col-ledger">{{ row.aavakLedger ?? '-' }}</td>
+              <td class="col-sub">{{ row.aavakSubLedger ?? '-' }}</td>
+              <td class="col-flat">{{ row.aavakFlatNo ?? '-' }}</td>
+              <td class="col-cash">{{ row.aavakCashBank ?? '-' }}</td>
+              <td class="col-amt">{{ row.aavakAmount != null ? (row.aavakAmount | indianCurrency) : '-' }}</td>
+              <td class="col-desc">{{ row.aavakDescription ?? '-' }}</td>
+              <td class="col-ledger javak-start">{{ row.javakLedger ?? '-' }}</td>
+              <td class="col-sub">{{ row.javakSubLedger ?? '-' }}</td>
+              <td class="col-cash">{{ row.javakCashBank ?? '-' }}</td>
+              <td class="col-amt">{{ row.javakAmount != null ? (row.javakAmount | indianCurrency) : '-' }}</td>
+              <td class="col-desc">{{ row.javakDescription ?? '-' }}</td>
             </tr>
           } @empty {
             <tr class="empty-row"><td colspan="12"><mat-icon>info_outline</mat-icon>No records found.</td></tr>

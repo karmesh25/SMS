@@ -137,11 +137,27 @@ public sealed class ReportService : IReportService
             {
                 var subLedgers = g
                     .GroupBy(e => new { e.SubLedgerId, e.SubLedger.LedgerName })
-                    .Select(sg => new BalanceSheetSubLedgerItemDto
+                    .Select(sg =>
                     {
-                        SubLedgerId = sg.Key.SubLedgerId,
-                        LedgerName = sg.Key.LedgerName,
-                        TotalAmount = sg.Sum(e => e.Amount)
+                        var entries = sg
+                            .OrderBy(e => e.EntryDate)
+                            .ThenBy(e => e.Amount)
+                            .Select(e => new BalanceSheetEntryItemDto
+                            {
+                                EntryDate = e.EntryDate,
+                                Amount = e.Amount,
+                                CashBank = e.CashBank,
+                                Description = e.Description
+                            })
+                            .ToList();
+
+                        return new BalanceSheetSubLedgerItemDto
+                        {
+                            SubLedgerId = sg.Key.SubLedgerId,
+                            LedgerName = sg.Key.LedgerName,
+                            TotalAmount = entries.Sum(e => e.Amount),
+                            Entries = entries
+                        };
                     })
                     .OrderBy(x => x.LedgerName)
                     .ToList();

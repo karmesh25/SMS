@@ -44,11 +44,20 @@ public class BalanceSheetFilterDto
     public Guid? MainLedgerId { get; set; }
 }
 
+public class BalanceSheetEntryItemDto
+{
+    public DateOnly EntryDate { get; set; }
+    public decimal Amount { get; set; }
+    public string CashBank { get; set; } = string.Empty;
+    public string? Description { get; set; }
+}
+
 public class BalanceSheetSubLedgerItemDto
 {
     public Guid SubLedgerId { get; set; }
     public string LedgerName { get; set; } = string.Empty;
     public decimal TotalAmount { get; set; }
+    public IReadOnlyList<BalanceSheetEntryItemDto> Entries { get; set; } = Array.Empty<BalanceSheetEntryItemDto>();
 }
 
 public class BalanceSheetLedgerItemDto

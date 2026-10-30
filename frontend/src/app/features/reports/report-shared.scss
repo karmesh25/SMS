@@ -41,8 +41,47 @@
   margin-bottom: 0;
 }
 
+.filter-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
 table {
   width: 100%;
+}
+
+.all-entry-table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  min-width: 1100px;
+}
+
+.all-entry-table th,
+.all-entry-table td {
+  border: 1px solid var(--abr-border);
+  padding: 0.4rem 0.5rem;
+  vertical-align: top;
+  font-size: 0.85rem;
+}
+
+.all-entry-table th {
+  font-weight: 600;
+  background: var(--abr-surface-2);
+}
+
+.all-entry-table .col-date { width: 6.5rem; white-space: nowrap; }
+.all-entry-table .col-ledger { width: 7rem; }
+.all-entry-table .col-sub { width: 7rem; }
+.all-entry-table .col-flat { width: 4.5rem; white-space: nowrap; }
+.all-entry-table .col-cash { width: 5.5rem; white-space: nowrap; }
+.all-entry-table .col-amt { width: 5.5rem; white-space: nowrap; text-align: right; }
+.all-entry-table .col-desc { width: 12rem; word-break: break-word; overflow-wrap: anywhere; }
+
+.all-entry-table .javak-start {
+  border-left: 2px solid var(--abr-danger, #c62828) !important;
 }
 
 .aavak-header {

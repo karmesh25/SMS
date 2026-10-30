@@ -14,7 +14,7 @@ import { ExportService, ReportExportType } from '../../../core/services/export.s
   styles: [`
     :host {
       display: inline-flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 0.5rem;
       align-items: center;
     }
